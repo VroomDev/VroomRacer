@@ -20,10 +20,9 @@ bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
 
-int raceLength=5;
+int raceLength=15;
 unsigned long raceStart=0;
 
-const int speakerPin = 6; // Pin connected to the speaker
 
 #include "MyTone.h"
 
@@ -33,8 +32,6 @@ const int speakerPin = 6; // Pin connected to the speaker
 
 volatile bool eyes=false;
 
-
-const int minLapDuration = 1000; // Debounce delay in milliseconds
 
 #include "Ema.h"
 #include "Lane.h"
@@ -71,21 +68,30 @@ void setup() {
   ////////////
   
   Serial.begin(9600);
+  delay(100);
   Serial.println("\n\nStarting");
 }
 
-ISR(TIMER1_COMPA_vect) {  
+
+volatile unsigned long avgTimeTaken=0;
+volatile unsigned long timeTaken=0;
+volatile unsigned long calls=0;
+
+ISR(TIMER1_COMPA_vect) {
+  unsigned long t=micros();  
   for(int i=0;i<LANENUM;i++){
     lanes[i].detect();
   }
-  
+  timeTaken=micros()-t;
+  avgTimeTaken=avgTimeTaken*(calls/(calls+1.0))+timeTaken/(calls+1.0);
+  calls++;
 }
 
 
 
 unsigned long scrolled=millis();
 void scrollLeft(){
-  if( scrolled+1000<millis()){
+  if( scrolled+2000<millis()){
       lcd.scrollDisplayLeft();
       scrolled=millis();
   }  
@@ -116,6 +122,9 @@ void loop() {
     int laps;
     if((laps=lanes[i].reportLap())>=0){
       //sayPhrase();       
+       Serial.print("avgTimeTaken:");
+       Serial.print(avgTimeTaken);
+       Serial.print("\n");
        playTone(400+i*100, 100);
        lanes[i].display();
        scrolled=millis()+2000;

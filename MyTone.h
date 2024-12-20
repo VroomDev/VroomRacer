@@ -1,3 +1,6 @@
+////////////////////////////////////////////MyTone by Chris Busch
+
+const int speakerPin = 6; // Pin connected to the speaker
 
 
 void myTone(int pin,unsigned int frequency){
