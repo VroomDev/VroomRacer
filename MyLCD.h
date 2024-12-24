@@ -1,4 +1,9 @@
-
+/*
+ * Code by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
+ 
 #define SCROLLDELAY 700
 #include <LiquidCrystal.h>
 LiquidCrystal realLcd(7, 8, 9, 10, 11, 12);

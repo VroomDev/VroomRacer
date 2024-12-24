@@ -1,4 +1,8 @@
-
+/*
+ * Code by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
 
 typedef enum : uint8_t { PRESAMPLE,  GO, FINISH } IsrFlag; 
 volatile IsrFlag isrFlag = PRESAMPLE;

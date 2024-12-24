@@ -1,5 +1,10 @@
 /////////Ema by Chris Busch
-
+/*
+ * Code by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
+ 
 const float alpha = 2.0/(500+1); // Smoothing factor (0 < alpha <= 1)  
 class Ema {
   public:

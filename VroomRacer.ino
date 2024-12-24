@@ -6,7 +6,11 @@
  * It is kept simple by simply using .h and not all the preprocessor 
  * controls.  That may change in the future if the code base grows.
  */
-
+/*
+ * Code by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
 #include "pitches.h"
 #define REST 0
 

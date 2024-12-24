@@ -1,4 +1,10 @@
-template <typename T, uint8_t Size>
+/* 
+ * Code by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
+ 
+ template <typename T, uint8_t Size>
 class RingBuffer {
   static_assert((Size & (Size - 1)) == 0, "Size must be a power of two");
   static_assert(Size <= 128, "max Size is 128");
