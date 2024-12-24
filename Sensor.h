@@ -33,8 +33,8 @@
     p("mean",mean);
     sd=sqrt(M2/n);
     p("sd",sd);
-    threshold=mean-10*sd-1;
-    if(minAcc<threshold) threshold=minAcc-1;
+    threshold=(mean-sd-1)/2;
+//    if(minAcc<threshold) threshold=minAcc-1;
     pln("threshold",threshold);    
     interrupts();
   }

@@ -13,7 +13,7 @@ volatile IsrFlag isrFlag = PRESAMPLE;
 #define NUMSENSORS 2
 static_assert((NUMSENSORS & (NUMSENSORS - 1)) == 0, "NUMSENSORS must be a power of two");
 //ACCSMOOTH must be base 2
-#define ACCSMOOTH 8
+#define ACCSMOOTH 1
 static_assert((ACCSMOOTH & (ACCSMOOTH - 1)) == 0, "ACCSMOOTH must be a power of two");
 
 Sensor sensors[NUMSENSORS];
