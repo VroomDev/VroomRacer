@@ -86,7 +86,7 @@ ISR(ADC_vect) {
           sensor.M2 += delta*(sensor.acc - sensor.mean);
       }
     }else if(flag==GO){
-        if(sensor.acc < sensor.threshold){ //threshold[curSensor]){             
+        if(sensor.acc < sensor.threshold){             
            if(currentTime - sensor.lastLapTime > minLapDuration) { 
               //lap detected
               sensor.lastLapTime=currentTime;
