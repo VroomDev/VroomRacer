@@ -10,12 +10,18 @@
 #include "pitches.h"
 #define REST 0
 
+//for debugging
+#define p(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');
+#define pln(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();
+
+
 
 // include the library code:
-#include <LiquidCrystal.h>
+
+#include "MyLCD.h"
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
+MyLCD lcd;
 bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
@@ -30,11 +36,23 @@ unsigned long raceStart=0;
 
  */
 
-volatile bool eyes=false;
+volatile bool raceStarted=false;
 
-
+#include "Detection.h"
+#include "RingBuffer.h"
 #include "Ema.h"
 #include "Lane.h"
+
+// Create a Ring Buffer to hold Detection structs
+const uint8_t bufferSize = 16; // Must be a power of 2
+RingBuffer<Detection, bufferSize> ringBuffer;
+
+#include "Sensor.h"
+#include "ISR.h"
+
+
+///////////
+
 
 const int LANENUM=2;
 Lane lanes[LANENUM];
@@ -50,21 +68,7 @@ void setup() {
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   ////////////
-  // Set up Timer1
-  noInterrupts(); // Disable interrupts
-
-  TCCR1A = 0;  // Clear Timer/Counter Control Registers
-  TCCR1B = 0;
-
-  TCNT1 = 0; // Initialize counter value to 0
-  OCR1A = 15999; // Set compare match register for 1ms intervals (16MHz / 1000 - 1)
-
-  TCCR1B |= (1 << WGM12); // Turn on CTC mode
-  TCCR1B |= (1 << CS10) | (1 << CS11); // Set CS10 and CS11 bits for 64 prescaler
-
-  TIMSK1 |= (1 << OCIE1A); // Enable Timer compare interrupt
-  interrupts(); // Enable interrupts
-
+  ISR::setup();
   ////////////
   
   Serial.begin(9600);
@@ -73,82 +77,54 @@ void setup() {
 }
 
 
-volatile unsigned long avgTimeTaken=0;
-volatile unsigned long timeTaken=0;
-volatile unsigned long calls=0;
-
-ISR(TIMER1_COMPA_vect) {
-  unsigned long t=micros();  
-  for(int i=0;i<LANENUM;i++){
-    lanes[i].detect();
-  }
-  timeTaken=micros()-t;
-  avgTimeTaken=avgTimeTaken*(calls/(calls+1.0))+timeTaken/(calls+1.0);
-  calls++;
-}
 
 
-
-unsigned long scrolled=millis();
-void scrollLeft(){
-  if( scrolled+2000<millis()){
-      lcd.scrollDisplayLeft();
-      scrolled=millis();
-  }  
-}
-
+int loopc=0;
 void loop() {
-   if(won){
-       scrollLeft();
+   loopc++;
+   if(raceStarted) lcd.scrollLeft();
+   //p("loopc",loopc);
+//   p("pings",pings);
+//   pln("notReady",notReady);
+   if(won){       
    }
-   if(!eyes){
+   if(!raceStarted){
       // Print a message to the LCD.  
       lcd.setCursor(0,0);
       lcd.print("  Vroom Racer ");  
       lcd.setCursor(0,1);
       lcd.print(" (c) 2024 CGB");  
       //delay(1000);    
-      playF1StartSound();
-      //delay(1000);
-      //playF1StartSound1();
+      //playF1StartSound();
+      playF1StartSound1();
       raceStart=millis();
+      ISR::calcThresholds();
+      ISR::go();
       lcd.setCursor(0,1);
       lcd.print("   GO!!!!!!!!");  
-      scrolled=millis()+2000;
   }
-  eyes=true;
-  // Generate sound for each syllable in "prepare to qualify"
-  for(int i=0;i<LANENUM;i++){
-    int laps;
-    if((laps=lanes[i].reportLap())>=0){
-      //sayPhrase();       
-       Serial.print("avgTimeTaken:");
-       Serial.print(avgTimeTaken);
-       Serial.print("\n");
-       playTone(400+i*100, 100);
-       lanes[i].display();
-       scrolled=millis()+2000;
-       if(laps==raceLength){
-          //playCarmen();
-          lcd.setCursor(0,i);
-          if( winner==lanes[i].lightPin ) {
-            lcd.print("   WINNER!!!!!!!!");
-            playMusic(melody,notes,80*4);                  
-          }else{                            
-            lcd.print("   LOST...         ");
-            playEngine();
-//            for(int j=0;j<5;j++){
-//              lcd.scrollDisplayLeft();
-//              delay(100);
-//              lcd.scrollDisplayRight();
-//              delay(100);
-//            }
-          }
-          lanes[i].display(); //update display
-       }
-    }else{
-//      scrollLeft(); 
+  raceStarted=true;
+  Detection d; 
+  if (ringBuffer.pull(d)) {
+    auto i=d.port;
+    playTone(400+i*100, 100);
+    d.debug();    
+    p("threshold",sensors[d.port].threshold);
+    p("mean",sensors[d.port].mean);
+    pln("sd",sensors[d.port].sd);        
+    lanes[i].detect(d);    
+    lanes[i].display();    
+    if(lanes[i].lapCounter==raceLength){      
+      lcd.setCursor(0,i);
+      if( winner==lanes[i].laneNum ) {
+        lcd.print("   WINNER!!!!!!!!");
+        playMusic(melody,notes,80*4);                  
+      }else{                            
+        lcd.print("   LOST...");
+        playEngine();
+      }
+      lanes[i].display(); //update display
     }
-  }  
-  delay(100); // Wait 5 seconds before repeating 
+  }
+  delay(100); // Wait before repeating 
 }
