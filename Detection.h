@@ -7,11 +7,11 @@
 class Detection {
   public:
   uint8_t port;
-  unsigned long value;
+  unsigned int value;
   unsigned long timestamp;
 
   // Constructor to initialize the members
-  Detection(uint8_t p,unsigned long v = 0, unsigned long t = 0) : port(p), value(v), timestamp(t) {}
+  Detection(uint8_t p,unsigned int v = 0, unsigned long t = 0) : port(p), value(v), timestamp(t) {}
 
   Detection() : port(0), value(0), timestamp(0) {}
 
