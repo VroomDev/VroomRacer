@@ -18,7 +18,7 @@ Each driver has three lights: red, yellow, and green.
 
 ## Real-Time Calculations
 - **Clipped Averages**:
-  - For 3 or more laps: \((\text{accumulatedLapDuration} - \text{worstLapDuration} - \text{bestLapDuration}) / (\text{completedLaps} - 2)\)
+  - For 3 or more laps: $$\((\text{accumulatedLapDuration} - \text{worstLapDuration} - \text{bestLapDuration}) / (\text{completedLaps} - 2)\)$$
   - For 2 laps: Simple average
 
 - **False Start**: If the first lap is out of range (either too fast or too slow), the race is red-flagged, declared a false start, and then restarted.
