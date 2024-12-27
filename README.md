@@ -26,7 +26,7 @@ Each driver has three lights: red, yellow, and green.
 
 ## Automatic Yellow Flags
 - If a driver hasn't completed a lap after 1.5 times the clipped average lap time for all racers, a yellow light goes on.
-- If another driver's next lap time is too fast during a yellow, their lap could be deleted as a penalty. A lap is too fast if it's less than \(\text{avgdur} - (\text{lapFinishClock} - \text{yellowStartClock}) \times 2\).
+- If another driver's next lap time is too fast during a yellow, their lap could be deleted as a penalty. A lap is too fast if it's less than $$\(\text{avgdur} - (\text{lapFinishClock} - \text{yellowStartClock}) \times 2\)$$.
 
 ## Track and Steward
 - **Pseudo "Mobius" Track**: A 4-lane track that is actually a 2-lane track.
