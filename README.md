@@ -29,7 +29,7 @@ Each driver has three lights: red, yellow, and green.
 - If another driver's next lap time is too fast during a yellow, their lap could be deleted as a penalty. A lap is too fast if it's less than $$\(\text{avgdur} - (\text{lapFinishClock} - \text{yellowStartClock}) \times 2\)$$.
 
 ## Track and Steward
-- **Pseudo "Mobius" Track**: A 4-lane track that is actually a 2-lane track.
+- **Twisted Track Handling**: it is important that the logic addresses lane jumping.
 - **A.I. Steward**: Reviews any new shortest lap after lap 1. If the lap is less than half the average duration, it will be deleted as it indicates a jumped lane or rider.
 
 ## Race Management
