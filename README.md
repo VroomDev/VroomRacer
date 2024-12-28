@@ -53,3 +53,15 @@ Each driver has three lights: red, yellow, and green.
 - **Lost**: TBD.
 - **Pit Stop Song**: Engine sound.
 - **Lap Deletion Song**: TBD.
+
+# Hardware 
+
+## Light Sensors 
+
+*Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. This makes photodiodes ideal for precise and quick light detection tasks. While photoresistors are often used in basic circuits like night lights, *photodiodes are preferred in applications requiring accurate and rapid light measurement*, such as optical communication and advanced sensing systems. There are also photo diodes to consider but the additional wiring required prohibited the use of them.
+
+Fhe above reasons, the recommendation is to use photo diodes.
+
+Examples of 
+- uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
+- Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive
