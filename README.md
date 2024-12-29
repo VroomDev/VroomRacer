@@ -83,3 +83,13 @@ Package Type: DIP(Dual In-line Package)
 Polarity: Anode (Longer Part) | Cathode (Shorter Part)
 
 LDR specifications:
+Model: GL 5506
+Light Resistance: 5 – 10 Kilo Ohms
+Dark Resistance: 0.5 Mega Ohms
+Max Voltage: 150 V
+Max Power Consumption: 90 mW
+Spectral Peak: 540 nm
+Response Time Up: 30 ms
+Response Time Down: 30 ms
+Operating Temperature: -30⁰C ~ +70⁰C
+Dimensions: 4.3mm x 5.1mm x 2.1 mm
