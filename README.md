@@ -65,3 +65,21 @@ For the above reasons, the recommendation is to use photo diodes.
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
 - Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive
+
+
+
+
+Photodiode Specification:
+Receive Wave Range : 400-1100 nm
+Response Peak Wavelength：940 nm
+Receiving Angle : 40°
+Material：Si, Plastic, Metal
+Head Color : Clear
+Head Size : 3 x 4mm / 0.12 x 0.16 inch (D*H)
+Pin Dia : 0.4 mm / 0.016 inch
+Total Length: 33mm / 1.3 inch
+
+Package Type: DIP(Dual In-line Package)
+Polarity: Anode (Longer Part) | Cathode (Shorter Part)
+
+LDR specifications:
