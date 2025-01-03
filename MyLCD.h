@@ -10,7 +10,8 @@ LiquidCrystal realLcd(7, 8, 9, 10, 11, 12);
 class MyLCD {
   private:
   void clearLine(){
-    for(int i=0;i<40;i++) realLcd.print(" ");
+    ///////////////1234567890123456789012345678901234567890
+    realLcd.print("                                       ");
   }
   
   public:
@@ -30,10 +31,12 @@ class MyLCD {
         realLcd.scrollDisplayLeft();
         scrolled=millis();
         lefts++;
+        lefts %= 40;
     }  
   }
   void recenter(){
     while(lefts>0){
+      delay(3);
       realLcd.scrollDisplayRight();
       lefts--;
     } 

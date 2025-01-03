@@ -4,25 +4,33 @@
  * No guarantees of being fit for purpose.
  */
  //
+
+#define AVG_CAR_LEN 2.5
+#define INCHMS2MPH 56.818
+
+ 
 class Detection {
   public:
   uint8_t port;
   unsigned int value;
+  unsigned int count;
   unsigned long timestamp;
 
   // Constructor to initialize the members
-  Detection(uint8_t p,unsigned int v = 0, unsigned long t = 0) : port(p), value(v), timestamp(t) {}
+  Detection(uint8_t p,unsigned int v = 0,unsigned int c=0, unsigned long t = 0) : port(p), value(v),count(c), timestamp(t) {}
 
-  Detection() : port(0), value(0), timestamp(0) {}
+  Detection() : port(0), value(0), count(0), timestamp(0) {}
 
   bool isEmpty(){
-    return timestamp==0 && value==0 && port==0;
+    return timestamp==0 && value==0 && port==0 && count==0;
   }
 
   void debug(){
+    ph("Detection");
     p("port",port);
     p("value",value);
-    p("timestamp",timestamp);
+    p("count",count);    
+    pln("timestamp",timestamp);
   }
   
 };

@@ -24,6 +24,7 @@ class Lane {
     }
 
   Detection prior;
+  
   bool detect(Detection d){
     //LAP DETECTED
     lastLapTime = d.timestamp;

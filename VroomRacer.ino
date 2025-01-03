@@ -15,6 +15,7 @@
 #define REST 0
 
 //for debugging
+#define ph(label) Serial.print(label);Serial.print(':');
 #define p(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');
 #define pln(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();
 
@@ -112,10 +113,11 @@ void loop() {
   if (ringBuffer.pull(d)) {
     auto i=d.port;
     playTone(400+i*100, 100);
-    d.debug();    
-    p("threshold",sensors[d.port].threshold);
-    p("mean",sensors[d.port].mean);
-    pln("sd",sensors[d.port].sd);        
+    d.debug();        
+    p("S#",d.port);
+    p("mph",AVG_CAR_LEN*INCHMS2MPH*sensors[d.port].ticksPerMs/d.count);
+    sensors[d.port].debug();
+    
     lanes[i].detect(d);    
     lanes[i].display();    
     if(lanes[i].lapCounter==raceLength){      

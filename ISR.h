@@ -89,16 +89,7 @@ ISR(ADC_vect) {
     if(flag==PRESAMPLE) {
       sensor.presample();      
     }else if(flag==GO){
-        if(sensor.acc < sensor.threshold){     
-           auto currentTime=millis();        
-           if(currentTime - sensor.lastLapTime > minLapDuration) { 
-              //lap detected
-              sensor.lastLapTime=currentTime;
-              //put in ring buffer
-              Detection detection(curSensor,sensor.acc,sensor.lastLapTime); // Initialize with data  
-              ringBuffer.push(detection);
-           }
-        }
+      sensor.go(curSensor);
     }      
   }
   if(curSensor==NUMSENSORS-1){
