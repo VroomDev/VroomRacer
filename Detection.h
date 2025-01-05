@@ -5,9 +5,6 @@
  */
  //
 
-#define AVG_CAR_LEN 2.5
-#define INCHMS2MPH 56.818
-
  
 class Detection {
   public:

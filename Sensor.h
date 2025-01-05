@@ -83,7 +83,10 @@
     p("mean",mean);
     p("ticksPerMs",ticksPerMs);
     p("initialThreshold",initialThreshold);
-    pln("mainThreshold",mainThreshold);  
+    pln("mainThreshold",mainThreshold); 
+    if(mean==0){
+      playMusic(imperialMarchMelody,imperialMarchNotes,2*120); 
+    }
     interrupts();
   }
 

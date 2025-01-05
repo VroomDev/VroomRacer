@@ -14,10 +14,40 @@
 #include "pitches.h"
 #define REST 0
 
+typedef enum : uint8_t {FORMATION='F', SET='S', RED = 'R', YELLOW = 'Y', GREEN = 'G', CHECKERS = 'C' } RaceFlag;
+
+char raceFlag=FORMATION;
+
+const int LANENUM=2;
+
 //for debugging
 #define ph(label) Serial.print(label);Serial.print(':');
 #define p(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');
 #define pln(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();
+
+
+void mydtostrf(float value, int width,char *buffer) {
+  // Calculate the number of digits in the integer part of the value
+  int intPart = (int)value;
+  if(value>99999 || value<-9999 ){
+    sprintf(buffer,"OVER!");
+    return;
+  }  
+  int prec=3;
+  if (intPart >= 1000) {
+    prec=0;
+  } else if (intPart >= 100) {
+    prec=1;
+  } else if (intPart >= 10) {
+    prec=2;
+  } else if (intPart >= 1) {
+    prec=3;
+  }
+  if(width<=4 && prec>0) prec--;
+  if(width<=3 && prec>0) prec--; //hacky
+  // Use dtostrf with the adjusted precision
+  dtostrf(value, width, prec, buffer);
+}
 
 
 
@@ -31,11 +61,11 @@ bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
 
-int raceLength=15;
+int raceLength=5;
 unsigned long raceStart=0;
 
 
-#include "MyTone.h"
+
 
 /*
 
@@ -46,22 +76,25 @@ volatile bool raceStarted=false;
 #include "Detection.h"
 #include "RingBuffer.h"
 #include "Ema.h"
+#include "Lights.h"
 #include "Lane.h"
 
 // Create a Ring Buffer to hold Detection structs
 const uint8_t bufferSize = 16; // Must be a power of 2
 RingBuffer<Detection, bufferSize> ringBuffer;
 
+#include "MyTone.h"
+
 #include "Sensor.h"
 #include "ISR.h"
 
-
-///////////
-
-
-const int LANENUM=2;
 Lane lanes[LANENUM];
 
+void waveFlag(RaceFlag which){
+  for(int i=0;i<LANENUM;i++){
+    lanes[i].lights.waveFlag(which);
+  }
+}
 
 
 void setup() {
@@ -85,52 +118,110 @@ void setup() {
 
 
 int loopc=0;
+
+#define AVG_CAR_LEN_INCHES 2.5
+#define INCHMS_TO_INCHSEC 1000
+// CONVERSION=AVG_CAR_LEN_INCHES*INCHMS_TO_INCHSEC
+#define CONVERSION 2500
+
+
+int curPage=0;
+
+long nextPageFlip=0;
+
 void loop() {
-   loopc++;
-   if(raceStarted) lcd.scrollLeft();
-   //p("loopc",loopc);
-//   p("pings",pings);
-//   pln("notReady",notReady);
-   if(won){       
+   for(int i=0;i<NUMSENSORS;i++){
+//      ph(i);
+//      sensors[i].debug();    
    }
-   if(!raceStarted){
+   loopc++;   
+   if(!raceStarted){      
       // Print a message to the LCD.  
-      lcd.setCursor(0,0);
-      lcd.print("  Vroom Racer ");  
       lcd.setCursor(0,1);
-      lcd.print(" (c) 2024 CGB");  
-      //delay(1000);    
-      //playF1StartSound();
-      playF1StartSound1();
-      raceStart=millis();
+      ///////////01234567890123456789
+      lcd.print(" Vroom Racer by CB");  
+      lcd.setCursor(0,3);
+      lcd.print("  Copyright 2024");        
+      playF1StartSound1();      
       ISR::calcThresholds();
+      raceFlag=GREEN;
+      raceStart=millis();
       ISR::go();
-      lcd.setCursor(0,1);
+      lcd.setCursor(0,2);
       lcd.print("   GO!!!!!!!!");  
+      raceStarted=true;
   }
-  raceStarted=true;
   Detection d; 
   if (ringBuffer.pull(d)) {
     auto i=d.port;
+    lanes[i].lights.all(false);
     playTone(400+i*100, 100);
+    lanes[i].lights.waveFlag(raceFlag);
     d.debug();        
     p("S#",d.port);
-    p("mph",AVG_CAR_LEN*INCHMS2MPH*sensors[d.port].ticksPerMs/d.count);
-    sensors[d.port].debug();
-    
-    lanes[i].detect(d);    
-    lanes[i].display();    
+    lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
+
+    /// Very slow car example
+    //10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
+    //10:40:29.620 -> S#:1,mph:0.15,Sensor:acc:872,lastLapTime:22000,minAcc:866,maxAcc:873,count:0,initialThreshold:652,mainThreshold:435,ticks per ms:18,n:65535
+
+    // 2500*18/17432=2.58 inches/second
+
+    p("inch/sec",lanes[i].speed);
+    sensors[d.port].debug();    
+    if(lanes[i].lapCounter<raceLength) lanes[i].detect(d);    
+    curPage=0;
+    nextPageFlip=0;
     if(lanes[i].lapCounter==raceLength){      
-      lcd.setCursor(0,i);
+      lcd.setCursor(0,i*2);
       if( winner==lanes[i].laneNum ) {
         lcd.print("   WINNER!!!!!!!!");
-        playMusic(melody,notes,80*4);                  
+        lanes[i].lights.green(true);
+        playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
       }else{                            
         lcd.print("   LOST...");
+        lanes[i].lights.red(true);
         playEngine();
       }
-      lanes[i].display(); //update display
+    }
+  }else{ //STEWARDS
+    //check for yellows
+    bool anyYellow=false;
+    if(!won){
+      for(int i=0;i<LANENUM;i++){
+        if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+lanes[i].avgLapDur*3/2){
+          //car is late!
+          ph("Yellow detected Car late")
+          pln("Car",i);
+          anyYellow=true;
+        }
+      }
+    }
+    if(anyYellow){
+      if(raceFlag!=YELLOW){
+        raceFlag=YELLOW;
+        waveFlag(raceFlag);
+        playMusic(imperialMarchMelody,imperialMarchNotes,120); 
+        nextPageFlip=0;    
+      }             
+    }else if(raceFlag==YELLOW){
+      playF1StartSound1();      
+      raceFlag=GREEN;
+      waveFlag(raceFlag);
+      nextPageFlip=0;
     }
   }
+  updateLCD();
   delay(100); // Wait before repeating 
+}
+
+
+void updateLCD(){
+  if(millis()>nextPageFlip){
+    nextPageFlip=millis()+4000;
+    for(int i=0;i<LANENUM;i++){
+      lanes[i].display(curPage,raceFlag);
+    }
+    curPage = ++curPage>=PAGECOUNT ? 0:curPage;
+  }
 }
