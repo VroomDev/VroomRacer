@@ -99,7 +99,9 @@ class Lights {
 
   byte redPin,bluePin,greenPin;
 
-  byte lanePins[NUMLANES]{0}; 
+  byte lanePins[NUMLANES*2]{0}; 
+  unsigned long timeout[NUMLANES]{0};
+
 
   void setup(byte r,byte g,byte b,byte* lanes){
     redPin=r;    
@@ -110,31 +112,56 @@ class Lights {
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
     pinMode(bluePin, OUTPUT);
-    for(int i=0;i<NUMLANES;i++) {
+    for(int i=0;i<NUMLANES*2;i++) {
       lanePins[i]=lanes[i];
       pinMode(lanePins[i], OUTPUT);
     }
-    
   }
 
-  void setLane(int lane,bool on){    
-    digitalWrite(lanePins[lane], on?HIGH:LOW);
+  void setLane(int lane,bool on){
+    digitalWrite(lanePins[lane], on?HIGH:LOW);    
+    digitalWrite(lanePins[lane+NUMLANES], !on?HIGH:LOW);
+    timeout[lane]=millis()+1000;
   }
 
-  void setLanes(bool on){    
+  
+  void clearLane(int lane){
+    digitalWrite(lanePins[lane], LOW);    
+    digitalWrite(lanePins[lane+NUMLANES],LOW);
+  }
+
+  void checkFade(){    
     for(int i=0;i<NUMLANES;i++) {
-      setLane(i,on);
+      if(timeout[i]>0 && millis()>timeout[i]){
+          clearLane(i);
+          timeout[i]=0;
+      }
+    }
+  }
+
+  void clearLanes(){    
+    for(int i=0;i<NUMLANES;i++) {
+      clearLane(i);
     }
   }
 
 
   void demo() {
-    
+    for(int c=0;c<NUMLANES;c++){
+      Serial.print("setting lane indicator, true then false");
+      Serial.println(c);
+      setLane(c,true);
+      delay(2000);
+      setLane(c,false);
+      delay(2000);
+    }
+    clearLanes();
     for(int c=0;c<NUM_COLORS;c++){
       Serial.println(colorLabels[c]);
       setColor(colorTable[c]);
-      delay(2000);
+      delay(1000);
     }
+    
   }
 
   void setColor(RGB rgb){

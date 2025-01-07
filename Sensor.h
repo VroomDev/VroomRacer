@@ -32,6 +32,7 @@
      p("count",count);
      p("initialThreshold",initialThreshold);
      p("mainThreshold",mainThreshold);
+     p("mean",mean);
      p("ticks per ms", ticksPerMs );        
      pln("n",n);       
   }

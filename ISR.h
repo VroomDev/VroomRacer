@@ -18,6 +18,19 @@ static_assert((ACCSMOOTH & (ACCSMOOTH - 1)) == 0, "ACCSMOOTH must be a power of 
 
 Sensor sensors[NUMSENSORS];
 
+int checkSensors(){
+  for(int i=0;i<NUMSENSORS;i++){
+    if(sensors[i].mean<3){
+      p("SensCheck",i);
+      p("mean",sensors[i].mean);
+      Serial.println("found bad sensor");
+      return i;
+    }
+  }
+  return -1;
+}
+
+
 class ISR{
   public:
   

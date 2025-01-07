@@ -23,7 +23,7 @@ void myTone(int pin,unsigned int frequency,unsigned long duration){
 void playTone(int frequency, int duration) {
   myTone(speakerPin, frequency, duration);
   delay(duration);
-  noTone(speakerPin);
+  //noTone(speakerPin);
 }
 
 
@@ -166,12 +166,11 @@ void playF1StartSound1() {
 
 void playF1Restart() {
   playTone(500, 200);   
-  delay(200);
+  delay(100);
   playTone(500, 200);   
-  delay(200);  
-  waveFlag(YELLOWFLAG);
-  playTone(200, 200);   
-  delay(200);  
+  delay(100);  
+  playTone(100, 200);   
+  delay(100);  
   waveFlag(GREENFLAG);  
   playTone(1000, 400);  
   delay(100);    

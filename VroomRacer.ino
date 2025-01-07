@@ -133,20 +133,8 @@ void setup() {
   
   lanes[0].setup(0);
   lanes[1].setup(1);
-  byte buf[NUMLANES]{30,32};
+  byte buf[NUMLANES*2]{30,32,31,33};
   lights.setup(6,7,8,buf); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
-
-//  lights.demo();
-//  
-//  lights.setLanes(false);
-//  delay(100);
-//  lights.setLanes(false);
-//  delay(100);
-//  lights.setLane(0,true);
-//  delay(1100);
-//  lights.setLane(1,true);
-//  delay(1100);
-//  lights.setLanes(false);
 
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
@@ -161,25 +149,20 @@ void setup() {
   ////////////
   ISR::setup();
   ////////////
-  
-  //playMusic(imperialMarchMelody,imperialMarchNotes,90); //lower tempo is slower
-//  lanes[0].lights.setColor(PURPLE);
-//  lanes[1].lights.setColor(ORANGE);
-
-//  // Tone sequence for the starting lights
-//  waveFlag(FORMATION);  
-//  waveFlag(SET);
-//  delay(1300);
-//  waveFlag(REDFLAG);
-//  delay(1300);
-//  waveFlag(YELLOWFLAG);
-//  delay(1300);
-//  waveFlag(GREENFLAG);
-//  delay(1100);  
+//  
+//  for(int jj=0;jj<NUMLANES;jj++){
+//    alertGoodLap(jj);
+//    delay(1500);
+//    alertBadLap(jj);
+//    delay(1500);
+//  }
+//  alertBadLap(0);
+//  delay(1000);
+//  alertBadLap(1);
+//  delay(1000);
+//  //lights.demo();
   
 }
-
-
 
 
 int loopc=0;
@@ -188,34 +171,46 @@ int loopc=0;
 #define INCHMS_TO_INCHSEC 1000
 // CONVERSION=AVG_CAR_LEN_INCHES*INCHMS_TO_INCHSEC
 #define CONVERSION 2500
+/// Very slow car example
+//10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
+//10:40:29.620 -> S#:1,mph:0.15,Sensor:acc:872,lastLapTime:22000,minAcc:866,maxAcc:873,count:0,initialThreshold:652,mainThreshold:435,ticks per ms:18,n:65535
+// 2500*18/17432=2.58 inches/second
 
 
 int curPage=0;
-
 long nextPageFlip=0;
 
 
-    /// Very slow car example
-    //10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
-    //10:40:29.620 -> S#:1,mph:0.15,Sensor:acc:872,lastLapTime:22000,minAcc:866,maxAcc:873,count:0,initialThreshold:652,mainThreshold:435,ticks per ms:18,n:65535
-    // 2500*18/17432=2.58 inches/second
 
 
 
 int getAvgLapCounter(){
   int tot=0;
+  int det=0;
   for(int i=0;i<NUMLANES;i++){
       tot+=lanes[i].lapCounter;
+      det+=lanes[i].lapCounter>0?1:0;
   }
-  return tot/NUMLANES;
+  if(det==0) return 0;
+  return tot/det;
 }
+
+int getMaxLapCounter(){
+  int tot=0;
+  for(int i=0;i<NUMLANES;i++){
+      tot=lanes[i].lapCounter>tot?lanes[i].lapCounter:tot; 
+  }
+  return tot;
+}
+
 
 Detection d; 
 
 
 void loop() {
+   lights.checkFade();
    loopc++;   
-   if(!raceStarted){      
+   if(!raceStarted){  
       // Print a message to the LCD.  
       lcd.setCursor(0,2);
       ///////////01234567890123456789        
@@ -226,8 +221,17 @@ void loop() {
       raceStart=millis();
       ISR::go();
       lcd.setCursor(0,3);
-      lcd.print("   GO!!!!!!!!");  
-      raceStarted=true;
+      lcd.print("   GO!!!!!!!!"); 
+      auto chk=checkSensors();
+      if(chk>=0){
+          lcd.setCursor(0,3);
+          lcd.print("Sensor fault Lane:");
+          lcd.print(chk);
+          playMusic(imperialMarchMelody,imperialMarchNotes,120);
+          delay(60000);         
+      }else{
+        raceStarted=true;
+      }
   }
   if (ringBuffer.pull(d)) {
     curPage=0;
@@ -260,22 +264,22 @@ void loop() {
     //check for yellows
     bool anyYellow=false,anyRed=false;    
     if(!won){
-      auto avgLapCounter=getAvgLapCounter();
-      if(avgLapCounter+1==raceLength/2){
+      auto maxLapCounter=getMaxLapCounter();
+      if(maxLapCounter+1==raceLength/2){
         if(raceFlag!=YELLOWFLAG){
             ph("Mid race competition yellow")
         }
         anyYellow=true;
       }else{
         for(int i=0;i<NUMLANES;i++){
-          if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+(lanes[i].avgLapDur*3)){
+          if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
             //car is late!
             if(raceFlag!=REDFLAG){
               ph("Red flag detected Car late")
               pln("Car",i);
             }
             anyRed=true;
-          }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+(lanes[i].avgLapDur*3/2)){
+          }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
             //car is late!
             if(raceFlag!=YELLOWFLAG){
               ph("Yellow detected Car late")
@@ -317,39 +321,29 @@ void loop() {
 
 void alertGoodLap(int i) {
   pln("GOOD LAP car:",i);
-  setColor(PURPLE);
   lights.setLane(i,true);
-  playTone(400+i*100, 100);
+  playTone(400+i*300, 100);
   if(lanes[i].lapCounter<raceLength) lanes[i].detect(d);    
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,i*2+1);
     if( winner==lanes[i].laneNum ) {
       ///////////12345678901234567890
       lcd.print("WINNER!!!          ");
-      lights.setColor(GREEN);
       playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
     }else{                            
       lcd.print("SORRY...           ");
-      lights.setColor(RED);
       playEngine();
     }
   }
-  lights.setLane(i,false);
   waveFlag(raceFlag);
 }
 
 void alertBadLap(int i){ //,Detection& d){
   pln("BAD LAP car:",i);
-  setColor(ORANGE);
-  lights.setLane(i,true);
-  playTone(400+i*100, 30);
   lights.setLane(i,false);
-  setColor(BLACK);
-  delay(30);
-  setColor(ORANGE);
-  lights.setLane(i,true);
-  playTone(400+i*100, 30);
-  lights.setLane(i,false);
+  for(int t=0;t<90;t+=10){
+    playTone(400+i*300-t, 20);
+  }
   waveFlag(raceFlag);
   lanes[i].prior=d; //reset start of this lap
 }
@@ -359,6 +353,7 @@ void updateLCD(){
   if(millis()>nextPageFlip){
     if(nextPageFlip!=0 && raceFlag==GREENFLAG){
        setColor(BLACK); //don't need that light on all the time    
+       lights.clearLanes(); 
     }
     nextPageFlip=millis()+4000;
     for(int i=0;i<NUMLANES;i++){
