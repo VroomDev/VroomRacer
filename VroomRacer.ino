@@ -252,7 +252,7 @@ void loop() {
     }else if( raceFlag==REDFLAG ){ //lap doesn't count
       alertBadLap(i);     
     }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
-      if(aspeed==0 || speed<=1 || speed<aspeed*3/5) { //lap counts
+      if(aspeed==0 || speed<30 || speed<aspeed*3/5) { //lap counts
         alertGoodLap(i); 
       }else{ // too fast!
         alertBadLap(i); 
@@ -274,15 +274,15 @@ void loop() {
         for(int i=0;i<NUMLANES;i++){
           if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
             //car is late!
-            if(raceFlag!=REDFLAG){
-              ph("Red flag detected Car late")
+            if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
+              p("Red flag detected Car late",raceFlag)
               pln("Car",i);
             }
             anyRed=true;
           }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
             //car is late!
-            if(raceFlag!=YELLOWFLAG){
-              ph("Yellow detected Car late")
+            if(raceFlag!=YELLOWFLAG && !anyRed && !anyYellow){
+              p("Yellow detected Car late",raceFlag)
               pln("Car",i);
             }
             anyYellow=true;
