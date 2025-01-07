@@ -124,7 +124,10 @@ class Lane {
     }
     buffer[20]=0; //null terminate
     lcd.print(buffer);    
-    if(serialOn) Serial.print(buffer);     
+    if(serialOn) {
+      Serial.print(buffer);
+      Serial.print("\n");     
+    }
     //////////////
     ////// second line
     //////////////
@@ -160,8 +163,10 @@ class Lane {
     }
     buffer[20]=0; //null terminate
     lcd.print(buffer);    
-    if(serialOn) Serial.print(buffer);
-    Serial.print("\n");     
+    if(serialOn) {
+      Serial.print(buffer);
+      Serial.print("\n");
+    }     
   }
 
   void display4(byte page,char flag){    

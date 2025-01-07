@@ -230,25 +230,25 @@ void loop() {
       raceStarted=true;
   }
   if (ringBuffer.pull(d)) {
-    
     curPage=0;
     nextPageFlip=0;
     auto i=d.port;
     auto aspeed=lanes[i].avgSpeed();
     auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
     if(debug){
-      p("S#",d.port);
+      pln("-----------------NEW DETECTION-------------","");
+      p("C#",d.port);
       sensors[d.port].debug();
       d.debug();
       p("avgSpeed",aspeed);
-      p("inch/sec",speed);
+      pln("inch/sec",speed);
     }
     if(lanes[i].lapCounter>=raceLength) { //driver done with race
       alertGoodLap(i);     
     }else if( raceFlag==REDFLAG ){ //lap doesn't count
       alertBadLap(i);     
     }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
-      if(aspeed==0 || speed<aspeed*3/5) { //lap counts
+      if(aspeed==0 || speed<=1 || speed<aspeed*3/5) { //lap counts
         alertGoodLap(i); 
       }else{ // too fast!
         alertBadLap(i); 
@@ -256,9 +256,6 @@ void loop() {
     }else{ //lap is green
       alertGoodLap(i); 
     }
-            
-    
-        
   }else{ //STEWARDS
     //check for yellows
     bool anyYellow=false,anyRed=false;    
@@ -316,7 +313,7 @@ void loop() {
 
 
 void alertGoodLap(int i) {
-  pln("good lap car:",i);
+  pln("GOOD LAP car:",i);
   setColor(PURPLE);
   lights.setLane(i,true);
   playTone(400+i*100, 100);
@@ -339,7 +336,7 @@ void alertGoodLap(int i) {
 }
 
 void alertBadLap(int i){ //,Detection& d){
-  pln("bad lap car:",i);
+  pln("BAD LAP car:",i);
   setColor(ORANGE);
   lights.setLane(i,true);
   playTone(400+i*100, 30);
