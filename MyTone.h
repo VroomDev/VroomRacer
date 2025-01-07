@@ -6,7 +6,7 @@
  * No guarantees of being fit for purpose.
  */
  
-const int speakerPin = 6; // Pin connected to the speaker
+const int speakerPin = 4; // Pin connected to the speaker
 
 
 void myTone(int pin,unsigned int frequency){
@@ -19,6 +19,7 @@ void myTone(int pin,unsigned int frequency,unsigned long duration){
   if(sound) tone(pin,frequency,duration);
 }
 
+//blocking play tone
 void playTone(int frequency, int duration) {
   myTone(speakerPin, frequency, duration);
   delay(duration);
@@ -144,20 +145,44 @@ void playF1StartSound() {
 
 void playF1StartSound1() {
   // Tone sequence for the starting lights
-  waveFlag(FORMATION);  
-  playTone(500, 300); 
-  waveFlag(SET);
-  delay(300);
-  playTone(500, 300); 
-  waveFlag(RED);
-  delay(300);
-  playTone(500, 300); 
-  waveFlag(YELLOW);
-  delay(300);
-  playTone(1000, 500);
-  waveFlag(GREEN);
-  delay(100);  
+  //waveFlag(FORMATION);
+  
+  waveFlag(SET);  
+  playTone(500, 300);   
+  delay(1300);
+  
+  waveFlag(REDFLAG); 
+  playTone(500, 300);   
+  delay(1300);
+  
+  waveFlag(YELLOWFLAG);
+  playTone(500, 300);   
+  delay(1300);  
+  
+  waveFlag(GREENFLAG);  
+  playTone(1000, 500);  
+  delay(1100);    
+  waveFlag(FORMATION);
 }
+
+
+
+//void playF1StartSound1() {
+//  // Tone sequence for the starting lights
+//  waveFlag(FORMATION);
+//  waveFlag(SET);  
+///  playTone(500, 300);   
+//  delay(300);
+//  waveFlag(REDFLAG);
+////  playTone(500, 300);   
+//  delay(300);
+//  waveFlag(YELLOWFLAG);
+////  playTone(500, 300);   
+//  delay(300);  
+////  playTone(1000, 500);  
+//  delay(100);
+//  waveFlag(GREENFLAG);  
+//}
 
 void playEngine(){
   // Simulating an engine revving up

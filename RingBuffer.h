@@ -37,6 +37,18 @@ public:
     return true;
   }
 
+  bool pushAlways(const T& item) {
+    // If buffer is full, increment tail to drop the oldest item
+    if (isFull()) {
+      tail = (tail + 1) & (Size - 1); // Efficient modulo operation
+      count--; // Decrement count to allow new item
+    }
+    // Push the new item
+    return push(item);
+  }
+
+
+
   bool pull(T& item) {
     if (isEmpty()) {
       return false; // Buffer is empty
@@ -51,6 +63,47 @@ public:
     return true;
   }
 
+    /**
+   * @brief Peek at the most recently pushed item in the buffer without removing it.
+   * 
+   * The index is relative to the most recent item pushed. For example, top(0) returns
+   * the most recent item, top(1) returns the second most recent item, and so on.
+   * 
+   * @param index The index relative to the most recent item.
+   * @param item The variable to store the peeked item.
+   * @return true if the item was successfully peeked, false if the index is out of range.
+   */
+  bool top(uint8_t index, T& item) const {
+    noInterrupts();
+    if (index >= count) {
+      return false; // Index out of range
+    }
+    uint8_t pos = (head + Size - 1 - index) & (Size - 1); // Calculate the position
+    item = buffer[pos];
+    interrupts();
+    return true;
+  }
+
+
+  /**
+   * @brief Peek at an item in the buffer without removing it.
+   * 
+   * This function allows you to peek at the next item in the buffer without removing it.
+   * The item is copied to the provided variable, but the buffer state remains unchanged.
+   * 
+   * @param item The variable to store the peeked item.
+   * @return true if the item was successfully peeked, false if the buffer is empty.
+   */
+  bool peek(T& item) const {
+    if (isEmpty()) {
+      return false; // Buffer is empty
+    }
+    noInterrupts();
+    item = buffer[tail]; // Peek at the item at the tail without modifying the buffer
+    interrupts();
+    return true;
+  }
+  
 private:
   T buffer[Size];
   uint8_t head, tail, count;

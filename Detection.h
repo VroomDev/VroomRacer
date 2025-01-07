@@ -4,6 +4,9 @@
  * No guarantees of being fit for purpose.
  */
  //
+#ifndef DETECTION_H
+#define DETECTION_H
+
 
  
 class Detection {
@@ -31,3 +34,6 @@ class Detection {
   }
   
 };
+
+
+#endif // DETECTION_H

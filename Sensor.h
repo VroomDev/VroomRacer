@@ -3,6 +3,8 @@
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */
+// a 2k resistor works better with LDR mean max is 145
+// a 1k resistor with LDR mean max is 95
 
  #define MAXCOUNT 65535
  struct Sensor {

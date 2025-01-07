@@ -12,7 +12,7 @@ unsigned int tock=0;
 class Lane {
   static const bool serialOn=true;
   public:
-    Lights lights;
+
     int laneNum = 0;
     unsigned long lastLapTime = 0; //millis(); // Time the last valid detection occurred
     int speed=0;    
@@ -20,26 +20,25 @@ class Lane {
     bool crossedStart=false;
     int lapCounter=0;
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
+
+    unsigned long long totalDuration=0;
        
     void setup(int pin){
       laneNum=pin;
       lastLapTime=millis();
-      if(pin==0){
-        lights.setup(7,8,9); 
-      }else{
-        lights.setup(10,11,12); 
-      }
     }
 
-  int setSpeed(int s){
+   int setSpeed(int s){
     speed=s;    
     if(speedCount<1024){
       totalSpeed+=s;
       speedCount++;
     }
+    return s;
   }
 
   int avgSpeed(){
+      if(speedCount==0) return 0;
       return totalSpeed/speedCount;
   }
 
@@ -57,9 +56,10 @@ class Lane {
     }else{
       lapCounter++; 
       lapDuration = d.timestamp-prior.timestamp;
-      if(lapDuration>worstLapDur || worstLapDur==0) worstLapDur=lapDuration;
-      if(lapDuration<bestLapDur || bestLapDur==0) bestLapDur=lapDuration;      
-      avgLapDur = (d.timestamp-raceStart)/lapCounter;
+      totalDuration+=lapDuration;      
+      if(lapDuration<bestLapDur || bestLapDur==0) bestLapDur=lapDuration; //always set best first
+      else if(lapDuration>worstLapDur || worstLapDur==0) worstLapDur=lapDuration;
+      avgLapDur = totalDuration/lapCounter;
       //lap counter is now the number of completed laps
       if(lapCounter==raceLength){
           if(won){
@@ -85,16 +85,16 @@ class Lane {
 
 
   void display(byte page,char flag){
-    if(LANENUM==2) display2(page,flag);
+    if(NUMLANES==2) display2(page,flag);
     else display4(page,flag);
   }
 
   const char* flagToString(RaceFlag flag){
     switch(flag){
       case FORMATION: return "RDY";
-      case RED: return "RED";
-      case YELLOW: return "YEL";
-      case GREEN: return "GRN";
+      case REDFLAG: return "RED";
+      case YELLOWFLAG: return "YEL";
+      case GREENFLAG: return "GRN";
       case CHECKERS: return "OVR";
       default: return "  ";
     }
@@ -115,7 +115,7 @@ class Lane {
         ////////////////01234567890123456789
         sprintf(buffer,"%c%d %3s Started! ",ch,laneNum,flagToString(flag));
       }else{
-        sprintf(buffer,"%c%d %3s Go!      ",ch,laneNum,flagToString(flag));
+        sprintf(buffer,"%c%d %3s Go!        ",ch,laneNum,flagToString(flag));
       }
     }else{    
       mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
