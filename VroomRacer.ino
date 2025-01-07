@@ -288,6 +288,7 @@ void loop() {
     }
     if(anyRed){
       if(raceFlag!=REDFLAG){
+        pln("wave","red flag");
         raceFlag=REDFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody,imperialMarchNotes,3*120); 
@@ -295,15 +296,17 @@ void loop() {
       }             
     }else if(anyYellow){
       if(raceFlag!=YELLOWFLAG){
+        pln("wave","yellow flag");
         raceFlag=YELLOWFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody,imperialMarchNotes,120); 
         nextPageFlip=0;    
       }             
-    }else if(raceFlag==YELLOWFLAG || raceFlag==REDFLAG){  //go back to green!      
+    }else if(raceFlag==YELLOWFLAG || raceFlag==REDFLAG){  //go back to green!
+      pln("back to","green");            
+      playF1Restart();
       raceFlag=GREENFLAG;
       waveFlag(raceFlag);
-      playF1StartSound1();      
       nextPageFlip=0;
     }
   }

@@ -139,7 +139,6 @@ void playF1StartSound() {
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
-//  myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
   myTone(speakerPin,2000); delay(1000); noTone(speakerPin);
 }
 
@@ -149,40 +148,37 @@ void playF1StartSound1() {
   
   waveFlag(SET);  
   playTone(500, 300);   
-  delay(1300);
+  delay(300);
   
   waveFlag(REDFLAG); 
   playTone(500, 300);   
-  delay(1300);
+  delay(300);
   
   waveFlag(YELLOWFLAG);
   playTone(500, 300);   
-  delay(1300);  
+  delay(300);  
   
   waveFlag(GREENFLAG);  
   playTone(1000, 500);  
-  delay(1100);    
+  delay(100);    
+  waveFlag(FORMATION);
+}
+
+void playF1Restart() {
+  playTone(500, 200);   
+  delay(200);
+  playTone(500, 200);   
+  delay(200);  
+  waveFlag(YELLOWFLAG);
+  playTone(200, 200);   
+  delay(200);  
+  waveFlag(GREENFLAG);  
+  playTone(1000, 400);  
+  delay(100);    
   waveFlag(FORMATION);
 }
 
 
-
-//void playF1StartSound1() {
-//  // Tone sequence for the starting lights
-//  waveFlag(FORMATION);
-//  waveFlag(SET);  
-///  playTone(500, 300);   
-//  delay(300);
-//  waveFlag(REDFLAG);
-////  playTone(500, 300);   
-//  delay(300);
-//  waveFlag(YELLOWFLAG);
-////  playTone(500, 300);   
-//  delay(300);  
-////  playTone(1000, 500);  
-//  delay(100);
-//  waveFlag(GREENFLAG);  
-//}
 
 void playEngine(){
   // Simulating an engine revving up
