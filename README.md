@@ -7,60 +7,100 @@ Vroom Racer is a simple Arduino Lap Timer for slot car racing using photoresisto
 The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs.
 
 ## Race Control Lights
-Each driver has three lights: red, yellow, and green.
+
+
+There is a RGB led flag light, that can emit different colors.
 - **Red**: Your car should be stopped. Laps are not counted.
 - **Yellow**: Your car should go at half speed through the lap sensor.
 - **Green**: The race is on!
+- **Purple flash**: someone had a lap counted.
+- **Orange flash**: someone had an ignored lap (either due to red flag or speeding while yellow 
 
+- 
 ## Lap Timing and Speed Calculation
-- **Lap Duration**: Measured from start to start time in milliseconds.
-- **Trap Speed**: Calculated based on the time the car breaks the beam. The car length is assumed to be 2.5 inches, and this is internally calculated as a count of interrupt "clicks".
+- **Lap Duration**: Measured from start to start with time in milliseconds.
+- **Trap Speed**: Calculated based on the time the car breaks the beam. The car length is assumed to be 2.5 inches, and this is internally calculated as a count of interrupt "clicks" and given in inches per second.
+
+**Inches per Second is the Best Speed Measurement for Slot Cars**
+
+Using inches per second (in/s) to measure slot car speed is practical and relatable. Here’s why:
+
+1. **No Scale Confusion**: Avoids debates over different scale speeds.
+2. **Real Car Comparison**: Similar to mph for real cars. For example, a fast slot car goes 8.5 feet per second, which is 5.8 mph or 102 inches per second. 102 sounds like a 1:1 car speed.
+3. **Track Compatibility**: Our tracks (e.g. 6, 9, 18 inches) align perfectly with this measurement.
+4. **Consistency**: Ensures uniformity across different tracks and setups.
+
+By using inches per second, we simplify speed measurement and enhance our racing experience. 
+
+
 
 ## Real-Time Calculations
-- **Clipped Averages**:
-  - For 3 or more laps: $$\((\text{accumulatedLapDuration} - \text{worstLapDuration} - \text{bestLapDuration}) / (\text{completedLaps} - 2)\)$$
-  - For 2 laps: Simple average
+- **Average lap duration**: this is used to detect yellow or red flags
+- **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
 
-- **False Start**: If the first lap is out of range (either too fast or too slow), the race is red-flagged, declared a false start, and then restarted.
-- **Impossibly Fast Laps**: Any lap that is impossibly fast is deleted.
+- **Impossibly Fast Laps**: Any lap that is impossibly fast is simply not detected.
 
 ## Automatic Yellow Flags
-- If a driver hasn't completed a lap after 1.5 times the clipped average lap time for all racers, a yellow light goes on.
-- If another driver's next lap time is too fast during a yellow, their lap could be deleted as a penalty. A lap is too fast if it's less than $$\(\text{avgdur} - (\text{lapFinishClock} - \text{yellowStartClock}) \times 2\)$$.
+- If a driver hasn't completed a lap after 1.5 times their average lap time a yellow light goes on.
+- Drivers must pass thru the sensor at a slower speed for the lap to count. Speeding the sensor results in that specific lap being ignored.
 
-## Track and Steward
-- **Twisted Track Handling**: it is important that the logic addresses lane jumping.
-- **A.I. Steward**: Reviews any new shortest lap after lap 1. If the lap is less than half the average duration, it will be deleted as it indicates a jumped lane or rider.
+A competition yellow is thrown halfway through the race.
 
-## Race Management
-- **Crash on Lap 1**: Push reset to restart the race.
-- **Pit Stop Lap**: If a call to pit lap happens, a pitted lap takes 10 seconds. A call to pit is indicated by a red light for the driver. A lap won't be counted as long as the red light is on. Once it goes out, the lap will be counted as a pit stop. The strategy is to stop just before the counter and wait.
+## Automatic Red Flag
 
-## Light Signals
-- **Both Red Lights**: Race stopped/restart if all laps haven't been completed.
-- **Both Solid Yellow Lights**: Go slow.
-- **Both Green Lights**: Go!
+If a car is very late, the automated logic declares a red flag.
 
-- **Single Red Light**: Pit lap, wait for it to go green before crossing the finish line.
-- **Single Green Blinking**: You won.
-- **Single Red Blinking**: You lost.
-- **Single Yellow Blinking**: Lap ignored (deleted).
+During red, no laps are counted. But it does reset the lap start, so it does clear a red flag condition if the car was the cause of the red flag.
+
 
 ## Sounds
 - **Single Tone**: Lap counted.
-- **Start**: 3 starting beeps.
+- **Falling tone**: Lap ignored/deleted.
+- **Green flag**: starting beeps.
 - **Winner**: Ode to Joy.
 - **Lost**: TBD.
-- **Pit Stop Song**: Engine sound.
-- **Lap Deletion Song**: TBD.
+- Imperial March snippets: fast temp yellow, slow tempo red flag.
+
+# Car Sensing 
+
+Typically when using a photo resistor to sense a slot car, a single threshold is used. This triggers the car on the downward sensor reading. E.g. if reading<threshold. Also a debounce is used so to not trigger more than once.
+
+However a lot of information is lost. If 2 thresholds are used, then the overall duration of the car passing over can be analyzed. If a reading is less than the initial threshold then it can start counting readings. When the reading is less than the main threshold then you know it's a real trigger. Once the reading is above the initial threshold then it's a real trigger of the car leaving the sensor. This has the benefit of counting the duration of the trigger event.
+
+```
+//Readings are done many times per millisecond 
+If reading < initial_threshold then
+  If count<65535 then
+     count++;
+  Endif
+ If reading<main_threshold then 
+  qualified=true;
+ Endif
+Endif
+If reading>=initial_threshold then
+ If qualified then 
+   If currentTime > lastTriggerTime + debounceInterval then
+    calculate inches per second based on count
+    lapDuration = currentTime - lastTriggerTime
+    lastTriggerTime=currentTime
+ Endif
+ qualified=false
+ count=0
+Endif
+```
 
 # Hardware 
 
 ## Light Sensors 
 
-*Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. This makes photodiodes ideal for precise and quick light detection tasks. While photoresistors are often used in basic circuits like night lights, *photodiodes are preferred in applications requiring accurate and rapid light measurement*, such as optical communication and advanced sensing systems. There are also photo diodes to consider but the additional wiring required prohibited the use of them.
+This project should be able to work with both LDRs and photo diodes.
 
-For the above reasons, the recommendation is to use photo diodes.
+*Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. LDRs are relatively slow to fully change resistance. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. 
+
+If you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing. So the slower LDR could be an advantage.
+
+There are also photo transistors to consider but this code isnt designed for it.
+
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
@@ -93,3 +133,9 @@ Response Time Up: 30 ms
 Response Time Down: 30 ms
 Operating Temperature: -30⁰C ~ +70⁰C
 Dimensions: 4.3mm x 5.1mm x 2.1 mm
+
+
+
+
+
+
