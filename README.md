@@ -72,7 +72,7 @@ However, this method loses a lot of information. By using two thresholds, you ca
 
 This approach allows you to measure the duration of the trigger event, providing more detailed information about the car's passage.
 
-This software calculates speed in inches per second by this equation: `speed = AVG_CAR_LEN_INCHES * INCHMS_TO_INCHSEC * ticksPerMs / detectionCount`
+This software calculates speed in inches per second by this equation: `speed = AVG_CAR_LEN_INCHES * MS_TO_SEC * readingsPerMs / detectionCount`
 
 Here is the logic on pseudo code:
 ```
