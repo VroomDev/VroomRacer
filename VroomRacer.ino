@@ -168,8 +168,8 @@ void setup() {
 int loopc=0;
 
 #define AVG_CAR_LEN_INCHES 2.5
-#define INCHMS_TO_INCHSEC 1000
-// CONVERSION=AVG_CAR_LEN_INCHES*INCHMS_TO_INCHSEC
+#define MS_TO_SEC 1000
+// CONVERSION=AVG_CAR_LEN_INCHES*MS_TO_SEC
 #define CONVERSION 2500
 /// Very slow car example
 //10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
