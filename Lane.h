@@ -20,7 +20,7 @@ class Lane {
     bool crossedStart=false;
     int lapCounter=0;
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
-
+    unsigned long topSpeed=0,lowSpeed=0;
     unsigned long long totalDuration=0;
        
     void setup(int pin){
@@ -33,6 +33,11 @@ class Lane {
     if(speedCount<1024){
       totalSpeed+=s;
       speedCount++;
+    }
+    if(s>topSpeed){
+      topSpeed=s;
+    }else if(s < lowSpeed || lowSpeed==0){
+      lowSpeed=s;      
     }
     return s;
   }
@@ -155,6 +160,9 @@ class Lane {
       case 2:
         mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
         sprintf(buffer,"%c%d Lap%-2d Best %5ss %c",ch,laneNum,(int)lapCounter,floatBuffer1);
+        break;
+      case 3:
+        sprintf(buffer,"%c%d Lap%-2d Top%4din/s",ch,laneNum,(int)lapCounter,(int)topSpeed);
         break;
       default: //3
         mydtostrf((worstLapDur / 1000.0), 5, floatBuffer1); // Convert float to string

@@ -180,29 +180,27 @@ int loopc=0;
 int curPage=0;
 long nextPageFlip=0;
 
+//
+//int getAvgLapCounter(){
+//  int tot=0;
+//  int det=0;
+//  for(int i=0;i<NUMLANES;i++){
+//      tot+=lanes[i].lapCounter;
+//      det+=lanes[i].lapCounter>0?1:0;
+//  }
+//  if(det==0) return 0;
+//  return tot/det;
+//}
+//
+//int getMaxLapCounter(){
+//  int tot=0;
+//  for(int i=0;i<NUMLANES;i++){
+//      tot=lanes[i].lapCounter>tot?lanes[i].lapCounter:tot; 
+//  }
+//  return tot;
+//}
 
-
-
-
-int getAvgLapCounter(){
-  int tot=0;
-  int det=0;
-  for(int i=0;i<NUMLANES;i++){
-      tot+=lanes[i].lapCounter;
-      det+=lanes[i].lapCounter>0?1:0;
-  }
-  if(det==0) return 0;
-  return tot/det;
-}
-
-int getMaxLapCounter(){
-  int tot=0;
-  for(int i=0;i<NUMLANES;i++){
-      tot=lanes[i].lapCounter>tot?lanes[i].lapCounter:tot; 
-  }
-  return tot;
-}
-
+unsigned long compYellowStart=0,compYellowStop=0;
 
 Detection d; 
 
@@ -264,14 +262,15 @@ void loop() {
     //check for yellows
     bool anyYellow=false,anyRed=false;    
     if(!won){
-      auto maxLapCounter=getMaxLapCounter();
-      if(maxLapCounter+1==raceLength/2){
+      // if we are in a red flag situation, stay red.  Otherwise check to see if in comp yellow period.
+      if(raceFlag!=REDFLAG && millis()>compYellowStart && millis()<compYellowStop){
         if(raceFlag!=YELLOWFLAG){
             ph("Mid race competition yellow")
         }
         anyYellow=true;
       }else{
         for(int i=0;i<NUMLANES;i++){
+          //is a car very late? definitely crashed
           if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
             //car is late!
             if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
@@ -279,6 +278,7 @@ void loop() {
               pln("Car",i);
             }
             anyRed=true;
+          //is a car getting late, probably crashed
           }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
             //car is late!
             if(raceFlag!=YELLOWFLAG && !anyRed && !anyYellow){
@@ -323,7 +323,11 @@ void alertGoodLap(int i) {
   pln("GOOD LAP car:",i);
   lights.setLane(i,true);
   playTone(400+i*300, 100);
-  if(lanes[i].lapCounter<raceLength) lanes[i].detect(d);    
+  if(lanes[i].lapCounter<raceLength) lanes[i].detect(d);
+  if(lanes[i].lapCounter==raceLength/2 && compYellowStart==0){ //
+        compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4 seconds random amount
+        compYellowStop=compYellowStart+lanes[i].avgLapDur; //make it last for 1 typical lap
+  }
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,i*2+1);
     if( winner==lanes[i].laneNum ) {
