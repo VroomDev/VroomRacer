@@ -1,5 +1,7 @@
 ### Balancing LED Brightness for Perfect Color Mixing
 
+At first when using a single RGB LED, all mt colors were mostly green. I realized that the green was too bright. So how to balance the colors fir the right blend?
+
 When working with LEDs, you'll notice that the brightness can vary significantly based on the color of the light. This can pose a challenge when trying to mix LED lights to achieve a desired hue. For instance, in single bulb RGB LED setups, achieving proper color balance requires careful attention to the different brightness levels of each color.
 
 To get the correct yellow color, for example, the green LED must have less current than the red LED to avoid having the color being mostly green. The chart below provides useful information for balancing the brightness of various LED colors:
@@ -26,7 +28,7 @@ By paying attention to these details, you can create stunning LED displays with 
 //// Adjust these values to balance the colors when using identical resistors
 const uint8_t maxRed = 255;  // Full intensity for red
 const uint8_t maxGreen = 39; //Reduced intensity for green to balance brightness
-const uint8_t maxBlue = 85;// Slightly reduced intensity for blue
+const uint8_t maxBlue = 85;// reduced intensity for blue
 
 // Adjust these values to balance the colors when using near 145,1k,430 ohm resistors
 const uint8_t maxRed = 244; //slightly reduced intensity for red
