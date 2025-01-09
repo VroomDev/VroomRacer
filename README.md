@@ -33,7 +33,6 @@ Using inches per second (in/s) to measure slot car speed is practical and relata
 By using inches per second, we simplify speed measurement and enhance our racing experience. 
 
 
-
 ## Real-Time Calculations
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
@@ -63,10 +62,19 @@ During red, no laps are counted. But it does reset the lap start, so it does cle
 
 # Car Sensing 
 
-Typically when using a photo resistor to sense a slot car, a single threshold is used. This triggers the car on the downward sensor reading. E.g. if reading<threshold. Also a debounce is used so to not trigger more than once.
+When using a photoresistor to detect a slot car, a single threshold is typically set to trigger the sensor when the reading drops below this threshold (e.g., `if reading < threshold`). A debounce mechanism is also used to prevent multiple triggers from a single event.
 
-However a lot of information is lost. If 2 thresholds are used, then the overall duration of the car passing over can be analyzed. If a reading is less than the initial threshold then it can start counting readings. When the reading is less than the main threshold then you know it's a real trigger. Once the reading is above the initial threshold then it's a real trigger of the car leaving the sensor. This has the benefit of counting the duration of the trigger event.
+However, this method loses a lot of information. By using two thresholds, you can analyze the duration of the car passing over the sensor. Here's how it works:
 
+1. **Initial Threshold**: When the reading drops below this threshold, start counting the readings.
+2. **Main Threshold**: When the reading drops below this threshold, it confirms a real trigger (the car is detected).
+3. **End of Trigger**: When the reading rises above the initial threshold again, it confirms the car has left the sensor.
+
+This approach allows you to measure the duration of the trigger event, providing more detailed information about the car's passage.
+
+This software calculates speed in inches per second by this equation: `speed = AVG_CAR_LEN_INCHES * MS_TO_SEC * readingsPerMs / detectionCount`
+
+Here is the logic on pseudo code:
 ```
 //Readings are done many times per millisecond 
 If reading < initial_threshold then
