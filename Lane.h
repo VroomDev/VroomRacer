@@ -5,7 +5,7 @@
  * No guarantees of being fit for purpose.
  */
 #include <Arduino.h> 
-const int minLapDuration = 500; // Debounce delay in milliseconds
+const int minLapDuration = 2500;
 #define PAGECOUNT 5
 unsigned int tock=0;
 
@@ -49,7 +49,9 @@ class Lane {
 
 
   Detection prior;
-  
+
+  /** return false if a bad crossing, returns true with a good start/finish crossing
+  */
   bool detect(Detection d){
     //LAP DETECTED
     lastLapTime = d.timestamp;
@@ -57,10 +59,13 @@ class Lane {
       prior=d;
       lapDuration=0; //race started crossed finish for first time   
       crossedStart=true; 
-      return false;      
-    }else{
-      lapCounter++; 
+      return true;      
+    }else{      
       lapDuration = d.timestamp-prior.timestamp;
+      if(lapDuration<minLapDuration){
+        return false;
+      }
+      lapCounter++; 
       totalDuration+=lapDuration;      
       if(lapDuration<bestLapDur || bestLapDur==0) bestLapDur=lapDuration; //always set best first
       else if(lapDuration>worstLapDur || worstLapDur==0) worstLapDur=lapDuration;
@@ -84,7 +89,6 @@ class Lane {
       prior=d;
       return true;
     }
-    
   }
 
 
@@ -105,6 +109,30 @@ class Lane {
     }
   }
 
+
+  void banner(bool lapCounted,char* msg){
+    lcd.setCursor(0,0);//col,row    
+    char floatBuffer1[10]; // Buffer to hold the formatted float     
+    char floatBuffer2[10]; // Buffer to hold the formatted float     
+    char buffer[40];
+    char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
+                    // 1 23456  7890123467890
+    if(msg[0]==0){
+      sprintf(buffer,"%c%d Lap%-2d Spd%3din/s "
+                   ,ch,laneNum,(int)lapCounter,(int)speed);
+    }else{
+      sprintf(buffer,"%c%d Lap%-2d %s         "
+                   ,ch,laneNum,(int)lapCounter,msg);
+    }
+    buffer[20]=0; //null terminate
+    lcd.print(buffer);
+    if(lapCounted && (lapCounter>0) ){    
+      lcd.printMillisAsSeconds(lapDuration);
+    }else{
+      lcd.printSpeed(speed);
+    }
+  }
+
   void display2(byte page,RaceFlag flag){    
     lcd.setCursor(0,laneNum*2);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
@@ -118,14 +146,14 @@ class Lane {
     if(lapCounter==0){
       if(crossedStart){
         ////////////////01234567890123456789
-        sprintf(buffer,"%c%d %3s Started! ",ch,laneNum,flagToString(flag));
+        sprintf(buffer,"%c%d %3s Started!     ",ch,laneNum,flagToString(flag));
       }else{
-        sprintf(buffer,"%c%d %3s Go!        ",ch,laneNum,flagToString(flag));
+        sprintf(buffer,"%c%d %3s Go!          ",ch,laneNum,flagToString(flag));
       }
     }else{    
       mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
       mydtostrf(avgLapDur/1000.0, 4, floatBuffer2); // Convert float to string    
-      sprintf(buffer,"%c%d %s Last:%5ss",ch,laneNum,flagToString(flag),floatBuffer1);
+      sprintf(buffer,"%c%d %s Last:%5ss  ",ch,laneNum,flagToString(flag),floatBuffer1);
     }
     buffer[20]=0; //null terminate
     lcd.print(buffer);    
@@ -147,26 +175,26 @@ class Lane {
         
     switch(page){
       case 0:
-        sprintf(buffer,"%c%d Lap%-2d Spd%4din/s",ch,laneNum,(int)lapCounter,(int)speed);
+        sprintf(buffer,"%c%d Lap%-2d Spd%4din/s   ",ch,laneNum,(int)lapCounter,(int)speed);
         break;
 //      case 0:
 //        mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
-//        sprintf(buffer,"%c%d Lap%-2d Last %5ss %c",ch,laneNum,(int)lapCounter,floatBuffer1);
+//        sprintf(buffer,"%c%d Lap%-2d Last %5ss  ",ch,laneNum,(int)lapCounter,floatBuffer1);
 //        break;
       case 1:
         mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"%c%d Lap%-2d Avg  %5ss %c",ch,laneNum,(int)lapCounter,floatBuffer1);
+        sprintf(buffer,"%c%d Lap%-2d Avg  %5ss   ",ch,laneNum,(int)lapCounter,floatBuffer1);
         break;
       case 2:
         mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"%c%d Lap%-2d Best %5ss %c",ch,laneNum,(int)lapCounter,floatBuffer1);
+        sprintf(buffer,"%c%d Lap%-2d Best %5ss    ",ch,laneNum,(int)lapCounter,floatBuffer1);
         break;
       case 3:
-        sprintf(buffer,"%c%d Lap%-2d Top%4din/s",ch,laneNum,(int)lapCounter,(int)topSpeed);
+        sprintf(buffer,"%c%d Lap%-2d Top%4din/s   ",ch,laneNum,(int)lapCounter,(int)topSpeed);
         break;
       default: //3
         mydtostrf((worstLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"%c%d Lap%-2d Slow %5ss %c",ch,laneNum,(int)lapCounter,floatBuffer1);
+        sprintf(buffer,"%c%d Lap%-2d Slow %5ss     ",ch,laneNum,(int)lapCounter,floatBuffer1);
         break;
     }
     buffer[20]=0; //null terminate

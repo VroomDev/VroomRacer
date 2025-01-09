@@ -7,9 +7,11 @@
 // a 1k resistor with LDR mean max is 95
 
  #define MAXCOUNT 65535
+ const int DEBOUNCE = 100; // Debounce delay in milliseconds
+
  struct Sensor {
   unsigned int acc=0; //to be set within ISR, this is the reading perhaps accumulated over a few reads
-  unsigned long lastLapTime=0; //to be set within ISR
+  unsigned long lastDetectTime=0; //to be set within ISR
     
   unsigned int minAcc=0,maxAcc=0,count=0;
     
@@ -26,7 +28,7 @@
   void debug(){
      ph("Sensor");
      p("acc",acc);
-     p("lastLapTime",lastLapTime);
+     p("lastDetectTime",lastDetectTime);
      p("minAcc",minAcc);
      p("maxAcc",maxAcc);
      p("count",count);
@@ -60,11 +62,11 @@
     if (acc >= initialThreshold) {
       if (qualified) {
         auto currentTime=millis(); 
-        if (currentTime > lastLapTime + minLapDuration) {          
-          //lap detected       
-          lastLapTime = currentTime;          
+        if (currentTime > lastDetectTime + DEBOUNCE) {          
+          //Detect detected       
+          lastDetectTime = currentTime;          
           //put in ring buffer
-          Detection detection(curSensor,acc,count,lastLapTime); // Initialize with data  
+          Detection detection(curSensor,acc,count,currentTime); // Initialize with data  
           ringBuffer.push(detection);          
         }
         qualified = false;

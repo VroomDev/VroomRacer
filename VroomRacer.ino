@@ -146,6 +146,7 @@ void setup() {
   lcd.print(" Vroom Racer by CB");  
   lcd.setCursor(0,1);
   lcd.print("  Copyright 2024");
+  
   ////////////
   ISR::setup();
   ////////////
@@ -161,7 +162,7 @@ void setup() {
 //  alertBadLap(1);
 //  delay(1000);
 //  //lights.demo();
-  
+  //alertBadLap(0,"Too fast!");
 }
 
 
@@ -232,7 +233,6 @@ void loop() {
       }
   }
   if (ringBuffer.pull(d)) {
-    curPage=0;
     nextPageFlip=0;
     auto i=d.port;
     auto aspeed=lanes[i].avgSpeed();
@@ -248,12 +248,12 @@ void loop() {
     if(lanes[i].lapCounter>=raceLength) { //driver done with race
       alertGoodLap(i);     
     }else if( raceFlag==REDFLAG ){ //lap doesn't count
-      alertBadLap(i);     
+      alertBadLap(i,"Red Flag");     
     }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
       if(aspeed==0 || speed<30 || speed<aspeed*3/5) { //lap counts
         alertGoodLap(i); 
       }else{ // too fast!
-        alertBadLap(i); 
+        alertBadLap(i,"Too fast!"); 
       }
     }else{ //lap is green
       alertGoodLap(i); 
@@ -274,15 +274,15 @@ void loop() {
           if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
             //car is late!
             if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
-              p("Red flag detected Car late",raceFlag)
+              p("Red flag detected Car late",(char)raceFlag)
               pln("Car",i);
             }
             anyRed=true;
           //is a car getting late, probably crashed
           }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
             //car is late!
-            if(raceFlag!=YELLOWFLAG && !anyRed && !anyYellow){
-              p("Yellow detected Car late",raceFlag)
+            if(raceFlag!=YELLOWFLAG && raceFlag!=REDFLAG && !anyRed && !anyYellow){
+              p("Yellow detected Car late",(char)raceFlag)
               pln("Car",i);
             }
             anyYellow=true;
@@ -320,30 +320,39 @@ void loop() {
 
 
 void alertGoodLap(int i) {
+  if(! lanes[i].detect(d) ){
+    alertBadLap(i,"Too soon!");
+    return;
+  }
   pln("GOOD LAP car:",i);
   lights.setLane(i,true);
   playTone(400+i*300, 100);
-  if(lanes[i].lapCounter<raceLength) lanes[i].detect(d);
+  lanes[i].banner(true,"");
+  nextPageFlip=millis()+1000;
   if(lanes[i].lapCounter==raceLength/2 && compYellowStart==0){ //
         compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4 seconds random amount
         compYellowStop=compYellowStart+lanes[i].avgLapDur; //make it last for 1 typical lap
   }
   if(lanes[i].lapCounter==raceLength){      
-    lcd.setCursor(0,i*2+1);
+    lcd.setCursor(0,0);
+    lcd.print("C");
+    lcd.print(i);
     if( winner==lanes[i].laneNum ) {
-      ///////////12345678901234567890
-      lcd.print("WINNER!!!          ");
+      ///////////12345678901234567890  
+      lcd.print(  " is the WINNER!!! ");
       playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
     }else{                            
-      lcd.print("SORRY...           ");
+      lcd.print(  " finished.        ");
       playEngine();
     }
   }
   waveFlag(raceFlag);
 }
 
-void alertBadLap(int i){ //,Detection& d){
+void alertBadLap(int i,char* msg){ //,Detection& d){
+  nextPageFlip=millis()+1000;
   pln("BAD LAP car:",i);
+  lanes[i].banner(false,msg);
   lights.setLane(i,false);
   for(int t=0;t<90;t+=10){
     playTone(400+i*300-t, 20);
