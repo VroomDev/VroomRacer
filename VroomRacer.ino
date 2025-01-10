@@ -63,6 +63,10 @@ void mydtostrf(float value, int width,char *buffer) {
 
 // initialize the library with the numbers of the interface pins
 MyLCD lcd;
+LiquidCrystal_I2C& gLCD=realLcd;
+
+#include "BiggerDigits.h"
+
 bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
@@ -150,6 +154,7 @@ void setup() {
   ////////////
   ISR::setup();
   ////////////
+ 
 //  
 //  for(int jj=0;jj<NUMLANES;jj++){
 //    alertGoodLap(jj);
@@ -169,8 +174,8 @@ void setup() {
 int loopc=0;
 
 #define AVG_CAR_LEN_INCHES 2.5
-#define MS_TO_SEC 1000
-// CONVERSION=AVG_CAR_LEN_INCHES*MS_TO_SEC
+#define INCHMS_TO_INCHSEC 1000
+// CONVERSION=AVG_CAR_LEN_INCHES*INCHMS_TO_INCHSEC
 #define CONVERSION 2500
 /// Very slow car example
 //10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
@@ -205,6 +210,48 @@ unsigned long compYellowStart=0,compYellowStop=0;
 
 Detection d; 
 
+
+
+
+void loop0(){
+ const char* m[]={ 
+  "Go!  ","Lap 0Car 0",
+  "Lap1","     Car 1",
+  
+  "1.111","Lap11secs ",
+   " 999","Lap 1speed",
+  
+  "Won!","Lap11Car 1",
+  "Lost ","Lap11Car 1",
+  
+  "0.123","Best secs ",
+  "11.12","Slow secs ",
+  
+  "11.12","Avg  secs ",
+   " 999","Top  speed",
+  
+   "  54","Avg  speed",
+   "  78","Avg  speed"};
+
+  // Get the size of the array
+  int arraySize = sizeof(m) / sizeof(m[0]);
+  BigNumber_SendCustomChars();
+  // Loop through the array and print each string
+  for (int i = 0; i < arraySize; i+=4){
+    lanes[0].setSpeed(i);
+    lanes[0].lapDuration=i*1000;
+    
+    drawString(0,0,m[i]);
+    printWrap(20-1-4,0,m[i+1]);
+    drawString(0,2,m[i+2]);
+    printWrap(20-1-4,2,m[i+3]);
+    delay(1000);
+//    lcd.defineLargeChars();
+//    lanes[0].banner(i&1?true:false,m[i]);
+//    lanes[0].lapCounter++;
+//    delay(1000);
+  }
+}
 
 void loop() {
    lights.checkFade();

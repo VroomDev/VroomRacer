@@ -33,7 +33,7 @@ LiquidCrystal_I2C realLcd(0x27, 20, 4);
 
 
 class MyLCD {
-  private:
+  public:
   
   // Array index into parts of big numbers. Numbers consist of 9 custom characters in 3 lines
   // 0 1 2 3 4 5 6 7 8 9 
@@ -193,7 +193,7 @@ class MyLCD {
     realLcd.print("    ");
   }
 
-  #define DOTCHAR '*'
+  #define DOTCHAR 'o'
 
   void printBigDigit(uint8_t digit,byte col,byte row,char extra=' '){
     // Line 1 of the one digit number
