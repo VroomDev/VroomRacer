@@ -38,8 +38,13 @@ By using inches per second, we simplify speed measurement and enhance our racing
 ## Real-Time Calculations
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
-
 - **Impossibly Fast Laps**: Any lap that is impossibly fast is simply not detected.
+
+
+![inches per second examples](./display1.jpg)
+
+![inches per second examples](./display2.jpg)
+
 
 ## Automatic Yellow Flags
 - If a driver hasn't completed a lap after 1.5 times their average lap time a yellow light goes on.
