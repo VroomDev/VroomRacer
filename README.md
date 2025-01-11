@@ -41,10 +41,8 @@ By using inches per second, we simplify speed measurement and enhance our racing
 - **Impossibly Fast Laps**: Any lap that is impossibly fast is simply not detected.
 
 
-![inches per second examples](./display1.jpg)
-
 ![inches per second examples](./display2.jpg)
-
+*Car 0 on Lap 5 went through the photo eye at 10 inches per second and made a lap time of 3.280 seconds.*
 
 ## Automatic Yellow Flags
 - If a driver hasn't completed a lap after 1.5 times their average lap time a yellow light goes on.
