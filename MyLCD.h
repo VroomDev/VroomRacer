@@ -262,7 +262,7 @@ class MyLCD {
       col-=4;
       period--;
     }
-    setCursor(19,2);
+    setCursor(19,3);
     print("S");
   }
 

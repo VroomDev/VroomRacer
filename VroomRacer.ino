@@ -19,7 +19,7 @@ const int NUMLANES=2;
 #include "pitches.h"
 #define REST 0
 
-typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C' } RaceFlag;
+typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE='D' } RaceFlag;
 
 
 RaceFlag raceFlag=FORMATION;
@@ -71,7 +71,7 @@ bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
 
-int raceLength=15;
+int raceLength=10;
 unsigned long raceStart=0;
 
 
@@ -106,6 +106,7 @@ void setColor(Color c){
 }
 
 void waveFlag(RaceFlag which){
+  raceFlag=which;
   switch(which){
     case FORMATION:
       setColor(BLACK);
@@ -123,8 +124,10 @@ void waveFlag(RaceFlag which){
       setColor(GREEN);
     break;
     case CHECKERS:
-      setColor(PURPLE);
+      setColor(CYAN);
     break;
+    default: 
+      setColor(BLACK);
   }
 }
 
@@ -213,7 +216,7 @@ Detection d;
 
 
 
-void loop0(){
+void loop0(){ //demo loop
  const char* m[]={ 
   "Go!  ","Lap 0Car 0",
   "Lap1","     Car 1",
@@ -386,11 +389,13 @@ void alertGoodLap(int i) {
     lcd.print(i);
     if( winner==lanes[i].laneNum ) {
       ///////////12345678901234567890  
+      waveFlag(CHECKERS);
       lcd.print(  " is the WINNER!!! ");
       playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
     }else{                            
       lcd.print(  " finished.        ");
       playEngine();
+      waveFlag(DONE);
     }
   }
   waveFlag(raceFlag);
@@ -412,7 +417,7 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 void updateLCD(){
   if(millis()>nextPageFlip){
     if(nextPageFlip!=0 && raceFlag==GREENFLAG){
-       setColor(BLACK); //don't need that light on all the time    
+           
        lights.clearLanes(); 
     }
     nextPageFlip=millis()+4000;

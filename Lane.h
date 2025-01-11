@@ -6,7 +6,7 @@
  */
 #include <Arduino.h> 
 const int minLapDuration = 2500;
-#define PAGECOUNT 6
+#define PAGECOUNT 7
 unsigned int tock=0;
 
 class Lane {
@@ -163,6 +163,13 @@ class Lane {
       Serial.print(buffer);
       Serial.print("\n");     
     }
+                                                //012345678901234567890
+    if(raceFlag==REDFLAG)         sprintf(buffer,"RED, no laps counted.");
+    else if(raceFlag==YELLOWFLAG) sprintf(buffer,"Yellow, must go slow.");
+    else if(raceFlag==GREENFLAG)  sprintf(buffer,"Green, go fast!      ");
+    else if(lapCounter==raceLength) sprintf(buffer,"Completed race.      ");
+    else if(winner==laneNum)      sprintf(buffer,"This car won.        ");
+    else                          sprintf(buffer,"                     ");
     //////////////
     ////// second line
     //////////////
@@ -176,27 +183,33 @@ class Lane {
             //C0  00000s Slow Time   
     switch(page){
       case 0:
-        sprintf(buffer,"%c%d%7d Trap Speed  ",ch,laneNum,(int)speed);
+        if(speed!=0)        sprintf(buffer,"%c%d%7d Trap Speed  ",ch,laneNum,(int)speed);
         break;
       case 1:
-        mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"%c%d%7ss Avg  Time ",ch,laneNum,floatBuffer1);
+        if(avgLapDur!=0) {
+          mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
+          sprintf(buffer,"%c%d%7ss Avg  Time ",ch,laneNum,floatBuffer1);
+        }
         break;
       case 2:
-        mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
-        sprintf(buffer,"%c%d%7ss Best Time   ",ch,laneNum,floatBuffer1);
+        if(bestLapDur!=0) {
+          mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
+          sprintf(buffer,"%c%d%7ss Best Time   ",ch,laneNum,floatBuffer1);
+        }
         break;
       case 3:         //01234567890123456789 
                       //C1 Lap00 Top000speed
-        sprintf(buffer,"%c%d%7d Top  Speed ",ch,laneNum,(int)topSpeed);
+        if(topSpeed!=0) {
+          sprintf(buffer,"%c%d%7d Top  Speed ",ch,laneNum,(int)topSpeed);
+        }
         break;
       case 4:
-        sprintf(buffer,"%c%d%7d Avg  Speed ",ch,laneNum,(int)avgSpeed());
+        if(avgSpeed()!=0) {
+          sprintf(buffer,"%c%d%7d Avg  Speed ",ch,laneNum,(int)avgSpeed());
+        }
         break;
-      default: //5
-        if(worstLapDur==0){
-          sprintf(buffer,"%c%d Make more laps     ",ch,laneNum);
-        }else{
+      case 5:
+        if(worstLapDur!=0){
            mydtostrf((worstLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
            sprintf(buffer,"%c%d%7ss Slow Time    ",ch,laneNum,floatBuffer1);
         }
