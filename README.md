@@ -32,6 +32,8 @@ Using inches per second (in/s) to measure slot car speed is practical and relata
 
 By using inches per second, we simplify speed measurement and enhance our racing experience. 
 
+![inches per second examples](./inchesPerSecond_Examples.jpg)
+
 
 ## Real-Time Calculations
 - **Average lap duration**: this is used to detect yellow or red flags
