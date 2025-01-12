@@ -147,7 +147,7 @@ Operating Temperature: -30⁰C ~ +70⁰C
 Dimensions: 4.3mm x 5.1mm x 2.1 mm
 
 
-Example of installed photo sensor in the track. This was glued with JBWeld, but a better option is super glue. Note the two red dots, by installing the sensors there, the drill bit will self align and be perfect across the track. The wires used are the ones with yiur Arduino kit. No soldering required.
+Example of installed photo sensor in the track. This was glued with JBWeld, but a better option is super glue. Note the two red dots, by installing the sensors there, the drill bit will self align and be perfect across the track. The wires used are the ones with an Arduino kit. No soldering required.
 ![track sensors](./20250112_174824~2.jpg)
 
 
