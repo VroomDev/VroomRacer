@@ -13,10 +13,9 @@ There is a RGB led flag light, that can emit different colors.
 - **Red**: Your car should be stopped. Laps are not counted.
 - **Yellow**: Your car should go at half speed through the lap sensor.
 - **Green**: The race is on!
-- **Purple flash**: someone had a lap counted.
-- **Orange flash**: someone had an ignored lap (either due to red flag or speeding while yellow 
+- **Cyan**: there is a winner.
 
-- 
+
 ## Lap Timing and Speed Calculation
 - **Lap Duration**: Measured from start to start with time in milliseconds.
 - **Trap Speed**: Calculated based on the time the car breaks the beam. The car length is assumed to be 2.5 inches, and this is internally calculated as a count of interrupt "clicks" and given in inches per second.
@@ -38,8 +37,8 @@ By using inches per second, we simplify speed measurement and enhance our racing
 ## Real-Time Calculations
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
-- **Impossibly Fast Laps**: Any lap that is impossibly fast is simply not detected.
-
+- **Impossibly fast laps** There is a debounce timeout that if the detection is within then the detection is completely ignored.
+- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is hardcoded. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap in less than 60% of its fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of its usual duration, the lap is discarded. It is recommended that if the first lap is crashed, the people running the race should be restarted.
 
 ![inches per second examples](./display2.jpg)
 *Car 0 on Lap 5 went through the photo eye at 10 inches per second and made a lap time of 3.280 seconds.*
@@ -62,7 +61,7 @@ During red, no laps are counted. But it does reset the lap start, so it does cle
 - **Falling tone**: Lap ignored/deleted.
 - **Green flag**: starting beeps.
 - **Winner**: Ode to Joy.
-- **Lost**: TBD.
+- **Lost**: “engine“ sounds
 - Imperial March snippets: fast temp yellow, slow tempo red flag.
 
 # Car Sensing 
