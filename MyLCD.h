@@ -21,7 +21,10 @@
 //the parameter is how many columns are on your screen
 //the parameter is how many rows are on your screen
 #ifdef USELCD
-LiquidCrystal_I2C realLcd(0x27, 20, 4);
+#define MAXLCDS 2
+LiquidCrystal_I2C* plcds[MAXLCDS]{NULL}; //pointers to LCDs   //realLcd(0x26, 20, 4);
+LiquidCrystal_I2C* curLcd=NULL;
+int nDevices;
 #endif
 
 
@@ -31,9 +34,49 @@ LiquidCrystal_I2C realLcd(0x27, 20, 4);
 #define A 0x20             // The character for blank
 
 
+void scanDevices() {
+  byte error, address;
+  Serial.println("Scanning...");
+
+  nDevices = 0;
+  for(address = 8; address < 120; address++ ) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      Serial.print("I2C device found at address 0x");
+      if (address < 16) Serial.print("0");
+      Serial.println(address, HEX);
+      curLcd=plcds[nDevices]=new LiquidCrystal_I2C(address, 20, 4);
+      nDevices++;
+      if(nDevices==MAXLCDS) return;
+    }
+    else if (error == 4) {
+      Serial.print("Unknown error at address 0x");
+      if (address < 16) Serial.print("0");
+      Serial.println(address, HEX);
+    }
+  }
+  if (nDevices == 0) {
+    Serial.println("No I2C devices found");
+  } 
+  else {
+    Serial.println("done");
+  }
+}
+
+void setDevice(int n){
+  if(n<nDevices) curLcd=plcds[n];      
+}
+
 
 class MyLCD {
+
+
+  
   public:
+
+  
   
   // Array index into parts of big numbers. Numbers consist of 9 custom characters in 3 lines
   // 0 1 2 3 4 5 6 7 8 9 
@@ -130,13 +173,13 @@ class MyLCD {
     };
   
     // send custom characters to the display
-    realLcd.load_custom_character(1,cc1);
-    realLcd.load_custom_character(2,cc2);
-    realLcd.load_custom_character(3,cc3);
-    realLcd.load_custom_character(4,cc4);
-    realLcd.load_custom_character(5,cc5);
-    realLcd.load_custom_character(6,cc6);
-    realLcd.load_custom_character(7,cc7);
+    curLcd->load_custom_character(1,cc1);
+    curLcd->load_custom_character(2,cc2);
+    curLcd->load_custom_character(3,cc3);
+    curLcd->load_custom_character(4,cc4);
+    curLcd->load_custom_character(5,cc5);
+    curLcd->load_custom_character(6,cc6);
+    curLcd->load_custom_character(7,cc7);
   
   }
   
@@ -149,7 +192,7 @@ class MyLCD {
     #ifdef USELCD
     ///////////////         1         2            3
     ///////////////1234567890123456789012345678901234567890
-    realLcd.print("                    ");
+    curLcd->print("                    ");
     #endif
   }
   
@@ -185,36 +228,36 @@ class MyLCD {
 
 
   void eraseBigDigit(byte col, byte row){
-    realLcd.setCursor(col,row+0);
-    realLcd.print("    ");
-    realLcd.setCursor(col,row+1);
-    realLcd.print("    ");
-    realLcd.setCursor(col,row+2);
-    realLcd.print("    ");
+    curLcd->setCursor(col,row+0);
+    curLcd->print("    ");
+    curLcd->setCursor(col,row+1);
+    curLcd->print("    ");
+    curLcd->setCursor(col,row+2);
+    curLcd->print("    ");
   }
 
   #define DOTCHAR 'o'
 
   void printBigDigit(uint8_t digit,byte col,byte row,char extra=' '){
     // Line 1 of the one digit number
-    realLcd.setCursor(col,row+0);
-    realLcd.write(bn1[digit*3]);
-    realLcd.write(bn1[digit*3+1]);
-    realLcd.write(bn1[digit*3+2]);
-    realLcd.write(extra==':' ?DOTCHAR:' ');
+    curLcd->setCursor(col,row+0);
+    curLcd->write(bn1[digit*3]);
+    curLcd->write(bn1[digit*3+1]);
+    curLcd->write(bn1[digit*3+2]);
+    curLcd->write(extra==':' ?DOTCHAR:' ');
   
     // Line 2 of the one-digit number
-    realLcd.setCursor(col,row+1);
-    realLcd.write(bn2[digit*3]);
-    realLcd.write(bn2[digit*3+1]);
-    realLcd.write(bn2[digit*3+2]);
-    realLcd.write(extra=='-'? DOTCHAR : ' ');
+    curLcd->setCursor(col,row+1);
+    curLcd->write(bn2[digit*3]);
+    curLcd->write(bn2[digit*3+1]);
+    curLcd->write(bn2[digit*3+2]);
+    curLcd->write(extra=='-'? DOTCHAR : ' ');
     // Line 3 of the one-digit number
-    realLcd.setCursor(col,row+2);
-    realLcd.write(bn3[digit*3]);
-    realLcd.write(bn3[digit*3+1]);
-    realLcd.write(bn3[digit*3+2]);
-    realLcd.write(extra=='.' || extra==':' ?DOTCHAR:' ');
+    curLcd->setCursor(col,row+2);
+    curLcd->write(bn3[digit*3]);
+    curLcd->write(bn3[digit*3+1]);
+    curLcd->write(bn3[digit*3+2]);
+    curLcd->write(extra=='.' || extra==':' ?DOTCHAR:' ');
   }
 
   void printBigNumber(unsigned int num,int col=19-3,int row=1){
@@ -269,10 +312,10 @@ class MyLCD {
   void begin(int a,int b){
     #ifdef USELCD
     //initialize lcd screen
-    realLcd.begin(20,4);
-    realLcd.init();
+    curLcd->begin(20,4);
+    curLcd->init();
     // turn on the backlight
-    realLcd.backlight();
+    curLcd->backlight();
 
     defineLargeChars();
     #endif
@@ -282,7 +325,7 @@ class MyLCD {
 
   void setCursor(int col,int row){
     #ifdef USELCD
-      realLcd.setCursor(col,row);
+      curLcd->setCursor(col,row);
     #endif
   }
     
@@ -290,24 +333,24 @@ class MyLCD {
   template <typename T>
   void print(const T& value) {
     #ifdef USELCD
-     realLcd.print(value);
+     curLcd->print(value);
      scrolled=millis()+2000;
     #endif
   }
 
   void print(char* label,unsigned long lt){
     #ifdef USELCD
-      realLcd.print(label);
+      curLcd->print(label);
       if(lt<10000) {
-        realLcd.print(lt);
-        realLcd.print("ms");
+        curLcd->print(lt);
+        curLcd->print("ms");
       }else if(lt>60000){
         lt/=100;
-        realLcd.print(lt/10.0);
-        realLcd.print("s");
+        curLcd->print(lt/10.0);
+        curLcd->print("s");
       }else{
-        realLcd.print(lt/1000.0);
-        realLcd.print("s");
+        curLcd->print(lt/1000.0);
+        curLcd->print("s");
       }
     #endif
   }

@@ -22,6 +22,7 @@ class Lane {
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
     unsigned long topSpeed=0,lowSpeed=0;
     unsigned long long totalDuration=0;
+    char* why=""; //this holds the reason why a lap was not counted.
        
     void setup(int pin){
       laneNum=pin;
@@ -63,12 +64,20 @@ class Lane {
     }else{      
       lapDuration = d.timestamp-prior.timestamp;
       if(lapDuration<minLapDuration){
+        why="Too fast!";
         return false;
+      }
+      if(bestLapDur!=0 && lapDuration<bestLapDur*6/10){
+        //jumped car
+        why="Jumped!";
+        return false;
+      }else if(lapDuration<bestLapDur || bestLapDur==0) {
+        bestLapDur=lapDuration; //always set best first
+      }else if(lapDuration>worstLapDur || worstLapDur==0){
+        worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
       }
       lapCounter++; 
       totalDuration+=lapDuration;      
-      if(lapDuration<bestLapDur || bestLapDur==0) bestLapDur=lapDuration; //always set best first
-      else if(lapDuration>worstLapDur || worstLapDur==0) worstLapDur=lapDuration;
       avgLapDur = totalDuration/lapCounter;
       //lap counter is now the number of completed laps
       if(lapCounter==raceLength){
@@ -111,6 +120,7 @@ class Lane {
 
 
   void banner(bool lapCounted,char* msg){
+    setDevice(laneNum);
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     

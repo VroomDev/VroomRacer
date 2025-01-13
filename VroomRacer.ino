@@ -12,6 +12,8 @@
  * No guarantees of being fit for purpose.
  */
 
+bool compYellowOn=false;
+int pitLaneSpeedLimit=50;
 const bool debug=true;
 const int NUMLANES=2;
 #include "Lights.h"
@@ -63,9 +65,9 @@ void mydtostrf(float value, int width,char *buffer) {
 
 // initialize the library with the numbers of the interface pins
 MyLCD lcd;
-LiquidCrystal_I2C& gLCD=realLcd;
+//LiquidCrystal_I2C& gLCD=realLcd;
 
-#include "BiggerDigits.h"
+//#include "BiggerDigits.h"
 
 bool sound=true;
 volatile int winner=-1;
@@ -147,30 +149,22 @@ void setup() {
   noTone(speakerPin);
       
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
-  lcd.setCursor(0,0);
-  ///////////01234567890123456789
-  lcd.print(" Vroom Racer by CB");  
-  lcd.setCursor(0,1);
-  lcd.print("  Copyright 2024");
-  
+  scanDevices();
+  for(int d=0;d<nDevices;d++){
+    setDevice(d);
+    lcd.begin(16, 2);
+    lcd.setCursor(0,0);
+    ///////////01234567890123456789
+    lcd.print(" Vroom Racer by CB  ");  
+    lcd.setCursor(0,1);
+    lcd.print("  Copyright 2024    ");
+    lcd.setCursor(0,2);
+    lcd.print("Yellow Spd Limit:");
+    lcd.print(pitLaneSpeedLimit);
+  }
   ////////////
   ISR::setup();
   ////////////
- 
-//  
-//  for(int jj=0;jj<NUMLANES;jj++){
-//    alertGoodLap(jj);
-//    delay(1500);
-//    alertBadLap(jj);
-//    delay(1500);
-//  }
-//  alertBadLap(0);
-//  delay(1000);
-//  alertBadLap(1);
-//  delay(1000);
-//  //lights.demo();
-  //alertBadLap(0,"Too fast!");
 }
 
 
@@ -188,89 +182,28 @@ int loopc=0;
 
 int curPage=0;
 long nextPageFlip=0;
-
-//
-//int getAvgLapCounter(){
-//  int tot=0;
-//  int det=0;
-//  for(int i=0;i<NUMLANES;i++){
-//      tot+=lanes[i].lapCounter;
-//      det+=lanes[i].lapCounter>0?1:0;
-//  }
-//  if(det==0) return 0;
-//  return tot/det;
-//}
-//
-//int getMaxLapCounter(){
-//  int tot=0;
-//  for(int i=0;i<NUMLANES;i++){
-//      tot=lanes[i].lapCounter>tot?lanes[i].lapCounter:tot; 
-//  }
-//  return tot;
-//}
-
 unsigned long compYellowStart=0,compYellowStop=0;
-
 Detection d; 
 
 
-
-
-void loop0(){ //demo loop
- const char* m[]={ 
-  "Go!  ","Lap 0Car 0",
-  "Lap1","     Car 1",
-  
-  "1.111","Lap11secs ",
-   " 999","Lap 1speed",
-  
-  "Won!","Lap11Car 1",
-  "Lost ","Lap11Car 1",
-  
-  "0.123","Best secs ",
-  "11.12","Slow secs ",
-  
-  "11.12","Avg  secs ",
-   " 999","Top  speed",
-  
-   "  54","Avg  speed",
-   "  78","Avg  speed"};
-
-  // Get the size of the array
-  int arraySize = sizeof(m) / sizeof(m[0]);
-  BigNumber_SendCustomChars();
-  // Loop through the array and print each string
-  for (int i = 0; i < arraySize; i+=4){
-    lanes[0].setSpeed(i);
-    lanes[0].lapDuration=i*1000;
-    
-    drawString(0,0,m[i]);
-    printWrap(20-1-4,0,m[i+1]);
-    drawString(0,2,m[i+2]);
-    printWrap(20-1-4,2,m[i+3]);
-    delay(1000);
-//    lcd.defineLargeChars();
-//    lanes[0].banner(i&1?true:false,m[i]);
-//    lanes[0].lapCounter++;
-//    delay(1000);
-  }
-}
-
 void loop() {
+   p("s0acc",sensors[0].acc);
+   pln("s1acc",sensors[1].acc);
    lights.checkFade();
    loopc++;   
    if(!raceStarted){  
       // Print a message to the LCD.  
       lcd.setCursor(0,2);
       ///////////01234567890123456789        
-      lcd.print("   Get ready. ");
+      lcd.print("   Get ready.       ");
       playF1StartSound1();      
       ISR::calcThresholds();
       raceFlag=GREENFLAG;
       raceStart=millis();
       ISR::go();
       lcd.setCursor(0,3);
-      lcd.print("   GO!!!!!!!!"); 
+      ///////////01234567890123456789         
+      lcd.print("     GO!!!!!!!!     "); 
       auto chk=checkSensors();
       if(chk>=0){
           lcd.setCursor(0,3);
@@ -300,7 +233,7 @@ void loop() {
     }else if( raceFlag==REDFLAG ){ //lap doesn't count
       alertBadLap(i,"Red Flag");     
     }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
-      if(aspeed==0 || speed<30 || speed<aspeed*3/5) { //lap counts
+      if(aspeed==0 || speed <= pitLaneSpeedLimit || speed<aspeed*3/5) { //lap counts
         alertGoodLap(i); 
       }else{ // too fast!
         alertBadLap(i,"Too fast!"); 
@@ -313,7 +246,7 @@ void loop() {
     bool anyYellow=false,anyRed=false;    
     if(!won){
       // if we are in a red flag situation, stay red.  Otherwise check to see if in comp yellow period.
-      if(raceFlag!=REDFLAG && millis()>compYellowStart && millis()<compYellowStop){
+      if(compYellowOn && raceFlag!=REDFLAG && millis()>compYellowStart && millis()<compYellowStop){
         if(raceFlag!=YELLOWFLAG){
             ph("Mid race competition yellow")
         }
@@ -371,14 +304,14 @@ void loop() {
 
 void alertGoodLap(int i) {
   if(! lanes[i].detect(d) ){
-    alertBadLap(i,"Too soon!");
+    alertBadLap(i,lanes[i].why);
     return;
   }
   pln("GOOD LAP car:",i);
   lights.setLane(i,true);
   playTone(400+i*300, 100);
   lanes[i].banner(true,"");
-  nextPageFlip=millis()+1000;
+  nextPageFlip=millis()+2000;
   if(lanes[i].lapCounter==raceLength/2 && compYellowStart==0){ //
         compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4 seconds random amount
         compYellowStop=compYellowStart+lanes[i].avgLapDur; //make it last for 1 typical lap
@@ -416,13 +349,15 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 
 void updateLCD(){
   if(millis()>nextPageFlip){
-    if(nextPageFlip!=0 && raceFlag==GREENFLAG){
-           
+    if(nextPageFlip!=0 && raceFlag==GREENFLAG){     
        lights.clearLanes(); 
     }
     nextPageFlip=millis()+4000;
-    for(int i=0;i<NUMLANES;i++){
-      lanes[i].display(curPage,raceFlag);
+    for(int d=0;d<nDevices;d++){
+      setDevice(d);
+      for(int i=0;i<NUMLANES;i++){
+         lanes[i].display(curPage,raceFlag);
+      }
     }
     curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }
