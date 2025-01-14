@@ -187,8 +187,8 @@ Detection d;
 
 
 void loop() {
-   p("s0acc",sensors[0].acc);
-   pln("s1acc",sensors[1].acc);
+//   p("s0acc",sensors[0].acc);
+//   pln("s1acc",sensors[1].acc);
    lights.checkFade();
    loopc++;   
    if(!raceStarted){  
@@ -217,7 +217,7 @@ void loop() {
       lcd.print("     GO!!!!!!!!     ");    
   }
   if (ringBuffer.pull(d)) {
-    nextPageFlip=0;
+    //nextPageFlip=0;
     auto i=d.port;
     auto aspeed=lanes[i].avgSpeed();
     auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
@@ -336,7 +336,7 @@ void alertGoodLap(int i) {
 }
 
 void alertBadLap(int i,char* msg){ //,Detection& d){
-  nextPageFlip=millis()+1000;
+  nextPageFlip=millis()+2000;
   pln("BAD LAP car:",i);
   lanes[i].banner(false,msg);
   lights.setLane(i,false);
@@ -350,10 +350,10 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 
 void updateLCD(){
   if(millis()>nextPageFlip){
+    nextPageFlip=millis()+4000;
     if(nextPageFlip!=0 && raceFlag==GREENFLAG){     
        lights.clearLanes(); 
     }
-    nextPageFlip=millis()+4000;
     for(int d=0;d<nDevices;d++){
       setDevice(d);
       for(int i=0;i<NUMLANES;i++){

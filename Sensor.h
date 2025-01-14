@@ -6,10 +6,16 @@
 // a 2k resistor works better with LDR mean max is 145
 // a 1k resistor with LDR mean max is 95
 
- #define MAXCOUNT 65535
- const int DEBOUNCE = 100; // Debounce delay in milliseconds
+// The mininum time required for darkness to qualify as a car passing overhead the sensor.
+// 2ms is 1250ips=71mph=4545 1:64mph, which is crazy fast, really isn't achievable
+// 3ms is 883ips=47mph=3030 1:64mph
+// 4ms is 625ips=36mph=2273 1:64mph, Tyco published 2000 scale mph was achievable, which is still crazy fast.
+// May need consider higher min ms time
+#define MIN_MS_TIME 2
+#define MAXCOUNT 65535
+const int DEBOUNCE = 100; // Debounce delay in milliseconds
 
- struct Sensor {
+struct Sensor {
   unsigned int acc=0; //to be set within ISR, this is the reading perhaps accumulated over a few reads
   unsigned long lastDetectTime=0; //to be set within ISR
     
@@ -17,7 +23,8 @@
     
   int initialThreshold = 200; // Example threshold value
   int mainThreshold = 128; // Example threshold value
-  bool qualified=false;
+  bool darkEnough=false; //dark enough
+  bool longEnough=false;
 
   uint16_t n=0,mean=0;
   uint32_t total=0;
@@ -55,12 +62,15 @@
   }
 
   void go(int curSensor){
-    if (acc < initialThreshold) {
+    //Remember there can be some readings wiggle as the shadow of the car goes over.
+    if (acc < initialThreshold) { //when below the threshold start monitoring
       if (count < MAXCOUNT) count++;
-      if (acc < mainThreshold)  qualified = true;
+      if (acc < mainThreshold)  darkEnough = true;
+      if (count>ticksPerMs*MIN_MS_TIME) longEnough=true;
     }    
-    if (acc >= initialThreshold) {
-      if (qualified) {
+    if (acc > initialThreshold) {
+      //now that it is bright enough, was the event dark and long enough? If not, keep looking.
+      if (darkEnough && longEnough) {
         auto currentTime=millis(); 
         if (currentTime > lastDetectTime + DEBOUNCE) {          
           //Detect detected       
@@ -69,9 +79,10 @@
           Detection detection(curSensor,acc,count,currentTime); // Initialize with data  
           ringBuffer.push(detection);          
         }
-        qualified = false;
-        count = 0;
       }
+      count=0;
+      darkEnough=false;
+      longEnough=false;
     }
   }
 
