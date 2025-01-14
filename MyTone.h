@@ -154,11 +154,10 @@ void playF1StartSound1() {
   playTone(500, 300);   
   delay(300);
   
-  waveFlag(YELLOWFLAG);
   playTone(500, 300);   
   delay(300);  
-  
-  waveFlag(GREENFLAG);  
+  waveFlag(YELLOWFLAG);
+  //cannot wave green flag here as it will cause false starts, let it stay yellow;  
   playTone(1000, 500);  
   delay(100);    
   waveFlag(FORMATION);

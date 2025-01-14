@@ -198,12 +198,8 @@ void loop() {
       lcd.print("   Get ready.       ");
       playF1StartSound1();      
       ISR::calcThresholds();
-      raceFlag=GREENFLAG;
       raceStart=millis();
       ISR::go();
-      lcd.setCursor(0,3);
-      ///////////01234567890123456789         
-      lcd.print("     GO!!!!!!!!     "); 
       auto chk=checkSensors();
       if(chk>=0){
           lcd.setCursor(0,3);
@@ -211,9 +207,14 @@ void loop() {
           lcd.print(chk);
           playMusic(imperialMarchMelody,imperialMarchNotes,120);
           delay(60000);         
+          return;
       }else{
         raceStarted=true;
       }
+      waveFlag(GREENFLAG);
+      lcd.setCursor(0,3);
+      ///////////01234567890123456789         
+      lcd.print("     GO!!!!!!!!     ");    
   }
   if (ringBuffer.pull(d)) {
     nextPageFlip=0;
