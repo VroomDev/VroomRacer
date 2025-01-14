@@ -19,10 +19,11 @@ class Lane {
     int speedCount=0;
     bool crossedStart=false;
     int lapCounter=0;
+    static unsigned long allBestLapDur;
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
     unsigned long topSpeed=0,lowSpeed=0;
     unsigned long long totalDuration=0;
-    char* why=""; //this holds the reason why a lap was not counted.
+    char why[40]=""; //this holds the reason why a lap was not counted.
        
     void setup(int pin){
       laneNum=pin;
@@ -64,14 +65,17 @@ class Lane {
     }else{      
       lapDuration = d.timestamp-prior.timestamp;
       if(lapDuration<minLapDuration){
-        why="Too fast!";
+        sprintf(why,"%d Hop",lapDuration);
+        return false;
+      }else if(allBestLapDur!=0 && lapDuration<allBestLapDur*6/10){
+        //jumped car, since better than anyone by too large of a margin
+        sprintf(why,"%d Jump",lapDuration);
         return false;
       }
-      if(bestLapDur!=0 && lapDuration<bestLapDur*6/10){
-        //jumped car
-        why="Jumped!";
-        return false;
-      }else if(lapDuration<bestLapDur || bestLapDur==0) {
+      if(lapDuration<allBestLapDur || allBestLapDur==0){
+         allBestLapDur=lapDuration; //used for jumped lap detection
+      }
+      if(lapDuration<bestLapDur || bestLapDur==0) {
         bestLapDur=lapDuration; //always set best first
       }else if(lapDuration>worstLapDur || worstLapDur==0){
         worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
@@ -130,7 +134,8 @@ class Lane {
     if(msg[0]==0){   //C0 Lap00 Speed12300
       sprintf(buffer,"%c%d Lap%-2d Speed%5d   "
                    ,ch,laneNum,(int)lapCounter,(int)speed);
-    }else{
+    }else{           //01234567890123456789
+                     //C0 Lap00 12345678901
       sprintf(buffer,"%c%d Lap%-2d %s         "
                    ,ch,laneNum,(int)lapCounter,msg);
     }
@@ -270,8 +275,7 @@ class Lane {
     if(serialOn) Serial.print(buffer);     
   }
  
-
-
-
   
 };
+
+unsigned long Lane::allBestLapDur=0;
