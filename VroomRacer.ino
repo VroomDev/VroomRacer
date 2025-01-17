@@ -198,7 +198,6 @@ void loop() {
       lcd.print("   Get ready.       ");
       playF1StartSound1();      
       ISR::calcThresholds();
-      ISR::go();
       auto chk=checkSensors();
       if(chk>=0){
           lcd.setCursor(0,3);
@@ -208,6 +207,7 @@ void loop() {
           delay(60000);         
           return;
       }else{
+        ISR::go();
         raceStart=millis();
         raceStarted=true;
       }
