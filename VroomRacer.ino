@@ -198,7 +198,6 @@ void loop() {
       lcd.print("   Get ready.       ");
       playF1StartSound1();      
       ISR::calcThresholds();
-      raceStart=millis();
       ISR::go();
       auto chk=checkSensors();
       if(chk>=0){
@@ -209,6 +208,7 @@ void loop() {
           delay(60000);         
           return;
       }else{
+        raceStart=millis();
         raceStarted=true;
       }
       waveFlag(GREENFLAG);
