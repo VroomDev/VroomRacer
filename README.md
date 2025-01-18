@@ -151,4 +151,12 @@ Example of installed photo sensor in the track. This was glued with JBWeld, but 
 ![track sensors](./tracksensors.jpg)
 
 
+# Enclosure
 
+I built mine out of thin hobby plywood that can be cut with a utility knife. To ease assembly , taping the exterior together then gluing from the inside using toothpick joiners with quick set white glue is very effective. For the exterior, I printed "textures" on my ink jet printer. For the roof, I am using cardstock paper.
+
+![housing](./house1.jpg)
+
+![housing](./house2.jpg)
+
+![housing](./house3.jpg)
