@@ -92,15 +92,14 @@ const RGB colorTable[NUM_COLORS] = {
 
 // Static brightness value ranging from 0 to 8
 #define MAXBRIGHTNESS 8
-static int brightness = 8; // Default to maximum brightness
 
 class Lights {
   public:
 
   byte redPin,bluePin,greenPin;
 
-  byte lanePins[NUMLANES*2]{0}; 
-  unsigned long timeout[NUMLANES]{0};
+//  byte lanePins[NUMLANES*2]{0}; 
+//  unsigned long timeout[NUMLANES]{0};
 
 
   void setup(byte r,byte g,byte b,byte* lanes){
@@ -111,32 +110,31 @@ class Lights {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
-    pinMode(bluePin, OUTPUT);
-    for(int i=0;i<NUMLANES*2;i++) {
-      lanePins[i]=lanes[i];
-      pinMode(lanePins[i], OUTPUT);
-    }
+//    for(int i=0;i<NUMLANES*2;i++) {
+//      lanePins[i]=lanes[i];
+//      pinMode(lanePins[i], OUTPUT);
+//    }
   }
 
   void setLane(int lane,bool on){
-    digitalWrite(lanePins[lane], on?HIGH:LOW);    
-    digitalWrite(lanePins[lane+NUMLANES], !on?HIGH:LOW);
-    timeout[lane]=millis()+1000;
+//    digitalWrite(lanePins[lane], on?HIGH:LOW);    
+//    digitalWrite(lanePins[lane+NUMLANES], !on?HIGH:LOW);
+//    timeout[lane]=millis()+1000;
   }
 
   
   void clearLane(int lane){
-    digitalWrite(lanePins[lane], LOW);    
-    digitalWrite(lanePins[lane+NUMLANES],LOW);
+//    digitalWrite(lanePins[lane], LOW);    
+//    digitalWrite(lanePins[lane+NUMLANES],LOW);
   }
 
   void checkFade(){    
-    for(int i=0;i<NUMLANES;i++) {
-      if(timeout[i]>0 && millis()>timeout[i]){
-          clearLane(i);
-          timeout[i]=0;
-      }
-    }
+//    for(int i=0;i<NUMLANES;i++) {
+//      if(timeout[i]>0 && millis()>timeout[i]){
+//          clearLane(i);
+//          timeout[i]=0;
+//      }
+//    }
   }
 
   void clearLanes(){    

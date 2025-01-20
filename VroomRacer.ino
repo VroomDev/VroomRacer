@@ -12,8 +12,33 @@
  * No guarantees of being fit for purpose.
  */
 
-bool compYellowOn=false;
-int pitLaneSpeedLimit=50;
+
+//////////////////////////// CONFIG VALUES
+
+#define NUMCONFIG 7
+uint8_t config[NUMCONFIG]; // Initialize all config bytes to 50
+const char VLABELS[NUMCONFIG][22] PROGMEM =  {
+  "Press + to exit mode\0",
+  "Brightness:         \0",
+  "Race length:        \0",
+  "Comp yellows:       \0",
+  "Yellow Spd limit:   \0",
+  "Sound:              \0",
+  "Min Lap Dur:        \0"
+ //01234567890123456789
+};
+typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR} Configs;
+
+const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,254};
+const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40};
+////////////////////////////END OF CONFIG
+
+#define compYellowOn ((bool)config[COMPYELLOW])
+#define pitLaneSpeedLimit ((int)config[SPEEDLIMIT])
+#define brightness ((int)config[BRIGHTNESS])
+#define sound ((bool)config[SOUND])
+#define minLapDuration ((int)config[MINLAPDUR]*40)
+
 const bool debug=true;
 const int NUMLANES=2;
 #include "Lights.h"
@@ -62,14 +87,10 @@ void mydtostrf(float value, int width,char *buffer) {
 // include the library code:
 
 #include "MyLCD.h"
-
 // initialize the library with the numbers of the interface pins
 MyLCD lcd;
-//LiquidCrystal_I2C& gLCD=realLcd;
 
-//#include "BiggerDigits.h"
 
-bool sound=true;
 volatile int winner=-1;
 volatile bool won=false;
 
@@ -90,6 +111,7 @@ volatile bool raceStarted=false;
 #include "Ema.h"
 
 #include "MyTone.h"
+#include "Buttons.h"
 #include "Lane.h"
 
 // Create a Ring Buffer to hold Detection structs
@@ -139,7 +161,7 @@ void setup() {
   Serial.begin(9600);
   delay(100);
   Serial.println("\n\nStarting");
-  
+  setupButtons();
   lanes[0].setup(0);
   lanes[1].setup(1);
   byte buf[NUMLANES*2]{30,32,31,33};
@@ -158,10 +180,9 @@ void setup() {
     lcd.print(" Vroom Racer by CB  ");  
     lcd.setCursor(0,1);
     lcd.print("  Copyright 2024    ");
-    lcd.setCursor(0,2);
-    lcd.print("Yellow Spd Limit:");
-    lcd.print(pitLaneSpeedLimit);
   }
+  setDevice(0);
+  displayAllConfig();
   ////////////
   ISR::setup();
   ////////////
@@ -185,10 +206,10 @@ long nextPageFlip=0;
 unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 
-
-void loop() {
-//   p("s0acc",sensors[0].acc);
-//   pln("s1acc",sensors[1].acc);
+void loop(){
+   if(configByButtons()){
+      return; // in display loop
+   }
    lights.checkFade();
    loopc++;   
    if(!raceStarted){  
@@ -204,7 +225,7 @@ void loop() {
           lcd.print("Sensor fault Lane:");
           lcd.print(chk);
           playMusic(imperialMarchMelody,imperialMarchNotes,120);
-          delay(60000);         
+          delay(10000);         
           return;
       }else{
         ISR::go();

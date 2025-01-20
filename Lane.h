@@ -5,7 +5,7 @@
  * No guarantees of being fit for purpose.
  */
 #include <Arduino.h> 
-const int minLapDuration = 2500;
+//const int minLapDuration = 2500;
 #define PAGECOUNT 8
 unsigned int tock=0;
 
