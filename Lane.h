@@ -10,7 +10,6 @@
 unsigned int tock=0;
 
 class Lane {
-  static const bool serialOn=true;
   public:
 
     int laneNum = 0;
@@ -99,7 +98,7 @@ class Lane {
         char buffer[200];
         sprintf(buffer,"C%d lapCounter:%d lapDuration:%lu \n",
           laneNum,lapCounter,lapDuration);
-        if(serialOn) Serial.print(buffer); //DAYLIGHT
+        if(serialOn) Serial.print(buffer); 
       }
       prior=d;
       return true;

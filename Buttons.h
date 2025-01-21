@@ -16,15 +16,15 @@
 int readButtons() {
   int flags=0;
   if (digitalRead(BUTTON_SELECT) == LOW) {
-    Serial.println("Select");
+    if(serialOn) Serial.println("Select");
     flags |= BSELECT;
   }
   if (digitalRead(BUTTON_DOWN) == LOW) {
-    Serial.println("Down");
+    if(serialOn) Serial.println("Down");
     flags |= BDOWN;
   }
   if (digitalRead(BUTTON_UP) == LOW) {
-    Serial.println("Up");
+    if(serialOn) Serial.println("Up");
     flags |= BUP;
   }
   return flags;
@@ -105,6 +105,26 @@ void seeChange(){
       setColor(YELLOW);
    }else if(v==SOUND){
      playTone(200,100);
+   }else if(v==DEMODIAG){
+      lcd.print(0,3,"                    ");
+      lcd.print(0,3,"Lights demo... ");
+      lights.demo();
+      delay(1000);
+      lcd.print(0,3,"Start song...  ");
+      pln("Start song","");
+      playF1StartSound1();
+      delay(1000);
+      lcd.print(0,3,"Restart song...");
+      pln("Restart song","");
+      playF1Restart();
+      delay(1000);
+      lcd.print(0,3,"Red flag...    ");
+      pln("Red flag song","");
+      playMusic(imperialMarchMelody,imperialMarchNotes,120);
+      delay(1000);
+      lcd.print(0,3,"Win song...    ");
+      pln("Win song","");
+      playMusic(odeToJoyMelody,odeToJoyNotes,80*4);  
    }
 }
 
@@ -132,17 +152,18 @@ bool configByButtons() {
     displayConfig(); // Update display with new value
   } else if (downButton()) {
     requireUpToStart = false;
-    if (--config[v] < 0) config[v] = 0;
+    if(config[v]>0) config[v]--;
+    if (config[v] < 0) config[v] = 0;
     seeChange();
     delay(100); // Debounce delay
     displayConfig(); // Update display with new value
   }
 
 //  // For debugging purposes, print the current variable and its value
-//  Serial.print("Config[");
-//  Serial.print(v);
-//  Serial.print("] = ");
-//  Serial.println(config[v]);
+//  if(serialOn) Serial.print("Config[");
+//  if(serialOn) Serial.print(v);
+//  if(serialOn) Serial.print("] = ");
+//  if(serialOn) Serial.println(config[v]);
 
   delay(100); // Loop delay to prevent bouncing issues
   if (v != 0 || requireUpToStart) return true; // Inhibit rest of loop, must select back to config 0 to resume

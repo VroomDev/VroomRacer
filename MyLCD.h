@@ -34,7 +34,7 @@ int nDevices;
 #define A 0x20             // The character for blank
 
 
-void scanDevices() {
+int scanDevices() {
   byte error, address;
   Serial.println("Scanning...");
 
@@ -49,7 +49,7 @@ void scanDevices() {
       Serial.println(address, HEX);
       curLcd=plcds[nDevices]=new LiquidCrystal_I2C(address, 20, 4);
       nDevices++;
-      if(nDevices==MAXLCDS) return;
+      if(nDevices==MAXLCDS) return nDevices;
     }
     else if (error == 4) {
       Serial.print("Unknown error at address 0x");
@@ -63,6 +63,7 @@ void scanDevices() {
   else {
     Serial.println("done");
   }
+  return nDevices;
 }
 
 void setDevice(int n){
@@ -171,6 +172,8 @@ class MyLCD {
       B11111,
       B11111
     };
+
+    if(curLcd==NULL) return;
   
     // send custom characters to the display
     curLcd->load_custom_character(1,cc1);
@@ -189,6 +192,7 @@ class MyLCD {
   
   
   void clearLine(){
+    if(curLcd==NULL) return;
     #ifdef USELCD
     ///////////////         1         2            3
     ///////////////1234567890123456789012345678901234567890
@@ -206,28 +210,29 @@ class MyLCD {
 
   // Routines for LCD Adjustment
   
-  // For LCD backlight adjustment
-  void backLight(uint8_t bright){
-    Wire.beginTransmission(0x4C);
-    Wire.write(0xFE);
-    Wire.write(0x03);
-    Wire.write(bright);
-    Wire.endTransmission();
-    delay(25);
-  }
-  
-  // For LCD contrast adjustment
-  void contrast(uint8_t cont) {
-    Wire.beginTransmission(0x4C);
-    Wire.write(0xFE);
-    Wire.write(0x04);
-    Wire.write(cont);
-    Wire.endTransmission();
-    delay(25);
-  }
+//  // For LCD backlight adjustment
+//  void backLight(uint8_t bright){
+//    Wire.beginTransmission(0x4C);
+//    Wire.write(0xFE);
+//    Wire.write(0x03);
+//    Wire.write(bright);
+//    Wire.endTransmission();
+//    delay(25);
+//  }
+//  
+//  // For LCD contrast adjustment
+//  void contrast(uint8_t cont) {
+//    Wire.beginTransmission(0x4C);
+//    Wire.write(0xFE);
+//    Wire.write(0x04);
+//    Wire.write(cont);
+//    Wire.endTransmission();
+//    delay(25);
+//  }
 
 
   void eraseBigDigit(byte col, byte row){
+    if(curLcd==NULL) return;
     curLcd->setCursor(col,row+0);
     curLcd->print("    ");
     curLcd->setCursor(col,row+1);
@@ -239,6 +244,7 @@ class MyLCD {
   #define DOTCHAR 'o'
 
   void printBigDigit(uint8_t digit,byte col,byte row,char extra=' '){
+    if(curLcd==NULL) return;
     // Line 1 of the one digit number
     curLcd->setCursor(col,row+0);
     curLcd->write(bn1[digit*3]);
@@ -310,6 +316,7 @@ class MyLCD {
   }
 
   void begin(int a,int b){
+    if(curLcd==NULL) return;
     #ifdef USELCD
     //initialize lcd screen
     curLcd->begin(20,4);
@@ -324,6 +331,7 @@ class MyLCD {
   
 
   void setCursor(int col,int row){
+    if(curLcd==NULL) return;
     #ifdef USELCD
       curLcd->setCursor(col,row);
     #endif
@@ -332,13 +340,26 @@ class MyLCD {
   // Templated member function
   template <typename T>
   void print(const T& value) {
+    if(curLcd==NULL) return;
     #ifdef USELCD
      curLcd->print(value);
      scrolled=millis()+2000;
     #endif
   }
 
+  // Templated member function
+  template <typename T>
+  void print(int c,int r,const T& value) {
+    if(curLcd==NULL) return;
+    #ifdef USELCD
+     setCursor(c,r);
+     curLcd->print(value);
+     scrolled=millis()+2000;
+    #endif
+  }
+
   void print(char* label,unsigned long lt){
+    if(curLcd==NULL) return;
     #ifdef USELCD
       curLcd->print(label);
       if(lt<10000) {
@@ -365,3 +386,6 @@ class MyLCD {
 static const char MyLCD::bn1[]{B,2,1, 2,1,A, 2,2,1, 2,2,1, 3,A,B, B,2,2, B,2,2, 2,2,B, B,2,1, B,2,1};
 static const char MyLCD::bn2[]{B,A,B, A,B,A ,3,2,2, A,6,1, 5,6,B, 5,6,7, B,6,7, A,3,2, B,6,B, 5,6,B};
 static const char MyLCD::bn3[]{4,3,B, 3,B,3, B,3,3, 3,3,B, A,A,B, 3,3,B, 4,3,B, A,B,A, 4,3,B, A,A,B};
+
+
+//EOF

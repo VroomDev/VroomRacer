@@ -15,7 +15,7 @@
 
 //////////////////////////// CONFIG VALUES
 
-#define NUMCONFIG 7
+#define NUMCONFIG 9
 uint8_t config[NUMCONFIG]; // Initialize all config bytes to 50
 const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Press + to exit mode\0",
@@ -24,13 +24,15 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Comp yellows:       \0",
   "Yellow Spd limit:   \0",
   "Sound:              \0",
-  "Min Lap Dur:        \0"
+  "Min Lap Dur:        \0",
+  "Serial monitor:     \0",
+  "Demo/Diagnostics:   \0"
  //01234567890123456789
 };
-typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR} Configs;
+typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG} Configs;
 
-const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,254};
-const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40};
+const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,    254,1,0};
+const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
 ////////////////////////////END OF CONFIG
 
 #define compYellowOn ((bool)config[COMPYELLOW])
@@ -39,7 +41,7 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40};
 #define sound ((bool)config[SOUND])
 #define minLapDuration ((int)config[MINLAPDUR]*40)
 
-const bool debug=true;
+#define serialOn ((bool)config[SERIALMONITOR])
 const int NUMLANES=2;
 #include "Lights.h"
  
@@ -54,9 +56,9 @@ RaceFlag raceFlag=FORMATION;
 
 
 //for debugging
-#define ph(label) Serial.print(label);Serial.print(':');
-#define p(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');
-#define pln(label,var) Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();
+#define ph(label)   if(serialOn){Serial.print(label);Serial.print(':');}
+#define p(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
+#define pln(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
 
 
 void mydtostrf(float value, int width,char *buffer) {
@@ -97,21 +99,13 @@ volatile bool won=false;
 int raceLength=10;
 unsigned long raceStart=0;
 
-
-
-
-/*
-
- */
-
 volatile bool raceStarted=false;
 
 #include "Detection.h"
 #include "RingBuffer.h"
-#include "Ema.h"
+
 
 #include "MyTone.h"
-#include "Buttons.h"
 #include "Lane.h"
 
 // Create a Ring Buffer to hold Detection structs
@@ -124,6 +118,7 @@ RingBuffer<Detection, bufferSize> ringBuffer;
 
 Lights lights;
 Lane lanes[NUMLANES];
+#include "Buttons.h"
 
 void setColor(Color c){
   lights.setColor(c);
@@ -161,17 +156,19 @@ void setup() {
   Serial.begin(9600);
   delay(100);
   Serial.println("\n\nStarting");
+  if(scanDevices()==0){
+    Serial.println("no LCD found");
+  }
   setupButtons();
   lanes[0].setup(0);
   lanes[1].setup(1);
-  byte buf[NUMLANES*2]{30,32,31,33};
-  lights.setup(6,7,8,buf); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
+  lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
 
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
       
   // set up the LCD's number of columns and rows:
-  scanDevices();
+  
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
@@ -207,10 +204,10 @@ unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 
 void loop(){
+//   if(serialOn) Serial.print(".");
    if(configByButtons()){
       return; // in display loop
    }
-   lights.checkFade();
    loopc++;   
    if(!raceStarted){  
       // Print a message to the LCD.  
@@ -242,7 +239,7 @@ void loop(){
     auto i=d.port;
     auto aspeed=lanes[i].avgSpeed();
     auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
-    if(debug){
+    if(serialOn){
       pln("-----------------NEW DETECTION-------------","");
       p("C#",d.port);
       sensors[d.port].debug();
@@ -330,7 +327,6 @@ void alertGoodLap(int i) {
     return;
   }
   pln("GOOD LAP car:",i);
-  lights.setLane(i,true);
   playTone(400+i*300, 100);
   lanes[i].banner(true,"");
   nextPageFlip=millis()+2000;
@@ -360,7 +356,6 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
   nextPageFlip=millis()+2000;
   pln("BAD LAP car:",i);
   lanes[i].banner(false,msg);
-  lights.setLane(i,false);
   for(int t=0;t<90;t+=10){
     playTone(400+i*300-t, 20);
   }
@@ -372,9 +367,6 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 void updateLCD(){
   if(millis()>nextPageFlip){
     nextPageFlip=millis()+4000;
-    if(nextPageFlip!=0 && raceFlag==GREENFLAG){     
-       lights.clearLanes(); 
-    }
     for(int d=0;d<nDevices;d++){
       setDevice(d);
       for(int i=0;i<NUMLANES;i++){

@@ -71,10 +71,10 @@ const char* colorLabels[NUM_COLORS] = { "RED", "GRN", "BLU", "YLW", "ORG", "PUR"
 //const uint8_t maxGreen = 255; //64; //60// Reduced intensity for green to balance brightness
 //const uint8_t maxBlue = 255;//255; //240;  // Slightly reduced intensity for blue
 
-// Adjust these values to balance the colors when using near 145,1k,430 ohm resistors
-const uint8_t maxRed = 244; //244;  //230 Full intensity for red
-const uint8_t maxGreen = 255; //64; //60// Reduced intensity for green to balance brightness
-const uint8_t maxBlue = 241;//255; //240;  // Slightly reduced intensity for blue
+//// Adjust these values to balance the colors when using near 145,1k,430 ohm resistors
+const uint8_t maxRed = 244; //  intensity for red
+const uint8_t maxGreen = 255; //intensity for green
+const uint8_t maxBlue = 241; //intensity for blue
 
 
 // Create an array of RGB structs to hold custom color values
@@ -98,11 +98,9 @@ class Lights {
 
   byte redPin,bluePin,greenPin;
 
-//  byte lanePins[NUMLANES*2]{0}; 
-//  unsigned long timeout[NUMLANES]{0};
 
 
-  void setup(byte r,byte g,byte b,byte* lanes){
+  void setup(byte r,byte g,byte b){
     redPin=r;    
     greenPin=g;
     bluePin=b;
@@ -110,52 +108,16 @@ class Lights {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
-//    for(int i=0;i<NUMLANES*2;i++) {
-//      lanePins[i]=lanes[i];
-//      pinMode(lanePins[i], OUTPUT);
-//    }
   }
 
-  void setLane(int lane,bool on){
-//    digitalWrite(lanePins[lane], on?HIGH:LOW);    
-//    digitalWrite(lanePins[lane+NUMLANES], !on?HIGH:LOW);
-//    timeout[lane]=millis()+1000;
-  }
 
   
-  void clearLane(int lane){
-//    digitalWrite(lanePins[lane], LOW);    
-//    digitalWrite(lanePins[lane+NUMLANES],LOW);
-  }
 
-  void checkFade(){    
-//    for(int i=0;i<NUMLANES;i++) {
-//      if(timeout[i]>0 && millis()>timeout[i]){
-//          clearLane(i);
-//          timeout[i]=0;
-//      }
-//    }
-  }
-
-  void clearLanes(){    
-    for(int i=0;i<NUMLANES;i++) {
-      clearLane(i);
-    }
-  }
 
 
   void demo() {
-    for(int c=0;c<NUMLANES;c++){
-      Serial.print("setting lane indicator, true then false");
-      Serial.println(c);
-      setLane(c,true);
-      delay(2000);
-      setLane(c,false);
-      delay(2000);
-    }
-    clearLanes();
     for(int c=0;c<NUM_COLORS;c++){
-      Serial.println(colorLabels[c]);
+      if(serialOn) Serial.println(colorLabels[c]);
       setColor(colorTable[c]);
       delay(1000);
     }

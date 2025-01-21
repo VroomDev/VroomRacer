@@ -150,6 +150,11 @@ Dimensions: 4.3mm x 5.1mm x 2.1 mm
 Example of installed photo sensor in the track. This was glued with JBWeld, but a better option is super glue. Note the two red dots, by installing the sensors there, the drill bit will self align and be perfect across the track. The wires used are the ones with an Arduino kit. No soldering required.
 ![track sensors](./tracksensors.jpg)
 
+# Wiring
+
+![wiring](./circuit.png)
+
+
 
 # Enclosure
 
@@ -160,3 +165,10 @@ I built mine out of thin hobby plywood that can be cut with a utility knife. To 
 ![housing](./House2.jpg)
 
 ![housing](./House3.jpg)
+
+# ERD
+
+![code](./ERD.png)
+
+
+
