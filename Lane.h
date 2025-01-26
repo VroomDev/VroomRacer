@@ -6,7 +6,7 @@
  */
 #include <Arduino.h> 
 //const int minLapDuration = 2500;
-#define PAGECOUNT 8
+#define PAGECOUNT 2
 unsigned int tock=0;
 
 class Lane {
@@ -16,6 +16,7 @@ class Lane {
     unsigned long lastLapTime = 0; //millis(); // Time the last valid detection occurred
     int speed=0;    
     int speedCount=0;
+    int fouls=0;
     bool crossedStart=false;
     int lapCounter=0;
     static unsigned long allBestLapDur;
@@ -125,6 +126,7 @@ class Lane {
 
 
   void banner(bool lapCounted,char* msg){
+    if(!lapCounted) fouls++;
     setDevice(laneNum);
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
@@ -150,7 +152,7 @@ class Lane {
   }
 
   void display2(byte page,RaceFlag flag){    
-    lcd.setCursor(0,laneNum*2);//col,row    
+    lcd.setCursor(0,0); //laneNum*2);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     
     char buffer[40];
@@ -175,73 +177,65 @@ class Lane {
       sprintf(buffer,"%c%d Lap%-2d %5ss Time            ",ch,laneNum+1,lapCounter,floatBuffer1);
     }
     buffer[20]=0; //null terminate
-    lcd.print(buffer);    
+    lcd.printRow(0,buffer);    
     if(serialOn) {
       Serial.print(buffer);
       Serial.print("\n");     
     }
-                                                //012345678901234567890
-    if(raceFlag==REDFLAG)         sprintf(buffer,"Red: no laps counted.");
-    else if(raceFlag==YELLOWFLAG) sprintf(buffer,"Yellow: must go slow.");
-    else if(raceFlag==GREENFLAG)  sprintf(buffer,"Green: go fast!      ");
-    else if(lapCounter==raceLength) sprintf(buffer,"Completed race.      ");
-    else if(winner==laneNum)      sprintf(buffer,"This car won.        ");
-    else                          sprintf(buffer,"                     ");
-    //////////////
-    ////// second line
-    //////////////
-    lcd.setCursor(0,laneNum*2+1);//col,row    
-            //01234567890123456789
-            //C0   0000 Trap Speed
-            //C0  00000s Avg  Time
-            //C0  00000s Best Time
-            //C0   0000 Top  Speed
-            //C0   0000 Avg  Speed
-            //C0  00000s Slow Time   
-    switch(page){
-      case 0:
-        if(speed!=0)        sprintf(buffer,"%c%d%7d Trap Speed  ",ch,laneNum+1,(int)speed);
-        break;
-      case 1:
-        if(avgLapDur!=0) {
-          mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
-          sprintf(buffer,"%c%d%7ss Avg  Time ",ch,laneNum+1,floatBuffer1);
-        }
-        break;
-      case 2:
-        if(bestLapDur!=0) {
-          mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
-          sprintf(buffer,"%c%d%7ss Best Time   ",ch,laneNum+1,floatBuffer1);
-        }
-        break;
-      case 3:         //01234567890123456789 
-                      //C1 Lap00 Top000speed
-        if(topSpeed!=0) {
-          sprintf(buffer,"%c%d%7d Top  Speed ",ch,laneNum+1,(int)topSpeed);
-        }
-        break;
-      case 4:
-        if(avgSpeed()!=0) {
-          sprintf(buffer,"%c%d%7d Avg  Speed ",ch,laneNum+1,(int)avgSpeed());
-        }
-        break;
-      case 5:
-        if(worstLapDur!=0){
-           mydtostrf((worstLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
-           sprintf(buffer,"%c%d%7ss Slow Time    ",ch,laneNum+1,floatBuffer1);
-        }
-        break;
-      case 6:
-        if(initialTime>0 && raceStart>0){
-          sprintf(buffer,"%c%d%6ldms Reaction     ",ch,laneNum+1,((signed long)initialTime-(signed long)raceStart));
-        }
+
+    if( page ==0 ) {
+      //01234567890123456789
+      //Lap Time  Avg 00000s//
+      //    Best 00000s     //
+      //Slow 00000s Fouls 00//
+      buffer[0]=0;
+      if(avgLapDur!=0) {
+        mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
+        sprintf(buffer,"Lap Time  Avg %6ss",floatBuffer1);
+      }
+      lcd.printRow(1,buffer);
+      buffer[0]=0;
+      if(bestLapDur!=0) {
+        mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
+        sprintf(buffer,"    Best %ss     ",floatBuffer1);
+      }
+      lcd.printRow(2,buffer);
+      buffer[0]=0;
+      if(worstLapDur!=0){
+        mydtostrf((worstLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
+        sprintf(buffer,"Slow %5ss Fouls%3d%c%d",floatBuffer1,fouls);
+      }
+      lcd.printRow(3,buffer);
+    }else{
+      //01234567890123456789
+      //Trap Speed 0000 in/s//
+      // Top 0000 Avg 0000  //  
+      //  Reaction 00000s   //
+      buffer[0]=0;
+      if(topSpeed!=0) {
+        sprintf(buffer,"Trap Speed %d in/s",(int)speed);
+      }
+      lcd.printRow(1,buffer);
+      buffer[0]=0;
+      if(avgSpeed()!=0) {
+          sprintf(buffer,"Top %4d  Avg %4d",(int)topSpeed,(int)avgSpeed());
+      }
+      lcd.printRow(2,buffer);
+      buffer[0]=0;
+      if(initialTime>0 && raceStart>0){
+        sprintf(buffer,"Reaction %6ldms",((signed long)initialTime-(signed long)raceStart));
+      }
+      lcd.printRow(3,buffer);
     }
-    buffer[20]=0; //null terminate
-    lcd.print(buffer);    
-    if(serialOn) {
-      Serial.print(buffer);
-      Serial.print("\n");
-    }     
+    
+                                                             //012345678901234567890
+      //    if(raceFlag==REDFLAG)         sprintf(buffer,"Red: no laps counted.");
+      //    else if(raceFlag==YELLOWFLAG) sprintf(buffer,"Yellow: must go slow.");
+      //    else if(raceFlag==GREENFLAG)  sprintf(buffer,"Green: go fast!      ");
+      //    else if(lapCounter==raceLength) sprintf(buffer,"Completed race.      ");
+      //    else if(winner==laneNum)      sprintf(buffer,"This car won.        ");
+      //    else                          sprintf(buffer,"                     ");
+      //        
   }
 
   void display4(byte page,char flag){    
@@ -285,3 +279,5 @@ class Lane {
 };
 
 unsigned long Lane::allBestLapDur=0;
+
+//EOF

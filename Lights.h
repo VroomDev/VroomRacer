@@ -5,7 +5,6 @@
  * No guarantees of being fit for purpose.
  */
 
-
 //| Color               | Lens Type                        | Forward Voltage (V) | Luminous Intensity (mcd) | Wavelength     |
 //|---------------------|----------------------------------|---------------------|--------------------------|----------------|
 //| White               | 5mm Round Top / Water Clear      | 3.0-3.2             | 12000-14000              | 6000-9000K     |
@@ -34,19 +33,7 @@
 
 
 
-// Define an enum to represent different colors
-typedef enum  {
-  RED,
-  GREEN,
-  BLUE,
-  YELLOW,
-  ORANGE,
-  PURPLE,
-  CYAN,
-  WHITE,
-  BLACK,
-  NUM_COLORS // Keeps track of the number of colors
-} Color;
+
 
 
 // Define a struct to hold RGB values
@@ -118,6 +105,9 @@ class Lights {
   void demo() {
     for(int c=0;c<NUM_COLORS;c++){
       if(serialOn) Serial.println(colorLabels[c]);
+      lcd.print(0,3,"");
+      lcd.clearLine();
+      lcd.print(0,3,colorLabels[c]);
       setColor(colorTable[c]);
       delay(1000);
     }

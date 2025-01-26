@@ -45,6 +45,18 @@ struct Sensor {
      p("ticks per ms", ticksPerMs );        
      pln("n",n);       
   }
+
+  void display(int w){
+    lcd.print("S:");
+    lcd.print(w);
+    lcd.print("R:");
+    lcd.print(acc);
+    lcd.print("IT:");
+    lcd.print(initialThreshold);
+    lcd.print("MT:");
+    lcd.print(mainThreshold);
+    lcd.print(" ");
+  }
     
   //called by the ISR
   void presample(){

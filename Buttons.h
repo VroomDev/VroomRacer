@@ -100,12 +100,40 @@ void displayAllConfig(){
   v=0;
 }
 
-void seeChange(){
+void saveConfig(){
+  for(int v=0;v<NUMCONFIG;v++){
+    // Save to EEPROM if the current configuration value has changed
+    if (EEPROM.read(v) != config[v]) {
+       ph("Writing to eeprom");
+       p("v",v);
+       pln("conf",config[v]);
+       EEPROM.write(v, config[v]);
+    }
+  }
+}
+
+
+void seeChange(bool inc){
    if(v==BRIGHTNESS){
       setColor(YELLOW);
+   }else if(v==RESUME){
+     if(inc) {
+      saveConfig();
+      ///////////////012345678901234567890
+      lcd.print(0,3,"Saved changes...    ");
+     }else{
+      lcd.print(0,3,"Temporary changes...");
+     }
+     delay(300);
    }else if(v==SOUND){
      playTone(200,100);
-   }else if(v==DEMODIAG){
+   }else if(v==DEMODIAG && inc){    
+      lcd.print(0,3,"                    ");
+      for(int i=0;i<NUMSENSORS;i++){
+         lcd.setCursor(0,3);
+         sensors[i].display(i);
+         delay(300);
+      }
       lcd.print(0,3,"                    ");
       lcd.print(0,3,"Lights demo... ");
       lights.demo();
@@ -128,33 +156,27 @@ void seeChange(){
    }
 }
 
+
 bool configByButtons() {
   if (selectButton()) {
-    // Save to EEPROM if the current configuration value has changed
-    if (EEPROM.read(v) != config[v]) {
-       ph("Writing to eeprom");
-       p("v",v);
-       pln("conf",config[v]);
-       EEPROM.write(v, config[v]);
-    }
     v++; // Increment the selection index
     if (v >= NUMCONFIG) v = 0; // Reset to 0 if it exceeds the number of config variables
     displayConfig(); // Update display with new selection
     while (selectButton()) {} // Wait until the button is released
-    delay(100); // Debounce delay
+    delay(300); // Debounce delay
     if (v == 0) requireUpToStart = true;
     else requireUpToStart = false;
   } else if (upButton()) {
     requireUpToStart = false;
     if (++config[v] > VMAX[v]) config[v] = VMAX[v];
-    seeChange();
+    seeChange(true);
     delay(100); // Debounce delay
     displayConfig(); // Update display with new value
   } else if (downButton()) {
     requireUpToStart = false;
     if(config[v]>0) config[v]--;
     if (config[v] < 0) config[v] = 0;
-    seeChange();
+    seeChange(false);
     delay(100); // Debounce delay
     displayConfig(); // Update display with new value
   }

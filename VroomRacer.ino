@@ -15,10 +15,12 @@
 
 //////////////////////////// CONFIG VALUES
 
+
+
 #define NUMCONFIG 9
 uint8_t config[NUMCONFIG]; // Initialize all config bytes to 50
 const char VLABELS[NUMCONFIG][22] PROGMEM =  {
-  "Press + to exit mode\0",
+  "- to Exit, + to Save\0",
   "Brightness:         \0",
   "Race length:        \0",
   "Comp yellows:       \0",
@@ -31,7 +33,7 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
 };
 typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG} Configs;
 
-const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,    254,1,0};
+const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,    254,1,1};
 const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
 ////////////////////////////END OF CONFIG
 
@@ -40,19 +42,37 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
 #define brightness ((int)config[BRIGHTNESS])
 #define sound ((bool)config[SOUND])
 #define minLapDuration ((int)config[MINLAPDUR]*40)
+//#define serialOn ((bool)config[SERIALMONITOR])
+#define serialOn true
+#define diagOn ((bool)config[DEMODIAG])
 
-#define serialOn ((bool)config[SERIALMONITOR])
 const int NUMLANES=2;
-#include "Lights.h"
+
+
+// Define an enum to represent different colors
+typedef enum  {
+  RED,
+  GREEN,
+  BLUE,
+  YELLOW,
+  ORANGE,
+  PURPLE,
+  CYAN,
+  WHITE,
+  BLACK,
+  NUM_COLORS // Keeps track of the number of colors
+} Color;
+
  
 #include "pitches.h"
 #define REST 0
 
 typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE='D' } RaceFlag;
 
+//how fast to flip the display page
+#define FLIPTIME 5000
 
 RaceFlag raceFlag=FORMATION;
-
 
 
 //for debugging
@@ -92,6 +112,8 @@ void mydtostrf(float value, int width,char *buffer) {
 // initialize the library with the numbers of the interface pins
 MyLCD lcd;
 
+#include "Lights.h"
+
 
 volatile int winner=-1;
 volatile bool won=false;
@@ -118,11 +140,13 @@ RingBuffer<Detection, bufferSize> ringBuffer;
 
 Lights lights;
 Lane lanes[NUMLANES];
-#include "Buttons.h"
 
 void setColor(Color c){
   lights.setColor(c);
 }
+
+#include "Buttons.h"
+
 
 void waveFlag(RaceFlag which){
   raceFlag=which;
@@ -159,16 +183,21 @@ void setup() {
   if(scanDevices()==0){
     Serial.println("no LCD found");
   }
+  Serial.println("set up buttons...");
   setupButtons();
+  Serial.println("set up lanes...");
   lanes[0].setup(0);
   lanes[1].setup(1);
+  Serial.println("lights...");
   lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
+        lights.demo();
 
+  Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
       
   // set up the LCD's number of columns and rows:
-  
+  Serial.println("lcd...");
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
@@ -205,8 +234,14 @@ Detection d;
 
 void loop(){
 //   if(serialOn) Serial.print(".");
+   if(diagOn){
+      for(int i=0;i<NUMSENSORS;i++){
+         p("S#",i);
+         sensors[i].debug();
+      }
+   }
    if(configByButtons()){
-      return; // in display loop
+      return; //stay in config mode
    }
    loopc++;   
    if(!raceStarted){  
@@ -353,8 +388,9 @@ void alertGoodLap(int i) {
 }
 
 void alertBadLap(int i,char* msg){ //,Detection& d){
-  nextPageFlip=millis()+2000;
-  pln("BAD LAP car:",i);
+  nextPageFlip=millis()+FLIPTIME/2;
+  p("BAD LAP car:",i);
+  pln("msg:",msg);
   lanes[i].banner(false,msg);
   for(int t=0;t<90;t+=10){
     playTone(400+i*300-t, 20);
@@ -365,13 +401,17 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 
 
 void updateLCD(){
+  static uint8_t flipper=0;
+  flipper++; 
   if(millis()>nextPageFlip){
-    nextPageFlip=millis()+4000;
-    for(int d=0;d<nDevices;d++){
-      setDevice(d);
-      for(int i=0;i<NUMLANES;i++){
-         lanes[i].display(curPage,raceFlag);
-      }
+    nextPageFlip=millis()+FLIPTIME;
+    if(nDevices==1){
+      lanes[flipper % NUMLANES].display(curPage,raceFlag);
+    }else{
+        for(int i=0;i<NUMLANES;i++){
+           setDevice(i % nDevices);
+           lanes[i].display(curPage,raceFlag);
+        }
     }
     curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }

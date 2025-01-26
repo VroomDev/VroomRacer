@@ -40,6 +40,7 @@ int scanDevices() {
 
   nDevices = 0;
   for(address = 8; address < 120; address++ ) {
+    Serial.println(address);
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
 
@@ -230,6 +231,14 @@ class MyLCD {
 //    delay(25);
 //  }
 
+
+  void printRow(int r,const char* msg){
+    char buffer[40]="";
+    sprintf(buffer,"%-20s",msg);
+    buffer[20]=0; //null term
+    setCursor(0,r);
+    print(buffer);
+  }
 
   void eraseBigDigit(byte col, byte row){
     if(curLcd==NULL) return;
