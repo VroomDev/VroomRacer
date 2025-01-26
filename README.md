@@ -1,5 +1,5 @@
 # VroomRacer
-Vroom Racer is a simple Arduino Lap Timer for slot car racing using photoresistor photo eyes.
+Vroom Racer is an Arduino Lap Timer for slot car racing using photo eyes that features automatic yellow and red flag detection, jumped lane detection, and an optional competition yellow flag.
 
 # Arduino-Based Slot Car Tracker and Timer
 
