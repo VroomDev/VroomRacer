@@ -128,29 +128,29 @@ void seeChange(bool inc){
    }else if(v==SOUND){
      playTone(200,100);
    }else if(v==DEMODIAG && inc){    
-      lcd.print(0,3,"                    ");
+      lcd.printRow(3,"Reading sensors.");
+      delay(50);
       for(int i=0;i<NUMSENSORS;i++){
          lcd.setCursor(0,3);
          sensors[i].display(i);
          delay(300);
       }
-      lcd.print(0,3,"                    ");
-      lcd.print(0,3,"Lights demo... ");
+      lcd.printRow(3,"Lights demo... ");
       lights.demo();
       delay(1000);
-      lcd.print(0,3,"Start song...  ");
+      lcd.printRow(3,"Start song...  ");
       pln("Start song","");
       playF1StartSound1();
       delay(1000);
-      lcd.print(0,3,"Restart song...");
+      lcd.printRow(3,"Restart song...");
       pln("Restart song","");
       playF1Restart();
       delay(1000);
-      lcd.print(0,3,"Red flag...    ");
+      lcd.printRow(3,"Red flag song...    ");
       pln("Red flag song","");
       playMusic(imperialMarchMelody,imperialMarchNotes,120);
       delay(1000);
-      lcd.print(0,3,"Win song...    ");
+      lcd.printRow(3,"Win song...");
       pln("Win song","");
       playMusic(odeToJoyMelody,odeToJoyNotes,80*4);  
    }

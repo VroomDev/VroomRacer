@@ -42,8 +42,8 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
 #define brightness ((int)config[BRIGHTNESS])
 #define sound ((bool)config[SOUND])
 #define minLapDuration ((int)config[MINLAPDUR]*40)
-//#define serialOn ((bool)config[SERIALMONITOR])
-#define serialOn true
+#define serialOn ((bool)config[SERIALMONITOR])
+//#define serialOn true
 #define diagOn ((bool)config[DEMODIAG])
 
 const int NUMLANES=2;
@@ -190,7 +190,6 @@ void setup() {
   lanes[1].setup(1);
   Serial.println("lights...");
   lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
-        lights.demo();
 
   Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
@@ -201,11 +200,9 @@ void setup() {
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
-    lcd.setCursor(0,0);
-    ///////////01234567890123456789
-    lcd.print(" Vroom Racer by CB  ");  
-    lcd.setCursor(0,1);
-    lcd.print("  Copyright 2024    ");
+    //////     /////01234567890123456789
+    lcd.printRow(0,"VroomRacer v20250125");  
+    lcd.printRow(1,"Copyright 2024 by CB");
   }
   setDevice(0);
   displayAllConfig();
@@ -232,18 +229,31 @@ long nextPageFlip=0;
 unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 
+bool needReset=false;
+
 void loop(){
+  loopc++;
 //   if(serialOn) Serial.print(".");
    if(diagOn){
       for(int i=0;i<NUMSENSORS;i++){
          p("S#",i);
          sensors[i].debug();
       }
+      delay(50);
    }
    if(configByButtons()){
       return; //stay in config mode
    }
-   loopc++;   
+   if(needReset){
+          lcd.setCursor(0,3);
+          ///////////01234567890123456789
+          lcd.print("Please reset");
+          for(int i=0;i<8;i++){
+             lcd.print(i<(loopc & 7) ? "." : " ");
+          }
+          delay(200);    
+          return; //stop the loop    
+   }
    if(!raceStarted){  
       // Print a message to the LCD.  
       lcd.setCursor(0,2);
@@ -253,11 +263,14 @@ void loop(){
       ISR::calcThresholds();
       auto chk=checkSensors();
       if(chk>=0){
-          lcd.setCursor(0,3);
+          lcd.setCursor(0,2);
           lcd.print("Sensor fault Lane:");
           lcd.print(chk);
-          playMusic(imperialMarchMelody,imperialMarchNotes,120);
-          delay(10000);         
+          lcd.print(" ");
+          lcd.printRow(3,"Please reset.");
+          playTone(250,100);
+          needReset=true;
+          delay(100);         
           return;
       }else{
         ISR::go();
