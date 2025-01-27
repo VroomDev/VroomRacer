@@ -201,7 +201,7 @@ void setup() {
     setDevice(d);
     lcd.begin(16, 2);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250125");  
+    lcd.printRow(0,"VroomRacer v20250126");  
     lcd.printRow(1,"Copyright 2024 by CB");
   }
   setDevice(0);
@@ -233,25 +233,34 @@ bool needReset=false;
 
 void loop(){
   loopc++;
-//   if(serialOn) Serial.print(".");
-   if(diagOn){
-      for(int i=0;i<NUMSENSORS;i++){
-         p("S#",i);
-         sensors[i].debug();
-      }
-      delay(50);
-   }
-   if(configByButtons()){
-      return; //stay in config mode
-   }
-   if(needReset){
+  delay(1);
+  int s=loopc % NUMSENSORS;
+  if(sensors[s].darkEnough && sensors[s].longEnough){
+    //in the sensor
+    if((loopc & 15)<8)  plcds[s]->noBacklight();
+    else plcds[s]->backlight();
+    playTone(400+s*300+sensors[s].count/355, 1);
+  }else if( (loopc & 31)<NUMSENSORS){
+    plcds[s]->backlight();
+  }
+   
+  if(diagOn && (loopc & 63)==0){
+    for(int i=0;i<NUMSENSORS;i++){
+       p("S#",i);
+       sensors[i].debug();
+    }
+  }
+  if(configByButtons()){
+    return; //stay in config mode
+  }
+  if( (loopc & 255)==0 && needReset){
           lcd.setCursor(0,3);
           ///////////01234567890123456789
           lcd.print("Please reset");
           for(int i=0;i<8;i++){
              lcd.print(i<(loopc & 7) ? "." : " ");
           }
-          delay(200);    
+          //delay(200);    
           return; //stop the loop    
    }
    if(!raceStarted){  
@@ -282,7 +291,7 @@ void loop(){
       ///////////01234567890123456789         
       lcd.print("     GO!!!!!!!!     ");    
   }
-  if (ringBuffer.pull(d)) {
+  if (  ringBuffer.pull(d)) {
     //nextPageFlip=0;
     auto i=d.port;
     auto aspeed=lanes[i].avgSpeed();
@@ -308,7 +317,8 @@ void loop(){
     }else{ //lap is green
       alertGoodLap(i); 
     }
-  }else{ //STEWARDS
+  }
+  if((loopc&127)==0){ //STEWARDS
     //check for yellows
     bool anyYellow=false,anyRed=false;    
     if(!won){
@@ -321,7 +331,8 @@ void loop(){
       }else{
         for(int i=0;i<NUMLANES;i++){
           //is a car very late? definitely crashed
-          if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
+          if( !(sensors[i].darkEnough || sensors[i].longEnough)
+              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+1000+(lanes[i].avgLapDur*3)){
             //car is late!
             if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
               p("Red flag detected Car late",(char)raceFlag)
@@ -329,7 +340,8 @@ void loop(){
             }
             anyRed=true;
           //is a car getting late, probably crashed
-          }else if( lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
+          }else if( !(sensors[i].darkEnough || sensors[i].longEnough) 
+              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+500+(lanes[i].avgLapDur*3/2)){
             //car is late!
             if(raceFlag!=YELLOWFLAG && raceFlag!=REDFLAG && !anyRed && !anyYellow){
               p("Yellow detected Car late",(char)raceFlag)
@@ -365,7 +377,6 @@ void loop(){
     }
   }
   updateLCD();
-  delay(100); // Wait before repeating 
 }
 
 
@@ -415,11 +426,10 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 
 void updateLCD(){
   static uint8_t flipper=0;
-  flipper++; 
   if(millis()>nextPageFlip){
     nextPageFlip=millis()+FLIPTIME;
     if(nDevices==1){
-      lanes[flipper % NUMLANES].display(curPage,raceFlag);
+      lanes[++flipper % NUMLANES].display(curPage,raceFlag);
     }else{
         for(int i=0;i<NUMLANES;i++){
            setDevice(i % nDevices);
