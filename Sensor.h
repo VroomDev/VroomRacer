@@ -19,7 +19,8 @@ struct Sensor {
   unsigned int acc=0; //to be set within ISR, this is the reading perhaps accumulated over a few reads
   unsigned long lastDetectTime=0; //to be set within ISR
     
-  uint16_t minAcc=0,maxAcc=0,count=0;
+  uint16_t minAcc=0,maxAcc=0;
+  volatile uint16_t count=0;
     
   int initialThreshold = 200; // Example threshold value
   int mainThreshold = 128; // Example threshold value

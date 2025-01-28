@@ -9,9 +9,12 @@
 #define PAGECOUNT 2
 unsigned int tock=0;
 
+#define MAXFUEL 400
+
 class Lane {
   public:
 
+    int fuel=MAXFUEL;
     int laneNum = 0;
     unsigned long lastLapTime = 0; //millis(); // Time the last valid detection occurred
     int speed=0;    
@@ -65,7 +68,17 @@ class Lane {
       crossedStart=true; 
       return true;      
     }else{      
-      lapDuration = d.timestamp-prior.timestamp;
+      //subtract "pit" time
+      unsigned int pitTime=d.count/sensors[d.port].ticksPerMs;
+      if(fuelOn){
+        fuel-=speed;
+      }
+      lapDuration = d.timestamp-prior.timestamp - pitTime;
+      if(fuel<0){
+        fuel=0;
+        sprintf(why,"Empty");
+        return false;
+      }
       if(lapDuration<minLapDuration){
         sprintf(why,"%d Hop",lapDuration);
         return false;
@@ -74,7 +87,8 @@ class Lane {
         sprintf(why,"%d Jump",lapDuration);
         return false;
       }
-      if(lapDuration<allBestLapDur || allBestLapDur==0){
+      // if count is maxed out then not elig for best lap
+      if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){
          allBestLapDur=lapDuration; //used for jumped lap detection
       }
       if(lapDuration<bestLapDur || bestLapDur==0) {
@@ -124,6 +138,18 @@ class Lane {
     }
   }
 
+  void gasBanner(){
+    setDevice(laneNum);
+    lcd.setCursor(0,0);//col,row    
+    char buffer[40];
+    char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
+                    // 1234567890123467890
+                     //C0 Lap00 In Pit G99
+    sprintf(buffer,"%c%d Lap%-2d In Pit G%2d%%  "
+                   ,ch,laneNum+1,(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
+    buffer[20]=0; //null terminate
+    lcd.print(buffer);
+  }
 
   void banner(bool lapCounted,char* msg){
     if(!lapCounted) fouls++;
@@ -133,10 +159,10 @@ class Lane {
     char floatBuffer2[10]; // Buffer to hold the formatted float     
     char buffer[40];
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
-                    // 1234567890123467890
-    if(msg[0]==0){   //C0 Lap00 Speed12300
-      sprintf(buffer,"%c%d Lap%-2d Speed%5d   "
-                   ,ch,laneNum+1,(int)lapCounter,(int)speed);
+                    // 12345678901234567890
+    if(msg[0]==0){   //C0 Lap00 Spd123 G23%
+      sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
+                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
     }else{           //01234567890123456789
                      //C0 Lap00 12345678901
       sprintf(buffer,"%c%d Lap%-2d %s         "
@@ -186,7 +212,7 @@ class Lane {
     if( page ==0 ) {
       //01234567890123456789
       //Lap Time  Avg 00000s//
-      //    Best 00000s     //
+      //Best 00000s Gas 00% //
       //Slow 00000s Fouls 00//
       buffer[0]=0;
       if(avgLapDur!=0) {
@@ -195,10 +221,13 @@ class Lane {
       }
       lcd.printRow(1,buffer);
       buffer[0]=0;
+      floatBuffer1[0]=0;
       if(bestLapDur!=0) {
         mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
-        sprintf(buffer,"    Best %ss     ",floatBuffer1);
-      }
+      } 
+      ///////////////
+      sprintf(buffer,"%4s %5s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
+      
       lcd.printRow(2,buffer);
       buffer[0]=0;
       if(worstLapDur!=0){

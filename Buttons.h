@@ -95,7 +95,7 @@ void displayConfig(bool header=true) {
 void displayAllConfig(){
   for(v=0;v<NUMCONFIG;v++){
     displayConfig(false);
-    delay(300);
+    delay(100);
   }
   v=0;
 }
@@ -114,7 +114,16 @@ void saveConfig(){
 
 
 void seeChange(bool inc){
-   if(v==BRIGHTNESS){
+   if(v==DEFAULTS){
+    if(inc){
+       // Read config values from EEPROM
+      for (int i = 0; i < NUMCONFIG; i++) {
+          config[i] = VDEF[i]; // Set to default value 
+      }  
+      displayAllConfig();
+      v=DEFAULTS;
+    }
+   }else  if(v==BRIGHTNESS){
       setColor(YELLOW);
    }else if(v==RESUME){
      if(inc) {
@@ -187,7 +196,7 @@ bool configByButtons() {
 //  if(serialOn) Serial.print("] = ");
 //  if(serialOn) Serial.println(config[v]);
 
-  delay(100); // Loop delay to prevent bouncing issues
+  delay(10); // Loop delay to prevent bouncing issues
   if (v != 0 || requireUpToStart) return true; // Inhibit rest of loop, must select back to config 0 to resume
   return false;
 }

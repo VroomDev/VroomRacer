@@ -241,3 +241,17 @@ void playCarmen() {
     noTone(speakerPin);
   }
 }
+
+
+void dingDing() {
+  // First ding
+  myTone(speakerPin, 1000); // Play a tone at 1000 Hz
+  delay(100);            // Play the tone for 200 milliseconds
+  noTone(speakerPin);     // Stop the tone
+  delay(50);            // Brief pause before the next ding
+
+  // Second ding
+  myTone(speakerPin, 1000); // Play a tone at 1000 Hz
+  delay(50);            // Play the tone for 200 milliseconds
+  noTone(speakerPin);     // Stop the tone
+}

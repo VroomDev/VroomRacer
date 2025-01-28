@@ -17,8 +17,8 @@
 
 
 
-#define NUMCONFIG 9
-uint8_t config[NUMCONFIG]; // Initialize all config bytes to 50
+#define NUMCONFIG 11
+uint8_t config[NUMCONFIG]; 
 const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "- to Exit, + to Save\0",
   "Brightness:         \0",
@@ -28,13 +28,15 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Sound:              \0",
   "Min Lap Dur:        \0",
   "Serial monitor:     \0",
-  "Demo/Diagnostics:   \0"
+  "Demo/Diagnostics:   \0",
+  "Fueling:            \0",
+  "Set to defaults:    \0"
  //01234567890123456789
 };
-typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG} Configs;
+typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG,FUELING,DEFAULTS} Configs;
 
-const uint8_t VMAX[NUMCONFIG]={0,8,99,1,50,1,    254,1,1};
-const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
+const uint8_t VMAX[NUMCONFIG]={0,8,99,1,45,1,    254,1,1,1,1};
+const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,1,0};
 ////////////////////////////END OF CONFIG
 
 #define compYellowOn ((bool)config[COMPYELLOW])
@@ -45,6 +47,8 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,50,1,2500/40,1,0};
 #define serialOn ((bool)config[SERIALMONITOR])
 //#define serialOn true
 #define diagOn ((bool)config[DEMODIAG])
+#define fuelOn ((bool)config[FUELING])
+
 
 const int NUMLANES=2;
 
@@ -128,7 +132,6 @@ volatile bool raceStarted=false;
 
 
 #include "MyTone.h"
-#include "Lane.h"
 
 // Create a Ring Buffer to hold Detection structs
 const uint8_t bufferSize = 16; // Must be a power of 2
@@ -137,6 +140,7 @@ RingBuffer<Detection, bufferSize> ringBuffer;
 
 #include "Sensor.h"
 #include "ISR.h"
+#include "Lane.h"
 
 Lights lights;
 Lane lanes[NUMLANES];
@@ -178,30 +182,33 @@ void waveFlag(RaceFlag which){
 
 void setup() {
   Serial.begin(9600);
-  delay(100);
+  delay(50);
   Serial.println("\n\nStarting");
   if(scanDevices()==0){
     Serial.println("no LCD found");
   }
-  Serial.println("set up buttons...");
+//  Serial.println("set up buttons...");
   setupButtons();
-  Serial.println("set up lanes...");
+//  Serial.println("set up lanes...");
   lanes[0].setup(0);
   lanes[1].setup(1);
-  Serial.println("lights...");
+//  Serial.println("lights...");
   lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
 
-  Serial.println("speaker...");
+//  Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
       
   // set up the LCD's number of columns and rows:
-  Serial.println("lcd...");
+//  Serial.println("lcd...");
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
+  }
+  for(int d=0;d<nDevices;d++){
+    setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250126");  
+    lcd.printRow(0,"VroomRacer v20250127");  
     lcd.printRow(1,"Copyright 2024 by CB");
   }
   setDevice(0);
@@ -231,19 +238,34 @@ Detection d;
 
 bool needReset=false;
 
+bool lcdDark[NUMSENSORS];
+
+void fueling(){
+  if(fuelOn){
+    int s=loopc % NUMSENSORS;
+    if(sensors[s].darkEnough && sensors[s].longEnough){
+      //in the sensor
+      if(lanes[s].fuel<MAXFUEL){
+        if( sensors[s].count>250*sensors[s].ticksPerMs) { //in pit
+            lanes[s].fuel+=MAXFUEL/100+1;
+            if(lanes[s].fuel<MAXFUEL) {
+              playTone(400+s*300+lanes[s].fuel, 1);
+            }else{
+              lanes[s].fuel=MAXFUEL;
+              dingDing();
+            }
+            lanes[s].gasBanner();
+        }
+      }
+    }
+  }
+}
+
+
 void loop(){
   loopc++;
   delay(1);
-  int s=loopc % NUMSENSORS;
-  if(sensors[s].darkEnough && sensors[s].longEnough){
-    //in the sensor
-    if((loopc & 15)<8)  plcds[s]->noBacklight();
-    else plcds[s]->backlight();
-    playTone(400+s*300+sensors[s].count/355, 1);
-  }else if( (loopc & 31)<NUMSENSORS){
-    plcds[s]->backlight();
-  }
-   
+  fueling();
   if(diagOn && (loopc & 63)==0){
     for(int i=0;i<NUMSENSORS;i++){
        p("S#",i);
@@ -385,8 +407,16 @@ void alertGoodLap(int i) {
     alertBadLap(i,lanes[i].why);
     return;
   }
+  p("fuel",lanes[i].fuel);
   pln("GOOD LAP car:",i);
   playTone(400+i*300, 100);
+  if(lanes[i].fuel<MAXFUEL/5){
+    ph("LOW FUEL");
+    delay(50);
+    playTone(400+i*300-100, 50);
+    delay(50);
+    playTone(400+i*300-100, 50);
+  }
   lanes[i].banner(true,"");
   nextPageFlip=millis()+2000;
   if(lanes[i].lapCounter==raceLength/2 && compYellowStart==0){ //
