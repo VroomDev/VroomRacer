@@ -15,6 +15,8 @@ void myTone(int pin,unsigned int frequency){
   }
   
 }
+
+// nonblocking tone
 void myTone(int pin,unsigned int frequency,unsigned long duration){
   if(sound) tone(pin,frequency,duration);
 }

@@ -29,14 +29,14 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Min Lap Dur:        \0",
   "Serial monitor:     \0",
   "Demo/Diagnostics:   \0",
-  "Fueling:            \0",
+  "Fuel tank(0=off):   \0",
   "Set to defaults:    \0"
  //01234567890123456789
 };
 typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG,FUELING,DEFAULTS} Configs;
 
-const uint8_t VMAX[NUMCONFIG]={0,8,99,1,45,1,    254,1,1,1,1};
-const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,1,0};
+const uint8_t VMAX[NUMCONFIG]={0,8,99,1,45,1,    254,1,1,254,1}; //max vmax is 254
+const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,  8,0};
 ////////////////////////////END OF CONFIG
 
 #define compYellowOn ((bool)config[COMPYELLOW])
@@ -47,7 +47,8 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,1,0};
 #define serialOn ((bool)config[SERIALMONITOR])
 //#define serialOn true
 #define diagOn ((bool)config[DEMODIAG])
-#define fuelOn ((bool)config[FUELING])
+#define fuelOn ((bool)config[FUELING]>0)
+#define MAXFUEL ((int)config[FUELING]*64)
 
 
 const int NUMLANES=2;
@@ -249,7 +250,7 @@ void fueling(){
         if( sensors[s].count>250*sensors[s].ticksPerMs) { //in pit
             lanes[s].fuel+=MAXFUEL/100+1;
             if(lanes[s].fuel<MAXFUEL) {
-              playTone(400+s*300+lanes[s].fuel, 1);
+              playTone(400+s*300+lanes[s].fuel, 1); //was playTone ,1
             }else{
               lanes[s].fuel=MAXFUEL;
               dingDing();
@@ -290,6 +291,9 @@ void loop(){
       lcd.setCursor(0,2);
       ///////////01234567890123456789        
       lcd.print("   Get ready.       ");
+      for(int i=0;i<NUMLANES;i++){
+        lanes[i].fuel=MAXFUEL;
+      }
       playF1StartSound1();      
       ISR::calcThresholds();
       auto chk=checkSensors();

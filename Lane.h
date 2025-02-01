@@ -9,7 +9,6 @@
 #define PAGECOUNT 2
 unsigned int tock=0;
 
-#define MAXFUEL 400
 
 class Lane {
   public:
@@ -62,6 +61,7 @@ class Lane {
     //LAP DETECTED
     lastLapTime = d.timestamp;
     if(prior.isEmpty()){
+      fuel=MAXFUEL;
       initialTime=d.timestamp;
       prior=d;
       lapDuration=0; //race started crossed finish for first time   
@@ -74,7 +74,7 @@ class Lane {
         fuel-=speed;
       }
       lapDuration = d.timestamp-prior.timestamp - pitTime;
-      if(fuel<0){
+      if(fuelOn && fuel<0){
         fuel=0;
         sprintf(why,"Empty");
         return false;
@@ -161,8 +161,13 @@ class Lane {
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
                     // 12345678901234567890
     if(msg[0]==0){   //C0 Lap00 Spd123 G23%
-      sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
+      if(fuelOn){
+        sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
                    ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
+      }else{
+        sprintf(buffer,"%c%d Lap%-2d Spd%3d         "
+                   ,ch,laneNum+1,(int)lapCounter,(int)speed);
+      }
     }else{           //01234567890123456789
                      //C0 Lap00 12345678901
       sprintf(buffer,"%c%d Lap%-2d %s         "
@@ -226,8 +231,11 @@ class Lane {
         mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
       } 
       ///////////////
-      sprintf(buffer,"%4s %5s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
-      
+      if(fuelOn){
+        sprintf(buffer,"%4s %5s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
+      }else{
+        sprintf(buffer,"%4s %5s%c          ",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s');
+      }
       lcd.printRow(2,buffer);
       buffer[0]=0;
       if(worstLapDur!=0){
