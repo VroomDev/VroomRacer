@@ -527,6 +527,9 @@
         <mxCell id="Iguv0Rym8qk7PCE48m6h-197" value="Make one per lane" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2" vertex="1" parent="1">
           <mxGeometry x="1140" y="189" width="60" height="30" as="geometry" />
         </mxCell>
+        <mxCell id="Iguv0Rym8qk7PCE48m6h-198" value="The mega has SDA, SDA1 and SLA and SLA1&lt;div&gt;so no need to solder to common pins.&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="684" y="450" width="276" height="30" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
