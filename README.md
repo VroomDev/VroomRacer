@@ -152,15 +152,12 @@ Example of installed photo sensor in the track. This was glued with JBWeld, but 
 
 # Wiring
 
-<div style="background-color: white; padding: 5px; display: inline-block;">
-  <img src="./circuit.png" />
-</div>
+<img src="./circuit.png" style="background: white;" bgcolor=white />
+
 
 There are relatively few connections and many grounds and +5v pins to choose from on an Arduino mega. So a wiring loom is a possibility.
 
-<div style="background-color: white; padding: 5px; display: inline-block;">
-  <img src="./wiringloom.png"/>
-</div>
+<img src="./wiringlooms.png" style="background: white;" bgcolor=white />
 
 # Enclosure
 
