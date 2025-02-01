@@ -152,9 +152,15 @@ Example of installed photo sensor in the track. This was glued with JBWeld, but 
 
 # Wiring
 
-![wiring](./circuit.png)
+<div style="background-color: white; padding: 5px; display: inline-block;">
+  <img src="./circuit.png" />
+</div>
 
+There are relatively few connections and many grounds and +5v pins to choose from on an Arduino mega. So a wiring loom is a possibility.
 
+<div style="background-color: white; padding: 5px; display: inline-block;">
+  <img src="./wiringloom.png"/>
+</div>
 
 # Enclosure
 
@@ -168,7 +174,9 @@ I built mine out of thin hobby plywood that can be cut with a utility knife. To 
 
 # ERD
 
-![code](./ERD.png)
+<div style="background-color: white; padding: 5px; display: inline-block;">
+  <img src="./ERD.png"/>
+</div>
 
 
 
