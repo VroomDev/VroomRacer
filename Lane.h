@@ -70,14 +70,15 @@ class Lane {
     }else{      
       //subtract "pit" time
       unsigned int pitTime=d.count/sensors[d.port].ticksPerMs;
-      if(fuelOn){
-        fuel-=speed;
-      }
       lapDuration = d.timestamp-prior.timestamp - pitTime;
-      if(fuelOn && fuel<0){
+      if(fuelOn && fuel<=0 && speed>0){ //if speed is zero, then got at least a splash of gas
         fuel=0;
         sprintf(why,"Empty");
         return false;
+      }
+      if(fuelOn){
+        fuel-=speed;
+        if(fuel<0) fuel=0;
       }
       if(lapDuration<minLapDuration){
         sprintf(why,"%d Hop",lapDuration);
@@ -145,14 +146,24 @@ class Lane {
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
                     // 1234567890123467890
                      //C0 Lap00 In Pit G99
+                     
     sprintf(buffer,"%c%d Lap%-2d In Pit G%2d%%  "
                    ,ch,laneNum+1,(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
     buffer[20]=0; //null terminate
     lcd.print(buffer);
+                             // 1234567890123467890
+    if(fuel<=0) sprintf(buffer,"EMPTY GAS TANK!    ");
+    else{
+      int level=(int)((long)fuel*19/MAXFUEL);
+      for(int i=0;i<20;i++){
+         buffer[i]= i<=level? 255 : '-';
+      }
+    }
+    buffer[20]=0; //null terminate
+    lcd.printRow(1,buffer);
   }
 
-  void banner(bool lapCounted,char* msg){
-    if(!lapCounted) fouls++;
+  void banner(bool lapCounted,char* msg,byte page=0){
     setDevice(laneNum);
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
@@ -175,10 +186,21 @@ class Lane {
     }
     buffer[20]=0; //null terminate
     lcd.print(buffer);
-    if(lapCounted && (lapCounter>0) ){    
-      lcd.printMillisAsSeconds(lapDuration);
+    if(page==2){
+        if(fuelOn){
+          sprintf(buffer,"%2dLAPS%2d%%",(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
+        }else{
+          sprintf(buffer,"%2dLAPS    ",(int)lapCounter);
+        }
+        lcd.printBigString(buffer);
+    }else if(page==1){
+        lcd.printSpeed(speed); //page1    
     }else{
-      lcd.printSpeed(speed);
+      if(lapCounted && (lapCounter>0) ){    
+        lcd.printMillisAsSeconds(lapDuration); //page0
+      }else{
+        lcd.printSpeed(speed); //page1
+      }
     }
   }
 
