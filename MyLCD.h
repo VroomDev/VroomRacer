@@ -275,6 +275,32 @@ class MyLCD {
     curLcd->write(extra=='.' || extra==':' ?DOTCHAR:' ');
   }
 
+  void printBigString(char* msg,int col=0,int row=1){
+    bool needpad=false;
+    for(int i=0;msg[i]!=0 && col<20 && row<4;i++){
+      char c=msg[i];
+      if(c>='0' && c<='9'){
+         if(needpad) col++;
+         printBigDigit(c-'0',col,row);
+         col+=3;
+         needpad=true;
+      }else if(c==' '){
+        if(needpad) col++;
+         eraseBigDigit(col,row);
+         col+=3;
+         needpad=true;
+      }else{
+        setCursor(col,row);
+        print((c=='|' | c==':') ? c : ' ');
+        setCursor(col,row+1);
+        print((c=='|' | c==':') ? c : ' ');
+        setCursor(col,row+2);
+        print(c);
+        col++;
+      }
+    }
+  }
+
   void printBigNumber(unsigned int num,int col=19-3,int row=1){
     while(col>=0){
       if(col==19-3 || num!=0){
