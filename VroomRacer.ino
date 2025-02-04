@@ -209,7 +209,7 @@ void setup() {
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250127");  
+    lcd.printRow(0,"VroomRacer v20250204");  
     lcd.printRow(1,"Copyright 2024 by CB");
   }
   setDevice(0);
@@ -234,6 +234,7 @@ int loopc=0;
 
 int curPage=0;
 long nextPageFlip=0;
+bool bannerFlip=false;
 unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 
@@ -248,14 +249,15 @@ void fueling(){
       //in the sensor
       if(lanes[s].fuel<MAXFUEL){
         if( sensors[s].count>250*sensors[s].ticksPerMs) { //in pit
-            lanes[s].fuel+=MAXFUEL/100+1;
+            lanes[s].fuel+=MAXFUEL/20+1;
             if(lanes[s].fuel<MAXFUEL) {
-              playTone(400+s*300+lanes[s].fuel, 1); //was playTone ,1
+              playTone(400+s*300+lanes[s].fuel, 2); //was playTone ,1
             }else{
               lanes[s].fuel=MAXFUEL;
               dingDing();
             }
             lanes[s].gasBanner();
+            nextPageFlip=millis()+500;
         }
       }
     }
@@ -422,7 +424,8 @@ void alertGoodLap(int i) {
     playTone(400+i*300-100, 50);
   }
   lanes[i].banner(true,"");
-  nextPageFlip=millis()+2000;
+  nextPageFlip=millis()+FLIPTIME/2;
+  bannerFlip=true;
   if(lanes[i].lapCounter==raceLength/2 && compYellowStart==0){ //
         compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4 seconds random amount
         compYellowStop=compYellowStart+lanes[i].avgLapDur; //make it last for 1 typical lap
@@ -447,8 +450,10 @@ void alertGoodLap(int i) {
 
 void alertBadLap(int i,char* msg){ //,Detection& d){
   nextPageFlip=millis()+FLIPTIME/2;
+  bannerFlip=true;
   p("BAD LAP car:",i);
   pln("msg:",msg);
+  lanes[i].fouls++;
   lanes[i].banner(false,msg);
   for(int t=0;t<90;t+=10){
     playTone(400+i*300-t, 20);
@@ -462,14 +467,22 @@ void updateLCD(){
   static uint8_t flipper=0;
   if(millis()>nextPageFlip){
     nextPageFlip=millis()+FLIPTIME;
-    if(nDevices==1){
-      lanes[++flipper % NUMLANES].display(curPage,raceFlag);
+    if(bannerFlip && nDevices>1){ //force showing laps
+      bannerFlip=false;
+      for(int i=0;i<NUMLANES;i++){
+         setDevice(i % nDevices);
+         lanes[i].banner(true,"",2);
+      }
     }else{
-        for(int i=0;i<NUMLANES;i++){
-           setDevice(i % nDevices);
-           lanes[i].display(curPage,raceFlag);
-        }
+      if(nDevices==1){
+        lanes[++flipper % NUMLANES].display(curPage,raceFlag);
+      }else{
+          for(int i=0;i<NUMLANES;i++){
+             setDevice(i % nDevices);
+             lanes[i].display(curPage,raceFlag);
+          }
+      }
+      curPage = ++curPage>=PAGECOUNT ? 0:curPage;
     }
-    curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }
 }
