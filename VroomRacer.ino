@@ -17,29 +17,40 @@
 
 
 
-#define NUMCONFIG 11
+//#define NUMCONFIG 12
+typedef enum : uint8_t {RESUME,BANKMODE,BRIGHTNESS,SOUND,RACELEN,FUELING,REDYELLOWMODE,SPEEDLIMIT,MINLAPDUR,SERIALMONITOR,DEMODIAG,DEFAULTS,NUMCONFIG} Configs;
+
 uint8_t config[NUMCONFIG]; 
 const char VLABELS[NUMCONFIG][22] PROGMEM =  {
-  "- to Exit, + to Save\0",
-  "Brightness:         \0",
-  "Race length:        \0",
-  "Comp yellows:       \0",
-  "Yellow Spd limit:   \0",
-  "Sound:              \0",
-  "Min Lap Dur:        \0",
-  "Serial monitor:     \0",
-  "Demo/Diagnostics:   \0",
-  "Fuel tank(0=off):   \0",
-  "Set to defaults:    \0"
+  "- to Exit, + to Save\0", //
+  "Boot up mode:       \0",
+  "Brightness:         \0", //
+  "Sound:              \0", //
+  "Race length:        \0", //
+  "Fuel tank(0=off):   \0", //
+  "Red/Yellow Flags:   \0", //
+  "Yellow Spd limit:   \0", //
+  "Min Lap Dur:        \0", //
+  "Serial monitor:     \0", //
+  "Demo/Diagnostics:   \0", //
+  "Set to defaults?    \0", //
  //01234567890123456789
 };
-typedef enum : uint8_t {RESUME,BRIGHTNESS,RACELEN,COMPYELLOW,SPEEDLIMIT,SOUND,MINLAPDUR,SERIALMONITOR,DEMODIAG,FUELING,DEFAULTS} Configs;
-
-const uint8_t VMAX[NUMCONFIG]={0,8,99,1,45,1,    254,1,1,254,1}; //max vmax is 254
-const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,  8,0};
+#define NUMBANKS 3
+const char* BANKNAMES[NUMBANKS]={"Fuel","Fast","Tune"};
+#define BANKSIZE 128
+uint8_t curBank=0; 
+///////////////////////////////resume, mode, bright, sound, laps, fuel, flags, limit, minlapdur, sermon, demo, defaults
+const uint8_t VMAX[NUMCONFIG]={ 0,       2,    8,       1,   99,   254,   2,    254,   254,      1,      1,    0  }; //max vmax is 254
+const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
+   //R Mode Br snd laps  fuel ryf limit  mLDur   Mon DD  Def 
+    {0,0,   8, 1,   10,   8,   1, 45,  2500/40,  1,  0,   0}, //FUEL MODE
+    {0,0,   8, 1,   10,   0,   1, 45,  2500/40,  1,  0,   0}, //Fast MODE
+    {0,0,   8, 0,   99,   0,   0, 254,  2500/40, 1,  0,   0}, //TUNE MODE
+};
 ////////////////////////////END OF CONFIG
 
-#define compYellowOn ((bool)config[COMPYELLOW])
+#define compYellowOn ((bool)config[REDYELLOWMODE]>1)
 #define pitLaneSpeedLimit ((int)config[SPEEDLIMIT])
 #define brightness ((int)config[BRIGHTNESS])
 #define sound ((bool)config[SOUND])
@@ -49,7 +60,7 @@ const uint8_t VDEF[NUMCONFIG]={0,8,10,0,45,1,2500/40,1,0,  8,0};
 #define diagOn ((bool)config[DEMODIAG])
 #define fuelOn ((bool)config[FUELING]>0)
 #define MAXFUEL ((int)config[FUELING]*64)
-
+#define redYellowOn ((bool)config[REDYELLOWMODE]>0)
 
 const int NUMLANES=2;
 
@@ -188,32 +199,37 @@ void setup() {
   if(scanDevices()==0){
     Serial.println("no LCD found");
   }
-//  Serial.println("set up buttons...");
-  setupButtons();
-//  Serial.println("set up lanes...");
-  lanes[0].setup(0);
-  lanes[1].setup(1);
-//  Serial.println("lights...");
-  lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
-
-//  Serial.println("speaker...");
-  pinMode(speakerPin, OUTPUT);
-  noTone(speakerPin);
-      
   // set up the LCD's number of columns and rows:
-//  Serial.println("lcd...");
+  //  Serial.println("lcd...");
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
   }
+  //  Serial.println("speaker...");
+  pinMode(speakerPin, OUTPUT);
+  noTone(speakerPin);
+
+  //  Serial.println("set up buttons...");
+  setupButtons();
+  
+  //  Serial.println("set up lanes...");
+  lanes[0].setup(0);
+  lanes[1].setup(1); 
+  //  Serial.println("lights...");
+  lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
+
+      
+  
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250204");  
+    lcd.printRow(0,"VroomRacer v20250207");  
     lcd.printRow(1,"Copyright 2024 by CB");
+    lcd.setCursor(0,2);
+    lcd.print(BANKNAMES[curBank]);
+    lcd.print(" Mode");
   }
   setDevice(0);
-  displayAllConfig();
   ////////////
   ISR::setup();
   ////////////
@@ -349,7 +365,7 @@ void loop(){
   if((loopc&127)==0){ //STEWARDS
     //check for yellows
     bool anyYellow=false,anyRed=false;    
-    if(!won){
+    if(!won && redYellowOn){
       // if we are in a red flag situation, stay red.  Otherwise check to see if in comp yellow period.
       if(compYellowOn && raceFlag!=REDFLAG && millis()>compYellowStart && millis()<compYellowStop){
         if(raceFlag!=YELLOWFLAG){
