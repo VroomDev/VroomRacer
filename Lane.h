@@ -190,7 +190,7 @@ class Lane {
         if(fuelOn){
           sprintf(buffer,"%2dLAPS%2d%%",(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
         }else{
-          sprintf(buffer,"%2dLAPS    ",(int)lapCounter);
+          sprintf(buffer,"%2dLAPS  ",(int)lapCounter);
         }
         lcd.printBigString(buffer);
     }else if(page==1){
