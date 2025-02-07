@@ -9,16 +9,12 @@
 #define BUTTON_UP 52
 
 
-#define BSELECT 1
-#define BDOWN 2
-#define BUP 3
+//#define BSELECT 1
+#define BDOWN 1
+#define BUP 2
 
-int readButtons() {
-  int flags=0;
-  if (digitalRead(BUTTON_SELECT) == LOW) {
-    if(serialOn) Serial.println("Select");
-    flags |= BSELECT;
-  }
+uint8_t readButtons() {
+  uint8_t flags=0;
   if (digitalRead(BUTTON_DOWN) == LOW) {
     if(serialOn) Serial.println("Down");
     flags |= BDOWN;
@@ -31,26 +27,67 @@ int readButtons() {
 }
 
 
-uint8_t v = 0;
+uint8_t v = 0; //current configuration setting
 
 
 bool requireUpToStart = false;
 
-void setupButtons() {
+/** returns eeprom mem location */
+int getMemLocation(int v){
+  return (v==BANKMODE ? 0 : BANKSIZE*curBank)+v;
+}
 
+void loadConfig(){
+  // Read config values from EEPROM
+  for (int i = 0; i < NUMCONFIG; i++) {
+    config[i] = EEPROM.read(getMemLocation(i));
+    if (config[i] == 255 || config[i] > VMAX[i] || config[i] < 0) {
+      config[i] = VDEF[curBank][i]; // Set to default value if EEPROM value is invalid
+    }
+  }
+}
+
+void saveConfig(int which=-1){
+  byte saved=0;
+  for(int v=0;v<NUMCONFIG;v++){
+    if(which==-1 || v==which){
+      // Save to EEPROM if the current configuration value has changed
+      if (EEPROM.read(getMemLocation(v)) != config[v]) {
+         ph("Writing to eeprom");
+         p("v",v);
+         pln("conf",config[v]);
+         EEPROM.write(getMemLocation(v), config[v]);
+         saved++;
+      }
+    }
+  }
+  ///////////////012345678901234567890
+  if(saved>1){
+    lcd.printRow(3,"Saved changes...");
+    delay(250);
+  }else if(saved>0){
+    ///////////////012345678901234567890
+    lcd.printRow(3,"Saved change.");
+    delay(250);
+  }
+  
+}
+
+
+
+void setupButtons() {
   pinMode(BUTTON_SELECT, INPUT_PULLUP);
   pinMode(BUTTON_UP, INPUT_PULLUP);
   pinMode(BUTTON_DOWN, INPUT_PULLUP);
-
-  // Read config values from EEPROM
-  for (int i = 0; i < NUMCONFIG; i++) {
-    config[i] = EEPROM.read(i);
-    if (config[i] == 255 || config[i] > VMAX[i] || config[i] < 0) {
-      config[i] = VDEF[i]; // Set to default value if EEPROM value is invalid
-      EEPROM.write(i, config[i]); // Write the default value to EEPROM
-    }
+  delay(1);
+  loadConfig();
+  byte r=readButtons(); //returns 0 to 3
+  if(r){
+    curBank=r-1; //sets 1 to 2
+  }else{
+    curBank=config[BANKMODE];
   }
-  
+  loadConfig(); //reload due to bankmode change
 }
 
 bool selectButton() {
@@ -80,11 +117,16 @@ void displayConfig(bool header=true) {
   lcd.print(label);
   if (v != 0) {
     lcd.setCursor(17, 3);
-    if(v==MINLAPDUR){
+    if(v==BANKMODE){
+      lcd.setCursor(15, 3);
+      lcd.print(BANKNAMES[config[v]]);
+    }else if(v==MINLAPDUR){
       lcd.setCursor(15, 3);
       lcd.print(config[v]*40);
     }else if(VMAX[v]==1){
       lcd.print(config[v]?"On":"Off");
+    }else if(VMAX[v]==0){
+      //nop
     }else lcd.print(config[v]);
   }
   ph("displayConfig");
@@ -93,32 +135,28 @@ void displayConfig(bool header=true) {
 }
 
 void displayAllConfig(){
+  char buf[40];
+             //01234567890123456789
+  sprintf(buf,"%s Mode",BANKNAMES[curBank]);
+  lcd.printRow(0,buf);
   for(v=0;v<NUMCONFIG;v++){
     displayConfig(false);
-    delay(100);
+    delay(200);
   }
   v=0;
 }
 
-void saveConfig(){
-  for(int v=0;v<NUMCONFIG;v++){
-    // Save to EEPROM if the current configuration value has changed
-    if (EEPROM.read(v) != config[v]) {
-       ph("Writing to eeprom");
-       p("v",v);
-       pln("conf",config[v]);
-       EEPROM.write(v, config[v]);
-    }
-  }
-}
+
 
 
 void seeChange(bool inc){
    if(v==DEFAULTS){
     if(inc){
+      lcd.printRow(0,"Set to defaults...");
+      delay(50);
        // Read config values from EEPROM
       for (int i = 0; i < NUMCONFIG; i++) {
-          config[i] = VDEF[i]; // Set to default value 
+          config[i] = VDEF[curBank][i]; // Set to default value 
       }  
       displayAllConfig();
       v=DEFAULTS;
@@ -128,10 +166,8 @@ void seeChange(bool inc){
    }else if(v==RESUME){
      if(inc) {
       saveConfig();
-      ///////////////012345678901234567890
-      lcd.print(0,3,"Saved changes...    ");
      }else{
-      lcd.print(0,3,"Temporary changes...");
+      lcd.printRow(3,"Temporary changes...");
      }
      delay(300);
    }else if(v==SOUND){
@@ -166,8 +202,13 @@ void seeChange(bool inc){
 }
 
 
+bool selectPressed=false;
+
 bool configByButtons() {
   if (selectButton()) {
+    if(v==BANKMODE){
+      saveConfig(v);
+    }
     v++; // Increment the selection index
     if (v >= NUMCONFIG) v = 0; // Reset to 0 if it exceeds the number of config variables
     displayConfig(); // Update display with new selection
@@ -175,13 +216,14 @@ bool configByButtons() {
     delay(300); // Debounce delay
     if (v == 0) requireUpToStart = true;
     else requireUpToStart = false;
-  } else if (upButton()) {
+    selectPressed=true;
+  } else if (upButton() && selectPressed) {
     requireUpToStart = false;
     if (++config[v] > VMAX[v]) config[v] = VMAX[v];
     seeChange(true);
     delay(100); // Debounce delay
     displayConfig(); // Update display with new value
-  } else if (downButton()) {
+  } else if (downButton()&& selectPressed) {
     requireUpToStart = false;
     if(config[v]>0) config[v]--;
     if (config[v] < 0) config[v] = 0;
@@ -198,5 +240,9 @@ bool configByButtons() {
 
   delay(10); // Loop delay to prevent bouncing issues
   if (v != 0 || requireUpToStart) return true; // Inhibit rest of loop, must select back to config 0 to resume
+  selectPressed=false;
   return false;
 }
+
+
+//eof
