@@ -232,6 +232,7 @@ class MyLCD {
 //  }
 
 
+  //fills the entire line
   void printRow(int r,const char* msg){
     char buffer[40]="";
     sprintf(buffer,"%-20s",msg);
