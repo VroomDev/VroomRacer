@@ -106,11 +106,13 @@ bool downButton() {
 
 void displayConfig(bool header=true) {
   setDevice(0);
-  lcd.setCursor(0, 2);
   ///////////CONFIGURATION
   ///////////01234567890123456789
-  if(header) lcd.print("Configuration mode: ");
-  char label[22]; 
+  char label[22];
+  if(header) {
+    sprintf(label,"Config %s mode:",BANKNAMES[curBank]);
+    lcd.printRow(2,label);
+  }
   strncpy_P(label, VLABELS[v], sizeof(label) - 1); 
   label[20] = '\0'; //null term
   lcd.setCursor(0, 3);
