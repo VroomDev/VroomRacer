@@ -48,7 +48,6 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
     {0,0,   8, 1,   10,   0,   1, 45,  2500/40,  1,  0,   0}, //Fast MODE
     {0,0,   8, 0,   99,   0,   0, 254,  2500/40, 1,  0,   0}, //TUNE MODE
 };
-////////////////////////////END OF CONFIG
 
 #define compYellowOn ((bool)config[REDYELLOWMODE]>1)
 #define pitLaneSpeedLimit ((int)config[SPEEDLIMIT])
@@ -61,6 +60,9 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
 #define fuelOn ((bool)config[FUELING]>0)
 #define MAXFUEL ((int)config[FUELING]*64)
 #define redYellowOn ((bool)config[REDYELLOWMODE]>0)
+#define raceLength ((int)config[RACELEN])
+
+////////////////////////////END OF CONFIG
 
 const int NUMLANES=2;
 
@@ -134,7 +136,6 @@ MyLCD lcd;
 volatile int winner=-1;
 volatile bool won=false;
 
-int raceLength=10;
 unsigned long raceStart=0;
 
 volatile bool raceStarted=false;
@@ -152,6 +153,7 @@ RingBuffer<Detection, bufferSize> ringBuffer;
 
 #include "Sensor.h"
 #include "ISR.h"
+#include "Lap.h"
 #include "Lane.h"
 
 Lights lights;
@@ -200,7 +202,6 @@ void setup() {
     Serial.println("no LCD found");
   }
   // set up the LCD's number of columns and rows:
-  //  Serial.println("lcd...");
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     lcd.begin(16, 2);
@@ -217,13 +218,11 @@ void setup() {
   lanes[1].setup(1); 
   //  Serial.println("lights...");
   lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
-
-      
-  
+  //setting up display
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250207");  
+    lcd.printRow(0,"VroomRacer v20250214");  
     lcd.printRow(1,"Copyright 2024 by CB");
     lcd.setCursor(0,2);
     lcd.print(BANKNAMES[curBank]);
@@ -246,7 +245,6 @@ int loopc=0;
 //10:40:29.574 -> Detection:port:1,value:652,count:17432,timestamp:22000
 //10:40:29.620 -> S#:1,mph:0.15,Sensor:acc:872,lastLapTime:22000,minAcc:866,maxAcc:873,count:0,initialThreshold:652,mainThreshold:435,ticks per ms:18,n:65535
 // 2500*18/17432=2.58 inches/second
-
 
 int curPage=0;
 long nextPageFlip=0;

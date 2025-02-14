@@ -5,13 +5,16 @@
  * No guarantees of being fit for purpose.
  */
 #include <Arduino.h> 
-//const int minLapDuration = 2500;
-#define PAGECOUNT 2
+#define PAGECOUNT 3
 unsigned int tock=0;
 
+const uint8_t lapBufSize = 8; // Must be a power of 2
 
 class Lane {
   public:
+    
+    RingBuffer<Lap, lapBufSize> laps;
+
 
     int fuel=MAXFUEL;
     int laneNum = 0;
@@ -71,9 +74,12 @@ class Lane {
       //subtract "pit" time
       unsigned int pitTime=d.count/sensors[d.port].ticksPerMs;
       lapDuration = d.timestamp-prior.timestamp - pitTime;
+      Lap lap;
+      lap.duration=lapDuration;
       if(fuelOn && fuel<=0 && speed>0){ //if speed is zero, then got at least a splash of gas
         fuel=0;
         sprintf(why,"Empty");
+        laps.pushAlways(lap);
         return false;
       }
       if(fuelOn){
@@ -82,10 +88,12 @@ class Lane {
       }
       if(lapDuration<minLapDuration){
         sprintf(why,"%d Hop",lapDuration);
+        laps.pushAlways(lap);
         return false;
       }else if(allBestLapDur!=0 && lapDuration<allBestLapDur*6/10){
         //jumped car, since better than anyone by too large of a margin
         sprintf(why,"%d Jump",lapDuration);
+        laps.pushAlways(lap);
         return false;
       }
       // if count is maxed out then not elig for best lap
@@ -98,6 +106,7 @@ class Lane {
         worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
       }
       lapCounter++; 
+      lap.lap=lapCounter;
       totalDuration+=lapDuration;      
       avgLapDur = totalDuration/lapCounter;
       //lap counter is now the number of completed laps
@@ -117,6 +126,7 @@ class Lane {
         if(serialOn) Serial.print(buffer); 
       }
       prior=d;
+      laps.pushAlways(lap);
       return true;
     }
   }
@@ -236,7 +246,22 @@ class Lane {
       Serial.print("\n");     
     }
 
-    if( page ==0 ) {
+    if( page==2 ) { 
+      //print out recent lap times
+      byte offset=0;
+      for(int row=1;row<=3;row++){
+        buffer[0]=0;
+        Lap lap1;
+        laps.top(lap1,offset++);
+        mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
+        Lap lap2;
+        laps.top(lap2,offset++);
+        mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
+        sprintf(buffer,"%2d %6ss %2d %6ss",lap1.lap,floatBuffer1,lap2.lap,floatBuffer2);
+        lcd.printRow(row,buffer);
+      }           
+      delay(1000);
+    }else if( page ==0 ) {
       //01234567890123456789
       //Lap Time  Avg 00000s//
       //Best 00000s Gas 00% //

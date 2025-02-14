@@ -73,9 +73,10 @@ public:
    * @param item The variable to store the peeked item.
    * @return true if the item was successfully peeked, false if the index is out of range.
    */
-  bool top(uint8_t index, T& item) const {
+  bool top(T& item,uint8_t index=0) const {
     noInterrupts();
     if (index >= count) {
+      interrupts();
       return false; // Index out of range
     }
     uint8_t pos = (head + Size - 1 - index) & (Size - 1); // Calculate the position
@@ -94,15 +95,18 @@ public:
    * @param item The variable to store the peeked item.
    * @return true if the item was successfully peeked, false if the buffer is empty.
    */
-  bool peek(T& item) const {
-    if (isEmpty()) {
-      return false; // Buffer is empty
-    }
+  bool peek(T& item, uint8_t offset = 0) const {
     noInterrupts();
-    item = buffer[tail]; // Peek at the item at the tail without modifying the buffer
+    if (isEmpty() || offset >= count) {
+      interrupts();
+      return false; // Buffer is empty or offset is too large
+    }
+    uint8_t pos = (tail + offset) & (Size - 1); // Calculate the position with offset
+    item = buffer[pos]; // Peek at the item at the calculated position
     interrupts();
     return true;
   }
+
   
 private:
   T buffer[Size];
