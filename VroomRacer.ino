@@ -13,9 +13,12 @@
  */
 
 
+//idea for laptime based fuel: minLapDuration*128/lapDuration
+
 //////////////////////////// CONFIG VALUES
 
-
+#define FUELSTEP 64
+#define MINLAPDURSTEP 64
 
 //#define NUMCONFIG 12
 typedef enum : uint8_t {RESUME,BANKMODE,BRIGHTNESS,SOUND,RACELEN,FUELING,REDYELLOWMODE,SPEEDLIMIT,MINLAPDUR,SERIALMONITOR,DEMODIAG,DEFAULTS,NUMCONFIG} Configs;
@@ -27,13 +30,13 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Brightness:         \0", //
   "Sound:              \0", //
   "Race length:        \0", //
-  "Fuel tank(0=off):   \0", //
+  "Fuel(0=off):        \0", //
   "Red/Yellow Flags:   \0", //
   "Yellow Spd limit:   \0", //
   "Min Lap Dur:        \0", //
   "Serial monitor:     \0", //
   "Demo/Diagnostics:   \0", //
-  "Set to defaults?    \0", //
+  "Revert defaults?    \0", //
  //01234567890123456789
 };
 #define NUMBANKS 3
@@ -43,22 +46,22 @@ uint8_t curBank=0;
 ///////////////////////////////resume, mode, bright, sound, laps, fuel, flags, limit, minlapdur, sermon, demo, defaults
 const uint8_t VMAX[NUMCONFIG]={ 0,       2,    8,       1,   99,   254,   2,    254,   254,      1,      1,    0  }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
-   //R Mode Br snd laps  fuel ryf limit  mLDur   Mon DD  Def 
-    {0,0,   8, 1,   10,   8,   1, 45,  2500/40,  1,  0,   0}, //FUEL MODE
-    {0,0,   8, 1,   10,   0,   1, 45,  2500/40,  1,  0,   0}, //Fast MODE
-    {0,0,   8, 0,   99,   0,   0, 254,  2500/40, 1,  0,   0}, //TUNE MODE
+   //R Mode Br snd laps  fuel ryf limit  mLDur             Mon  DD  Def 
+    {0,0,   8, 1,   10,   8,   1, 45,   2500/MINLAPDURSTEP,  1,  0,   0}, //FUEL MODE
+    {0,0,   8, 1,   10,   0,   1, 45,   2500/MINLAPDURSTEP,  1,  0,   0}, //Fast MODE
+    {0,0,   8, 0,   99,   0,   0, 254,  2500/MINLAPDURSTEP,  1,  0,   0}, //TUNE MODE
 };
 
 #define compYellowOn ((bool)config[REDYELLOWMODE]>1)
 #define pitLaneSpeedLimit ((int)config[SPEEDLIMIT])
 #define brightness ((int)config[BRIGHTNESS])
 #define sound ((bool)config[SOUND])
-#define minLapDuration ((int)config[MINLAPDUR]*40)
+#define minLapDuration ((int)config[MINLAPDUR]*MINLAPDURSTEP)
 #define serialOn ((bool)config[SERIALMONITOR])
 //#define serialOn true
 #define diagOn ((bool)config[DEMODIAG])
 #define fuelOn ((bool)config[FUELING]>0)
-#define MAXFUEL ((int)config[FUELING]*64)
+#define MAXFUEL ((int)config[FUELING]*FUELSTEP)
 #define redYellowOn ((bool)config[REDYELLOWMODE]>0)
 #define raceLength ((int)config[RACELEN])
 
@@ -222,7 +225,7 @@ void setup() {
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250214");  
+    lcd.printRow(0,"VroomRacer v20250215");  
     lcd.printRow(1,"Copyright 2024 by CB");
     lcd.setCursor(0,2);
     lcd.print(BANKNAMES[curBank]);

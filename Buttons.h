@@ -124,7 +124,10 @@ void displayConfig(bool header=true) {
       lcd.print(BANKNAMES[config[v]]);
     }else if(v==MINLAPDUR){
       lcd.setCursor(15, 3);
-      lcd.print(config[v]*40);
+      lcd.print(config[v]*MINLAPDURSTEP);
+    }else if(v==FUELING){
+      lcd.setCursor(15, 3);
+      lcd.print(config[v]*MINLAPDURSTEP);  
     }else if(VMAX[v]==1){
       lcd.print(config[v]?"On":"Off");
     }else if(VMAX[v]==0){
