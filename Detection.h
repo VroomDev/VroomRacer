@@ -21,6 +21,17 @@ class Detection {
 
   Detection() : port(0), value(0), count(0), timestamp(0) {}
 
+  void set(uint8_t p,unsigned int v = 0,unsigned int c=0, unsigned long t = 0) {
+     port=p; value=v; count=c; timestamp=t;
+  }
+
+  void reset(){
+    port=0;
+    value=0;
+    count=0;
+    timestamp=0;
+  }
+
   bool isEmpty(){
     return timestamp==0 && value==0 && port==0 && count==0;
   }
