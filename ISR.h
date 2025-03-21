@@ -10,13 +10,11 @@
 typedef enum : uint8_t { PRESAMPLE,  GO, FINISH } IsrFlag; 
 volatile IsrFlag isrFlag = PRESAMPLE;
 
-#define NUMSENSORS 2
-static_assert((NUMSENSORS & (NUMSENSORS - 1)) == 0, "NUMSENSORS must be a power of two");
-//ACCSMOOTH must be base 2
-#define ACCSMOOTH 1
-static_assert((ACCSMOOTH & (ACCSMOOTH - 1)) == 0, "ACCSMOOTH must be a power of two");
+#define MAXSENSORS 4
+int NUMSENSORS=2;
+//static_assert((NUMSENSORS & (NUMSENSORS - 1)) == 0, "NUMSENSORS must be a power of two");
 
-Sensor sensors[NUMSENSORS];
+Sensor sensors[MAXSENSORS];
 
 int checkSensors(){
   for(int i=0;i<NUMSENSORS;i++){
@@ -74,39 +72,30 @@ class ISR{
 
 
 uint8_t curSensor = 0;
-volatile int pings=0;
 volatile unsigned int notReady=0;
 
 
 //// ADC interrupt service routine
 ISR(ADC_vect) {
-  static uint8_t accCount=0; 
   Sensor& sensor=sensors[curSensor];
-  auto nextSensor=(curSensor + 1) & (NUMSENSORS-1);
-  if(accCount==0){
-    sensor.acc=0;
-  }
+  auto nextSensor=(curSensor + 1);
+  if(nextSensor>=NUMSENSORS) nextSensor=0;
   while(!(ADCSRA & (1 << ADIF))) { //wait
     //spin wheels    
   }
   ADCSRA |= (1 << ADIF); // Clear ADIF by writing a 1 to it (this is how you clear the flag)
   #ifdef BIT8
-    sensor.acc += ADCH;   // Read the ADC value for 8 bit resolution
+    sensor.acc = ADCH;   // Read the ADC value for 8 bit resolution
   #else
-    sensor.acc += ADC; // 10 bit resolution
+    sensor.acc = ADC; // 10 bit resolution
   #endif
-  ADMUX = (ADMUX & 0xF0) | nextSensor;  // Update to the next channel
-  if(accCount==ACCSMOOTH-1){ //we accumulated enough readings
-    //now do the checking on this value
-    auto flag=isrFlag;
-    if(flag==PRESAMPLE) {
-      sensor.presample();      
-    }else if(flag==GO){
-      sensor.go(curSensor);
-    }      
-  }
-  if(curSensor==NUMSENSORS-1){
-    accCount=(accCount+1) & (ACCSMOOTH-1);    
-  }
+  ADMUX = (ADMUX & 0xF0) | nextSensor;  // Update to the next channel immediately after reading
+  //now do the checking on this value
+  auto flag=isrFlag;
+  if(flag==PRESAMPLE) {
+    sensor.presample();      
+  }else if(flag==GO){
+    sensor.go(curSensor);
+  }      
   curSensor = nextSensor;
 }
