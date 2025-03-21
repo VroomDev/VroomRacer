@@ -68,7 +68,8 @@ int scanDevices() {
 }
 
 void setDevice(int n){
-  if(n<nDevices) curLcd=plcds[n];      
+  if(n>=nDevices) n=0; //use 0 if you can if no other
+  if(n<nDevices) curLcd=plcds[n];
 }
 
 
