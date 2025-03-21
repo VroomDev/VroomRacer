@@ -22,10 +22,9 @@ void myTone(int pin,unsigned int frequency,unsigned long duration){
 }
 
 //blocking play tone
-void playTone(int frequency, int duration) {
+void playTone(int frequency, unsigned int duration) {
   myTone(speakerPin, frequency, duration);
   delay(duration);
-  //noTone(speakerPin);
 }
 
 
@@ -141,7 +140,7 @@ void playF1StartSound() {
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
   myTone(speakerPin,1000); delay(500);  noTone(speakerPin); delay(250);
-  myTone(speakerPin,2000); delay(1000); noTone(speakerPin);
+  myTone(speakerPin,2000,1000); //delay(1000); noTone(speakerPin);
 }
 
 void playF1StartSound1() {
@@ -155,14 +154,11 @@ void playF1StartSound1() {
   waveFlag(REDFLAG); 
   playTone(500, 300);   
   delay(300);
-  
+
+  waveFlag(YELLOWFLAG);
   playTone(500, 300);   
   delay(300);  
-  waveFlag(YELLOWFLAG);
-  //cannot wave green flag here as it will cause false starts, let it stay yellow;  
-  playTone(1000, 500);  
-  delay(100);    
-  waveFlag(FORMATION);
+  waveFlag(FORMATION);    
 }
 
 void playF1Restart() {
