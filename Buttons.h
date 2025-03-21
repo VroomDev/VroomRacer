@@ -5,8 +5,8 @@
 
 
 #define BUTTON_SELECT 48
-#define BUTTON_DOWN 50
-#define BUTTON_UP 52
+#define BUTTON_MINUS 50
+#define BUTTON_PLUS 52
 
 
 //#define BSELECT 1
@@ -15,11 +15,11 @@
 
 uint8_t readButtons() {
   uint8_t flags=0;
-  if (digitalRead(BUTTON_DOWN) == LOW) {
+  if (digitalRead(BUTTON_MINUS) == LOW) {
     if(serialOn) Serial.println("Down");
     flags |= BDOWN;
   }
-  if (digitalRead(BUTTON_UP) == LOW) {
+  if (digitalRead(BUTTON_PLUS) == LOW) {
     if(serialOn) Serial.println("Up");
     flags |= BUP;
   }
@@ -77,8 +77,8 @@ void saveConfig(int which=-1){
 
 void setupButtons() {
   pinMode(BUTTON_SELECT, INPUT_PULLUP);
-  pinMode(BUTTON_UP, INPUT_PULLUP);
-  pinMode(BUTTON_DOWN, INPUT_PULLUP);
+  pinMode(BUTTON_PLUS, INPUT_PULLUP);
+  pinMode(BUTTON_MINUS, INPUT_PULLUP);
   delay(1);
   loadConfig();
   byte r=readButtons(); //returns 0 to 3
@@ -94,12 +94,12 @@ bool selectButton() {
   return digitalRead(BUTTON_SELECT) == LOW;
 }
 
-bool upButton() {
-  return digitalRead(BUTTON_UP) == LOW;
+bool plusButton() {
+  return digitalRead(BUTTON_PLUS) == LOW;
 }
 
-bool downButton() {
-  return digitalRead(BUTTON_DOWN) == LOW;
+bool minusButton() {
+  return digitalRead(BUTTON_MINUS) == LOW;
 }
 
 
@@ -122,12 +122,15 @@ void displayConfig(bool header=true) {
     if(v==BANKMODE){
       lcd.setCursor(15, 3);
       lcd.print(BANKNAMES[config[v]]);
-    }else if(v==MINLAPDUR){
+    }else if(v==MINLAPDUR || v==YELLOWDELTA ){
       lcd.setCursor(15, 3);
       lcd.print(config[v]*MINLAPDURSTEP);
-    }else if(v==FUELING){
+    }else if(v==FUELING){ //Not a time thing but larger number
       lcd.setCursor(15, 3);
       lcd.print(config[v]*MINLAPDURSTEP);  
+    }else if(v==REDLAPSNUMER){
+      lcd.setCursor(15, 3);
+      lcd.print((double)config[v]/FRACTIONDENOM);
     }else if(VMAX[v]==1){
       lcd.print(config[v]?"On":"Off");
     }else if(VMAX[v]==0){
@@ -222,13 +225,13 @@ bool configByButtons() {
     if (v == 0) requireUpToStart = true;
     else requireUpToStart = false;
     selectPressed=true;
-  } else if (upButton() && selectPressed) {
+  } else if (plusButton() && selectPressed) {
     requireUpToStart = false;
     if (++config[v] > VMAX[v]) config[v] = VMAX[v];
     seeChange(true);
     delay(100); // Debounce delay
     displayConfig(); // Update display with new value
-  } else if (downButton()&& selectPressed) {
+  } else if (minusButton() && selectPressed) {
     requireUpToStart = false;
     if(config[v]>0) config[v]--;
     if (config[v] < 0) config[v] = 0;
