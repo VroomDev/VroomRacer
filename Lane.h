@@ -15,7 +15,8 @@ class Lane {
     
     RingBuffer<Lap, lapBufSize> laps;
 
-
+    Detection prior;
+    Detection start,finish; //only used for drag racing
     int fuel=MAXFUEL;
     int laneNum = 0;
     unsigned long lastLapTime = 0; //millis(); // Time the last valid detection occurred
@@ -30,11 +31,26 @@ class Lane {
     unsigned long topSpeed=0,lowSpeed=0,initialTime=0;
     unsigned long long totalDuration=0;
     char why[40]=""; //this holds the reason why a lap was not counted.
+
+    void reset(){
+       sprintf(why,"");
+       prior.reset();
+       start.reset();
+       finish.reset();
+       crossedStart=false;
+       speed=0;
+       lastLapTime=0;
+       fuel=MAXFUEL;
+       fouls=0;
+       lapCounter=0;
+       initialTime=0;
+    }
        
     void setup(int pin){
       laneNum=pin;
       lastLapTime=millis();
     }
+
 
    int setSpeed(int s){
     speed=s;    
@@ -56,7 +72,7 @@ class Lane {
   }
 
 
-  Detection prior;
+  
 
   /** return false if a bad crossing, returns true with a good start/finish crossing
   */
@@ -213,6 +229,65 @@ class Lane {
       }
     }
   }
+
+  void displayDrag(byte page,RaceFlag flag){    
+    char floatBuffer1[10]; // Buffer to hold the formatted float     
+    char floatBuffer2[10]; // Buffer to hold the formatted float     
+    char buffer[40];
+    char ch=!won?'C' : winner==laneNum ? 'W' : 'L';     
+    if(crossedStart && raceStart>0  && initialTime>0){
+        ////////////////01234567890123456789
+        ////////////////C1 R99999ms S%d
+        sprintf(buffer,"%c%d R%ldms S%d   ",ch,laneNum+1,((signed long)initialTime-(signed long)raceStart),speed);
+    }else{
+        sprintf(buffer,"%c%d Go!              ",ch,laneNum+1);
+    }   
+    lcd.printRow(laneNum*2,buffer);       
+    mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
+                    //01234567890123456789
+                    //C0 Lap00 00000s Time 
+    sprintf(buffer,"%c%d Lap%d %5ss Time            ",ch,laneNum+1,lapCounter,floatBuffer1);
+    lcd.printRow(laneNum*2+1,buffer);    
+    if(serialOn) {
+      Serial.print(buffer);
+      Serial.print("\n");     
+    }
+
+    if( page==2 ) { 
+      //print out recent lap times
+      byte offset=0;
+      for(int row=0;row<2;row++){
+        buffer[0]=0;
+        Lap lap1;
+        laps.top(lap1,offset++);
+        mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
+        Lap lap2;
+        laps.top(lap2,offset++);
+        mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
+        sprintf(buffer,"C%d %d %6ss %d %6ss",laneNum+1,offset-1,floatBuffer1,offset,floatBuffer2);
+        lcd.printRow(laneNum*2+row,buffer);
+      }           
+    }else if( page ==1 ) {
+      //01234567890123456789
+      //Lap Time  Avg 00000s//
+      //Best 00000s Gas 00% //
+      //Slow 00000s Fouls 00//
+      buffer[0]=0;
+      floatBuffer1[0]=0;
+      if(bestLapDur!=0) {
+        mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
+      } 
+      /////////////       
+      sprintf(buffer,"%4s %5s%c          ",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s');
+      lcd.printRow(laneNum*2,buffer);
+      buffer[0]=0;
+      if(avgSpeed()!=0) {
+          sprintf(buffer,"Top %4d  Avg %4d",(int)topSpeed,(int)avgSpeed());
+      }
+      lcd.printRow(laneNum*2+1,buffer);
+    }
+  }
+
 
   void display2(byte page,RaceFlag flag){    
     lcd.setCursor(0,0); //laneNum*2);//col,row    
