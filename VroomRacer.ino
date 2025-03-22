@@ -16,6 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
+const char* title="VroomRacer v20250322";
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -41,7 +42,7 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Demo/Diagnostics:   \0", //
   "Revert defaults?    \0", //
   "Yellow millis:      \0", //
-  "Red Multiplier:     \0"
+  "Red Multiplier+:    \0"
  //01234567890123456789
 };
 #define NUMBANKS 4
@@ -237,7 +238,7 @@ void setup() {
   for(int d=0;d<nDevices;d++){
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,"VroomRacer v20250320");  
+    lcd.printRow(0,title);  
     lcd.printRow(1,"Copyright 2024 by CB");
     lcd.setCursor(0,2);
     lcd.print(BANKNAMES[curBank]);
@@ -352,16 +353,12 @@ void dragLoop(){
     dragReady=true;
     ISR::go();
   }else if(! raceStarted ) {
-      if(!plusButton()){
-        ////////////////012345678901234567890
-        lcd.printRow(1,"Press + to Drag Race");
-        delay(50);
-      }else{
+      if(plusButton()){
           startDragRace();    
       }
   }else{
-      if( plusButton() && won) {
-         raceStarted=false;
+      if( plusButton()) {
+         raceStarted=false; //do not have to wait for the other finisher
       }
       if(  ringBuffer.pull(d)) {
             auto i=d.port;
@@ -383,10 +380,16 @@ void dragLoop(){
                 pln("inch/sec",speed);
             }
             alertDragDetection(i); 
-      }
-      updateDragLCD();
+      }     
   }  
+  updateDragLCD();
 }
+
+//  01234567890123456789
+//0 VroomRacer v20250102
+//1 Instructions
+//2 C1 R1234 E91234 S123
+//3 C2 R1234 E91234 S123
 
 void updateDragLCD(){
   static uint8_t flipper=0;
@@ -394,8 +397,15 @@ void updateDragLCD(){
     nextPageFlip=millis()+FLIPTIME;
     if(nDevices>0){
       setDevice(0);
-      lanes[++flipper % NUMLANES].displayDrag(curPage,raceFlag);
-      lanes[++flipper % NUMLANES].displayDrag(curPage,raceFlag);
+      if(curPage==0){
+        lcd.printRow(0,title);      
+        lcd.printRow(1,winner>=0?"We have a winner!": (raceStarted?"Go!":"Press + to Drag Race"));
+        lanes[++flipper % NUMLANES].display1Drag();
+        lanes[++flipper % NUMLANES].display1Drag();
+      }else{
+        lanes[++flipper % NUMLANES].displayDrag(curPage);
+        lanes[++flipper % NUMLANES].displayDrag(curPage);
+      }
     }
     curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }
@@ -408,7 +418,7 @@ void alertDragDetection(int i) {
   }
   pln("GOOD LAP car:",i);
   playTone(400+i*300, 100);
-  lanes[i].banner(true,"");
+  lanes[i].banner0(true,"");
   nextPageFlip=millis()+FLIPTIME/2;
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,0);
@@ -423,6 +433,8 @@ void alertDragDetection(int i) {
       lcd.print(  " finished.        ");
       playEngine();
       waveFlag(DONE);
+      raceStarted=false;
+      curPage=0;
     }
   }
   waveFlag(raceFlag);
@@ -445,13 +457,16 @@ void alertDragBadDetection(int i,char* msg){ //,Detection& d){
 
 
 void startDragRace(){
-  lcd.printRow(2,"Start engines.");
+  lcd.printRow(0,title);
+  lcd.printRow(1,"Get ready.");
+  lcd.printRow(2,"");
+  lcd.printRow(3,"");
   while(plusButton()){delay(10);} //wait for depress
   reset();
-  delay(1000);
+  delay(1000); //debounce
   // Print a message to the LCD.  
   /////     //////01234567890123456789        
-  lcd.printRow(1,"Get ready.");
+  lcd.printRow(1,"Get set.");
   playF1StartSound1();      
   auto chk=checkSensors();
   if(chk>=0){
@@ -558,7 +573,7 @@ void raceLoop(){
           //////////////////////////RED CHECK
           if( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
               && redLapsNumer>0
-              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+yellowDelta+(lanes[i].avgLapDur*redLapsNumer/FRACTIONDENOM)){
+              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+lanes[i].avgLapDur+yellowDelta+(lanes[i].avgLapDur*redLapsNumer/FRACTIONDENOM)){
             //car is late!
             if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
               p("Red flag detected Car late",(char)raceFlag)
@@ -569,7 +584,7 @@ void raceLoop(){
           //////////////////////////YELLOW CHECK
           }else if( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
               && yellowDelta>0
-              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+yellowDelta){
+              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+lanes[i].avgLapDur+yellowDelta){
             //car is late!
             if(raceFlag!=YELLOWFLAG && raceFlag!=REDFLAG && !anyRed && !anyYellow){
               p("Yellow detected Car late",(char)raceFlag)
