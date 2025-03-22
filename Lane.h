@@ -191,6 +191,9 @@ class Lane {
 
   void banner(bool lapCounted,char* msg,byte page=0){
     setDevice(laneNum);
+    banner0(lapCounted,msg,page);
+  }
+  void banner0(bool lapCounted,char* msg,byte page=0){
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     
@@ -230,30 +233,55 @@ class Lane {
     }
   }
 
-  void displayDrag(byte page,RaceFlag flag){    
+  void display1Drag(){    
+    char floatBuffer1[10]; // Buffer to hold the formatted float     
+    char floatBuffer2[10]; // Buffer to hold the formatted float     
+    char buffer[40];
+    buffer[0]=0;
+    char ch=!won?'C' : winner==laneNum ? 'W' : 'L';     
+    ////////////////01234567890123456789
+    ////////////////C1 R1234 E91234 S123
+    //crossedStart
+    int reactionTime=crossedStart?(int)((signed long)initialTime-(signed long)raceStart):0;
+    if(reactionTime>9999 || lapDuration>99999){
+      //display in seconds since so very slow!
+      sprintf(buffer,"%c%d R%4ds E%4ds S%3d   ",ch,laneNum+1,    reactionTime/1000,      (int)lapDuration/1000,      (int)speed);
+    }else{
+      sprintf(buffer,"%c%d R%4d%cE%5d S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',(int)lapDuration,      (int)speed);
+    }
+    lcd.printRow(2+laneNum,buffer);       
+    if(serialOn) {
+        Serial.print(buffer);
+        Serial.print("\n");     
+    }
+}
+
+  
+  
+  void displayDrag(byte page){    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     
     char buffer[40];
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';     
-    if(crossedStart && raceStart>0  && initialTime>0){
-        ////////////////01234567890123456789
-        ////////////////C1 R99999ms S%d
-        sprintf(buffer,"%c%d R%ldms S%d   ",ch,laneNum+1,((signed long)initialTime-(signed long)raceStart),speed);
-    }else{
-        sprintf(buffer,"%c%d Go!              ",ch,laneNum+1);
-    }   
-    lcd.printRow(laneNum*2,buffer);       
-    mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
-                    //01234567890123456789
-                    //C0 Lap00 00000s Time 
-    sprintf(buffer,"%c%d Lap%d %5ss Time            ",ch,laneNum+1,lapCounter,floatBuffer1);
-    lcd.printRow(laneNum*2+1,buffer);    
-    if(serialOn) {
-      Serial.print(buffer);
-      Serial.print("\n");     
-    }
-
-    if( page==2 ) { 
+    if(page==0){
+      if(crossedStart && raceStart>0  && initialTime>0){
+          ////////////////01234567890123456789
+          ////////////////C1 R99999ms S%d
+          sprintf(buffer,"%c%d R%ldms S%d   ",ch,laneNum+1,((signed long)initialTime-(signed long)raceStart),speed);
+      }else{
+          sprintf(buffer,"%c%d               ",ch,laneNum+1);
+      }   
+      lcd.printRow(laneNum*2,buffer);       
+      mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
+                      //01234567890123456789
+                      //C0 Lap00 00000s Time 
+      sprintf(buffer,"%c%d Lap%d %5ss Time            ",ch,laneNum+1,lapCounter,floatBuffer1);
+      lcd.printRow(laneNum*2+1,buffer);    
+      if(serialOn) {
+        Serial.print(buffer);
+        Serial.print("\n");     
+      }
+    }else if( page==2 ) { 
       //print out recent lap times
       byte offset=0;
       for(int row=0;row<2;row++){
@@ -264,7 +292,9 @@ class Lane {
         Lap lap2;
         laps.top(lap2,offset++);
         mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
-        sprintf(buffer,"C%d %d %6ss %d %6ss",laneNum+1,offset-1,floatBuffer1,offset,floatBuffer2);
+        ////////////////01234567890123456789
+        ////////////////C1 # 12345s # 12345s
+        sprintf(buffer,"C%d %d %5ss %d %5ss",laneNum+1,offset-1,floatBuffer1,offset,floatBuffer2);
         lcd.printRow(laneNum*2+row,buffer);
       }           
     }else if( page ==1 ) {
