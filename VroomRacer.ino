@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250322";
+const char* title="VroomRacer v20250325";
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -54,7 +54,7 @@ uint8_t curBank=0;
 const uint8_t VMAX[NUMCONFIG]={ 0,  NUMBANKS-1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254 }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
    //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-    {0,0,   8, 1,   10,   8,   5,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 2*FRACTIONDENOM}, //FUEL MODE
+    {0,0,   8, 1,   10,   6,   5,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 2*FRACTIONDENOM}, //FUEL MODE
     {0,0,   8, 1,   10,   0,   0,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 2*FRACTIONDENOM}, //Fast MODE
     {0,0,   8, 0,   99,   0,   0,     254,  2500/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //TUNE MODE
     {0,0,   8, 1,   1,    0,   0,     254,   128/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //DRAG MODE
