@@ -230,7 +230,7 @@ class Lane {
       ph("banner0"); p("lane#",laneNum); pln("reactionTime",reactionTime);
       if(lapCounted && (lapCounter>0) ){    
         lcd.printMillisAsSeconds(lapDuration); //page0
-      }else if(crossedStart && lapCounter==0 && reactionTime<1000 && reactionTime>=0){
+      }else if(crossedStart && lapCounter==0 && reactionTime<=9999 && reactionTime>=0){
         lcd.printReaction(reactionTime);
       }else{
         lcd.printSpeed(speed); //page1
