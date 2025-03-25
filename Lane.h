@@ -193,6 +193,7 @@ class Lane {
     setDevice(laneNum);
     banner0(lapCounted,msg,page);
   }
+  
   void banner0(bool lapCounted,char* msg,byte page=0){
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
@@ -225,8 +226,12 @@ class Lane {
     }else if(page==1){
         lcd.printSpeed(speed); //page1    
     }else{
+      int reactionTime=crossedStart?(int)((signed long)initialTime-(signed long)raceStart):0;
+      ph("banner0"); p("lane#",laneNum); pln("reactionTime",reactionTime);
       if(lapCounted && (lapCounter>0) ){    
         lcd.printMillisAsSeconds(lapDuration); //page0
+      }else if(crossedStart && lapCounter==0 && reactionTime<1000 && reactionTime>=0){
+        lcd.printReaction(reactionTime);
       }else{
         lcd.printSpeed(speed); //page1
       }
