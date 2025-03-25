@@ -324,6 +324,15 @@ class MyLCD {
       setCursor(19-4,3); print(" sec.");
   }
 
+  void printReaction(int millis,int col=19-3-4,int row=1){
+      eraseBigDigit(19-3,1);
+      printBigNumber(millis,19-3-4);
+      setCursor(19-4,1); print(" Rxn ");
+      setCursor(19-4,2); print(" Time");
+      setCursor(19-4,3); print(" (MS)");
+  }
+
+
   //12345 displays as 12.345
   void printMillisAsSeconds(unsigned long num,int col=19-3,int row=1){
     auto orig=num;
