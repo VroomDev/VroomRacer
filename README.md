@@ -159,6 +159,8 @@ There are relatively few connections and many grounds and +5v pins to choose fro
 
 <img src="./wiringlooms.jpg" style="background: white;" bgcolor=white />
 
+Note: the parallel resistor in the above diagram can be replaced with a single resistor of about 145 ohm.
+
 # Enclosure
 
 I built mine out of thin hobby plywood that can be cut with a utility knife. To ease assembly , taping the exterior together then gluing from the inside using toothpick joiners with quick set white glue is very effective. For the exterior, I printed "textures" on my ink jet printer. For the roof, I am using cardstock paper.
