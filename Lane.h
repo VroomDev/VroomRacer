@@ -247,12 +247,32 @@ class Lane {
     ////////////////01234567890123456789
     ////////////////C1 R1234 E91234 S123
     //crossedStart
-    int reactionTime=crossedStart?(int)((signed long)initialTime-(signed long)raceStart):0;
-    if(reactionTime>9999 || lapDuration>99999){
-      //display in seconds since so very slow!
-      sprintf(buffer,"%c%d R%4ds E%4ds S%3d   ",ch,laneNum+1,    reactionTime/1000,      (int)lapDuration/1000,      (int)speed);
+    p("car",laneNum+1);
+    if(start.isEmpty()){
+      sprintf(buffer,"%c%d Not started.",ch,laneNum+1);
+      pln("","unstarted");
+    }else if(finish.isEmpty()){
+      unsigned long reactionTime=((unsigned long)start.timestamp-(unsigned long)raceStart);
+      if(reactionTime<0) ch='D';
+      sprintf(buffer,"%c%d R%4lu Unfinished",ch,laneNum+1,reactionTime);
+      p("startTS",start.timestamp);
+      p("raceStart",raceStart);
+      pln("RT",reactionTime);
     }else{
-      sprintf(buffer,"%c%d R%4d%cE%5d S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',(int)lapDuration,      (int)speed);
+      unsigned long reactionTime=start.timestamp-raceStart;
+      unsigned long lapDuration=finish.timestamp-start.timestamp;
+      if(reactionTime<0) ch='D';
+      if(reactionTime>9999 || lapDuration>99999){
+        //display in seconds since so very slow!
+        sprintf(buffer,"%c%d R%4lus E%4lus S%3d   ",ch,laneNum+1,    reactionTime/1000,      (int)lapDuration/1000,      (int)speed);
+      }else{
+        sprintf(buffer,"%c%d R%4lu%cE%5lu S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',(int)lapDuration,      (int)speed);
+      }
+      p("startTS",start.timestamp);
+      p("finishTS",finish.timestamp);
+      p("raceStart",raceStart);
+      p("RT",reactionTime);
+      pln("ET",lapDuration);
     }
     lcd.printRow(2+laneNum,buffer);       
     if(serialOn) {
