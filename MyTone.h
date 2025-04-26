@@ -21,6 +21,10 @@ void myTone(int pin,unsigned int frequency,unsigned long duration){
   if(sound) tone(pin,frequency,duration);
 }
 
+void playToneNoBlock(int frequency, unsigned int duration) {
+  myTone(speakerPin, frequency, duration);
+}
+
 //blocking play tone
 void playTone(int frequency, unsigned int duration) {
   myTone(speakerPin, frequency, duration);
