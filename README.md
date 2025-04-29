@@ -38,20 +38,20 @@ By using inches per second, we simplify speed measurement and enhance our racing
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
 - **Impossibly fast laps** There is a debounce timeout that if the detection is within then the detection is completely ignored.
-- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is hardcoded. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap in less than 60% of overall fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
+- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is configurable. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap too quickly based on the fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
 
 ![inches per second examples](./display2.jpg)
 *Car 0 on Lap 5 went through the photo eye at 10 inches per second and made a lap time of 3.280 seconds.*
 
 ## Automatic Yellow Flags
-- If a driver hasn't completed a lap after 1.5 times their average lap time a yellow light goes on.
+- If a driver hasn't completed a lap after a configurable amount of delay after their average lap time a yellow light goes on.
 - Drivers must pass thru the sensor at a slower speed for the lap to count. Speeding the sensor results in that specific lap being ignored.
 
-A competition yellow is thrown halfway through the race.
+A competition yellow is thrown at a configurable interval through the race.
 
 ## Automatic Red Flag
 
-If a car is very late, the automated logic declares a red flag.
+If a car is very late (configurable), the automated logic declares a red flag.
 
 During red, no laps are counted. But it does reset the lap start, so it does clear a red flag condition if the car was the cause of the red flag.
 
@@ -111,7 +111,7 @@ This project should be able to work with either LDRs or photo diodes.
 
 There are also photo transistors to consider but this code isn't designed for it.
 
-The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track.
+The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track. The calculation of car speed does seem to be affected by the choice of sensor.
 
 Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing? So the slower LDR could be an advantage? 
 
