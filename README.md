@@ -105,14 +105,15 @@ Endif
 
 ## Light Sensors 
 
-This project should be able to work with both LDRs and photo diodes.
+This project should be able to work with either LDRs or photo diodes.
 
 *Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. LDRs are relatively slow to fully change resistance. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. 
 
-If you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing. So the slower LDR could be an advantage.
+There are also photo transistors to consider but this code isn't designed for it.
 
-There are also photo transistors to consider but this code isnt designed for it.
+The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track.
 
+Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing? So the slower LDR could be an advantage? 
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
