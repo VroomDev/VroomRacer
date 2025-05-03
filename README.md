@@ -154,7 +154,7 @@ Example of installed photo sensor in the track. This was glued with JBWeld, but 
 # Wiring
 
 <img src="./circuit.jpg" style="background: white;" bgcolor=white />
-
+In the above chart, photodiodes can replace the LDR's but keep in mind that polarity matters. Photodiodes must be installed with reverse bias. As for the RGB LED, there are 4 leads: a ground, red, green, and blue. Please see the next image for complete details. The 2k resistors can be higher ohms for increased photosensitivity.
 
 There are relatively few connections and many grounds and +5v pins to choose from on an Arduino mega. So a wiring loom is a possibility.
 
