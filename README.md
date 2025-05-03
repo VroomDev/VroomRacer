@@ -178,5 +178,50 @@ I built mine out of thin hobby plywood that can be cut with a utility knife. To 
   <img src="./ERD.png"/>
 </div>
 
+# About voltage dividers
+
+Using a **photodiode in reverse bias** within a **voltage divider** setup on an Arduino is a great way to measure light intensity with improved sensitivity and faster response times. Here’s how it works:
+
+### **Understanding Reverse Bias Photodiodes**
+- In **reverse bias mode**, the cathode (negative) is connected to a higher voltage, and the anode (positive) to a lower voltage (typically ground).
+- The diode does **not conduct** like a regular diode unless light strikes it, generating a **small photocurrent** proportional to the light intensity.
+- This configuration **reduces capacitance**, making the response faster.
+
+---
+
+### **Setting Up the Voltage Divider**
+A **voltage divider** transforms the photocurrent into a voltage signal that the Arduino can read. Here's a basic setup:
+
+1. **Connect the Photodiode in Reverse Bias**:
+   - **Cathode** → **VCC (e.g., 5V or 3.3V)**
+   - **Anode** → **One end of the resistor**
+   - The other end of the resistor → **Ground**
+   - The junction between the **photodiode and resistor** becomes the output voltage.
+
+2. **Selecting the Resistor Value**:
+   - Use a **pull-down resistor** (e.g., **10kΩ to 1MΩ**).  
+   - Higher resistance **increases sensitivity** to low-light conditions but may slow response time.
+   - Lower resistance **improves response speed** but may reduce sensitivity.
+
+3. **Reading the Voltage with Arduino**:
+   - Connect the voltage junction (between the **photodiode and resistor**) to an **analog pin (A0, A1, etc.)**.
+   - Use `analogRead(pin)` to measure the voltage, which **varies based on light intensity**.
+
+---
+
+### **Arduino Code Example**
+```cpp
+const int sensorPin = A0; // Photodiode voltage divider junction
+void setup() {
+    Serial.begin(9600);
+}
+void loop() {
+    int sensorValue = analogRead(sensorPin); // Read voltage level
+    float voltage = sensorValue * (5.0 / 1023.0); // Convert ADC value to volts
+    Serial.println(voltage); // Print voltage to monitor
+    delay(500);
+}
+```
+This setup allows you to track changes in light levels and adjust the resistor value for better sensitivity.
 
 
