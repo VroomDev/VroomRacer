@@ -5,7 +5,7 @@
  */
 
 //define BIT8 to have 8 bit sensors
-#define BIT8
+//#define BIT8
 
 typedef enum : uint8_t { PRESAMPLE,  GO, FINISH } IsrFlag; 
 volatile IsrFlag isrFlag = PRESAMPLE;
@@ -15,6 +15,12 @@ int NUMSENSORS=2;
 //static_assert((NUMSENSORS & (NUMSENSORS - 1)) == 0, "NUMSENSORS must be a power of two");
 
 Sensor sensors[MAXSENSORS];
+
+int resetSensors(){
+  for(int i=0;i<NUMSENSORS;i++){
+      sensors[i].reset();
+  }
+}
 
 int checkSensors(){
   for(int i=0;i<NUMSENSORS;i++){
@@ -72,7 +78,6 @@ class ISR{
 
 
 uint8_t curSensor = 0;
-volatile unsigned int notReady=0;
 
 
 //// ADC interrupt service routine
