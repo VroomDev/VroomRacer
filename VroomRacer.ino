@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250325";
+const char* title="VroomRacer v20250526";
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -54,8 +54,8 @@ uint8_t curBank=0;
 const uint8_t VMAX[NUMCONFIG]={ 0,  NUMBANKS-1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254 }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
    //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-    {0,0,   8, 1,   10,   6,   5,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 2*FRACTIONDENOM}, //FUEL MODE
-    {0,0,   8, 1,   10,   0,   0,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 2*FRACTIONDENOM}, //Fast MODE
+    {0,0,   8, 1,   10,   6,   5,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 1*FRACTIONDENOM}, //FUEL MODE
+    {0,0,   8, 1,   10,   0,   0,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 1*FRACTIONDENOM}, //Fast MODE
     {0,0,   8, 0,   99,   0,   0,     254,  2500/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //TUNE MODE
     {0,0,   8, 1,   1,    0,   0,     254,   128/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //DRAG MODE
 };
@@ -225,8 +225,22 @@ void setup() {
 
   //  Serial.println("set up buttons...");
   setupButtons(); //NOTE THIS DOES THE CONFIG LOAD AS WELL
+  Serial.print("analogRead A0:");
+  Serial.println(analogRead(A0));
+  delay(10);
+  Serial.print("analogRead A1:");
+  Serial.println(analogRead(A1));
+  delay(10);
   if(dragOn){ //Set up drag racing
-//      NUMSENSORS=4;
+      NUMSENSORS=4;
+      Serial.println("NUMSENSORS TO 4");
+      Serial.print("analogRead A2:");
+      Serial.println(analogRead(A2));
+      delay(10);
+      Serial.print("analogRead A3:");
+      Serial.println(analogRead(A3));
+      delay(10);
+          
   }
   
   //  Serial.println("set up lanes...");
@@ -272,6 +286,7 @@ bool lcdDark[MAXSENSORS];
 
 
 void reset(){
+  resetSensors();
   for(int i=0;i<NUMLANES;i++){
      lanes[i].reset();
   }
@@ -286,6 +301,7 @@ void reset(){
   compYellowStop=0;
   d.reset(); 
   needReset=false;
+  ringBuffer.empty();
 }
 
 
@@ -332,16 +348,24 @@ void loop(){
 
 bool dragReady=false;
 
+
+
+bool verbose=true;
 //drag racing logic in here
 void dragLoop(){
   if((loopc & 511)==510){
-    pln("NUMSENSORS",NUMSENSORS);
+    if(verbose) pln("NUMSENSORS",NUMSENSORS);
   }
-  if((loopc & 63)==0){
+  if((loopc & 2047)==0){
     for(int i=0;i<NUMSENSORS;i++){
-       p("S#",i);
-       sensors[i].debug();
+       if(verbose) p("S#",i);
+       if(verbose) sensors[i].debug();
     }
+  }else if((loopc & 63)==0){
+    for(int i=0;i<NUMSENSORS;i++){
+       if(verbose) p(",",sensors[i].acc);
+    }
+    if(verbose) pln("<--","Sensors");
   }
   if(! dragReady) {
     for(int i=0;i<NUMSENSORS;i++){
@@ -361,29 +385,62 @@ void dragLoop(){
          raceStarted=false; //do not have to wait for the other finisher
       }
       if(  ringBuffer.pull(d)) {
-            auto i=d.port;
-            if(d.port<2){
-              lanes[d.port].start=d;
-            }else{
-              i-=2;
-              lanes[d.port-2].finish=d;
-            }
-            //to do add in safety checks to make sure sensors are done in order etc.
-            auto aspeed=lanes[i].avgSpeed();
-            auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
-            if(serialOn){
-                pln("-----------------NEW DETECTION-------------","");
-                p("C#",d.port);
-                sensors[d.port].debug();
-                d.debug();
-                p("avgSpeed",aspeed);
-                pln("inch/sec",speed);
-            }
-            alertDragDetection(i); 
+        handleDragDetection();
       }     
   }  
   updateDragLCD();
 }
+
+void handleDragDetection(){
+  nextPageFlip=0;
+  d.debug();
+  auto i=d.port;
+  playToneNoBlock(400+i*300, 50);
+  if(d.port<2){ //start sensors
+    if(!lanes[i].start.isEmpty()) {
+      pln("already started",i);
+      return; //ignore this as we already started!
+    }      
+    lanes[i].start=d;
+    auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
+    p("port",d.port+1);
+    pln("ispeed",speed);
+  }else{ //finish sensors
+    i-=2;
+    if(lanes[i].start.isEmpty()) {
+      pln("not crossed start",i);
+      return;  //we haven't crossed start
+    }
+    if(!lanes[i].finish.isEmpty()) {
+      pln("we already finished",i);
+      return; //ignore this as we already finished!
+    }
+    playToneNoBlock(400+i*300, 100);
+    lanes[i].finish=d;
+    auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
+    lcd.setCursor(0,0);
+    lcd.print("C");
+    lcd.print(i+1);
+    if(lanes[i].start.timestamp<raceStart) {
+      //DQ
+      lcd.print(  " is the DQed!!! ");
+    }else if(won){
+      //didn't win :(
+      lcd.print(  " finished.        ");
+      //playEngine();
+      waveFlag(DONE);
+      raceStarted=false;
+      curPage=0; 
+    }else{
+       won=true;
+       winner=i;
+       ///////////12345678901234567890  
+       waveFlag(CHECKERS);
+       lcd.print(  " is the WINNER!!! ");
+    } 
+  }
+}
+
 
 //  01234567890123456789
 //0 VroomRacer v20250102
@@ -397,15 +454,15 @@ void updateDragLCD(){
     nextPageFlip=millis()+FLIPTIME;
     if(nDevices>0){
       setDevice(0);
-      if(curPage==0){
-        lcd.printRow(0,title);      
-        lcd.printRow(1,winner>=0?"We have a winner!": (raceStarted?"Go!":"Press + to Drag Race"));
-        lanes[++flipper % NUMLANES].display1Drag();
-        lanes[++flipper % NUMLANES].display1Drag();
-      }else{
-        lanes[++flipper % NUMLANES].displayDrag(curPage);
-        lanes[++flipper % NUMLANES].displayDrag(curPage);
-      }
+      //      if(curPage==0){
+      lcd.printRow(0,title);      
+      lcd.printRow(1,won ? "Race complete!": (raceStarted?"Go!":"Press + to Drag Race"));
+      lanes[++flipper % NUMLANES].display1Drag();
+      lanes[++flipper % NUMLANES].display1Drag();
+      //      }else{
+      //        lanes[++flipper % NUMLANES].displayDrag(curPage);
+      //        lanes[++flipper % NUMLANES].displayDrag(curPage);
+      //      }
     }
     curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }
@@ -423,15 +480,15 @@ void alertDragDetection(int i) {
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,0);
     lcd.print("C");
-    lcd.print(i);
+    lcd.print(i+1);
     if( winner==lanes[i].laneNum ) {
       ///////////12345678901234567890  
       waveFlag(CHECKERS);
       lcd.print(  " is the WINNER!!! ");
-      playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
+      //playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
     }else{                            
       lcd.print(  " finished.        ");
-      playEngine();
+      //playEngine();
       waveFlag(DONE);
       raceStarted=false;
       curPage=0;
@@ -456,7 +513,16 @@ void alertDragBadDetection(int i,char* msg){ //,Detection& d){
 }
 
 
+extern volatile unsigned long timer0_millis;
+
+void resetClock(){
+//  noInterrupts();
+//  timer0_millis=0;
+//  interrupts();
+}
+
 void startDragRace(){
+  resetClock();
   lcd.printRow(0,title);
   lcd.printRow(1,"Get ready.");
   lcd.printRow(2,"");
@@ -467,7 +533,8 @@ void startDragRace(){
   // Print a message to the LCD.  
   /////     //////01234567890123456789        
   lcd.printRow(1,"Get set.");
-  playF1StartSound1();      
+  playF1StartSound1();
+  raceStart=millis();      
   auto chk=checkSensors();
   if(chk>=0){
       lcd.setCursor(0,2);
@@ -480,7 +547,6 @@ void startDragRace(){
       delay(100);         
       return;
   }else{
-    raceStart=millis();
     raceStarted=true;
   }
   waveFlag(GREENFLAG);
@@ -650,7 +716,7 @@ void alertGoodLap(int i) {
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,0);
     lcd.print("C");
-    lcd.print(i);
+    lcd.print(i+1);
     if( winner==lanes[i].laneNum ) {
       ///////////12345678901234567890  
       waveFlag(CHECKERS);
