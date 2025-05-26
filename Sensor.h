@@ -11,7 +11,9 @@
 // 3ms is 883ips=47mph=3030 1:64mph
 // 4ms is 625ips=36mph=2273 1:64mph, Tyco published 2000 scale mph was achievable, which is still crazy fast.
 // May need consider higher min ms time
-#define MIN_MS_TIME 2
+#define MIN_MS_TIME 1
+// 1
+//was 2
 #define MAXCOUNT 65535
 const int DEBOUNCE = 100; // Debounce delay in milliseconds
 
@@ -32,6 +34,12 @@ struct Sensor {
   uint16_t ticksPerMs=0;
   unsigned long startSampleTime=millis();
   unsigned long stopSampleTime=millis();
+
+  void reset(){
+    noInterrupts();        
+    lastDetectTime=0;
+    interrupts();
+  }
 
   void debug(){
      ph("Sensor");
@@ -103,7 +111,9 @@ struct Sensor {
   void calcThreshold(){
     noInterrupts();        
     initialThreshold=mean*3/4;
-    mainThreshold=mean/2;  
+    mainThreshold=mean/2;
+    //initialThreshold=mean*4/5;
+    //mainThreshold=mean*3/4;  
     ticksPerMs=n/(stopSampleTime-startSampleTime);
     ph("Sensor.calcThreshold");
     p("minAcc",minAcc);
