@@ -248,25 +248,33 @@ class Lane {
     ////////////////C1 R1234 E91234 S123
     //crossedStart
     p("car",laneNum+1);
-    if(start.isEmpty()){
+    if(start.isEmpty()){ //not started yet
       sprintf(buffer,"%c%d Not started.",ch,laneNum+1);
       pln("","unstarted");
-    }else if(finish.isEmpty()){
-      unsigned long reactionTime=((unsigned long)start.timestamp-(unsigned long)raceStart);
-      if(reactionTime<0) ch='D';
-      sprintf(buffer,"%c%d R%4lu Unfinished",ch,laneNum+1,reactionTime);
-      p("startTS",start.timestamp);
-      p("raceStart",raceStart);
-      pln("RT",reactionTime);
-    }else{
-      unsigned long reactionTime=start.timestamp-raceStart;
-      unsigned long lapDuration=finish.timestamp-start.timestamp;
-      if(reactionTime<0) ch='D';
-      if(reactionTime>9999 || lapDuration>99999){
-        //display in seconds since so very slow!
-        sprintf(buffer,"%c%d R%4lus E%4lus S%3d   ",ch,laneNum+1,    reactionTime/1000,      (int)lapDuration/1000,      (int)speed);
+    }else if(finish.isEmpty()){ //not finished yet
+      if( start.timestamp<raceStart) { //jumped!
+        sprintf(buffer,"%c%d DQ          S%3d",ch,laneNum+1,(int)speed);  
       }else{
-        sprintf(buffer,"%c%d R%4lu%cE%5lu S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',(int)lapDuration,      (int)speed);
+        unsigned long reactionTime=((unsigned long)start.timestamp-(unsigned long)raceStart);
+        if(reactionTime<0) ch='D';
+        sprintf(buffer,"%c%d R%4lu       S%3d",ch,laneNum+1,reactionTime, (int)speed);
+        p("startTS",start.timestamp);
+        p("raceStart",raceStart);
+        pln("RT",reactionTime);
+      }
+    }else{
+      if( start.timestamp<raceStart) { //jumped!
+        ch='D';
+      }
+      unsigned long reactionTime=start.timestamp<raceStart ? 9999000 : start.timestamp-raceStart;
+      unsigned long lapDuration=finish.timestamp-start.timestamp;
+      if( lapDuration>9999){ //display both in seconds
+        //display in seconds since so very slow!
+        sprintf(buffer,"%c%d R%3lus E%3lus S%3d   ",ch,laneNum+1,    reactionTime/1000,      lapDuration/1000,      (int)speed);
+      }else if(reactionTime>9999) {
+        sprintf(buffer,"%c%d R%3lus E%4lu S%3d   ",ch,laneNum+1,    reactionTime/1000,      lapDuration,      (int)speed);
+      }else{
+        sprintf(buffer,"%c%d R%4lu%cE%5lu S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',lapDuration,      (int)speed);
       }
       p("startTS",start.timestamp);
       p("finishTS",finish.timestamp);
