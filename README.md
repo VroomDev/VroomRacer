@@ -38,20 +38,20 @@ By using inches per second, we simplify speed measurement and enhance our racing
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
 - **Impossibly fast laps** There is a debounce timeout that if the detection is within then the detection is completely ignored.
-- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is hardcoded. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap in less than 60% of overall fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
+- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is configurable. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap too quickly based on the fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
 
 ![inches per second examples](./display2.jpg)
 *Car 0 on Lap 5 went through the photo eye at 10 inches per second and made a lap time of 3.280 seconds.*
 
 ## Automatic Yellow Flags
-- If a driver hasn't completed a lap after 1.5 times their average lap time a yellow light goes on.
+- If a driver hasn't completed a lap after a configurable amount of delay after their average lap time a yellow light goes on.
 - Drivers must pass thru the sensor at a slower speed for the lap to count. Speeding the sensor results in that specific lap being ignored.
 
-A competition yellow is thrown halfway through the race.
+A competition yellow is thrown at a configurable interval through the race.
 
 ## Automatic Red Flag
 
-If a car is very late, the automated logic declares a red flag.
+If a car is very late (configurable), the automated logic declares a red flag.
 
 During red, no laps are counted. But it does reset the lap start, so it does clear a red flag condition if the car was the cause of the red flag.
 
@@ -105,14 +105,15 @@ Endif
 
 ## Light Sensors 
 
-This project should be able to work with both LDRs and photo diodes.
+This project should be able to work with either LDRs or photo diodes.
 
 *Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. LDRs are relatively slow to fully change resistance. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. 
 
-If you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing. So the slower LDR could be an advantage.
+There are also photo transistors to consider but this code isn't designed for it.
 
-There are also photo transistors to consider but this code isnt designed for it.
+The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track. The calculation of car speed does seem to be affected by the choice of sensor.
 
+Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing? So the slower LDR could be an advantage? (I confirmed that indeed photodiodes are sensitive to AC lighting flickering/strobing and a battery supplied light is better if photodiodes are used. The symptom of this is the trap speed calculation can be overly quick.) Photodiodes can also be sensitive to capacitance if long pairs of wires are used, to remedy this, pull the pair of wires apart.
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
@@ -153,7 +154,7 @@ Example of installed photo sensor in the track. This was glued with JBWeld, but 
 # Wiring
 
 <img src="./circuit.jpg" style="background: white;" bgcolor=white />
-
+In the above chart, photodiodes can replace the LDR's but keep in mind that polarity matters. Photodiodes must be installed with reverse bias. As for the RGB LED, there are 4 leads: a ground, red, green, and blue. Please see the next image for complete details. The 2k resistors can be higher ohms for increased photosensitivity.
 
 There are relatively few connections and many grounds and +5v pins to choose from on an Arduino mega. So a wiring loom is a possibility.
 
@@ -177,5 +178,52 @@ I built mine out of thin hobby plywood that can be cut with a utility knife. To 
   <img src="./ERD.png"/>
 </div>
 
+# About voltage dividers
+
+I have made 3 devices so far. First two being road course timers which work perfectly. The third one is a drag strip timer and have been having some issues tuning it.
+
+Using a **photodiode in reverse bias** within a **voltage divider** setup on an Arduino is a great way to measure light intensity with improved sensitivity and faster response times. Here’s how it works:
+
+### **Understanding Reverse Bias Photodiodes**
+- In **reverse bias mode**, the cathode (negative) is connected to a higher voltage, and the anode (positive) to a lower voltage (typically ground).
+- The diode does **not conduct** like a regular diode unless light strikes it, generating a **small photocurrent** proportional to the light intensity.
+- This configuration **reduces capacitance**, making the response faster.
+
+---
+
+### **Setting Up the Voltage Divider**
+A **voltage divider** transforms the photocurrent into a voltage signal that the Arduino can read. Here's a basic setup:
+
+1. **Connect the Photodiode in Reverse Bias**:
+   - **Cathode** → **VCC (e.g., 5V or 3.3V)**
+   - **Anode** → **One end of the resistor**
+   - The other end of the resistor → **Ground**
+   - The junction between the **photodiode and resistor** becomes the output voltage.
+
+2. **Selecting the Resistor Value**:
+   - Use a **pull-down resistor** (e.g., **10kΩ to 1MΩ**).  
+   - Higher resistance **increases sensitivity** to low-light conditions but may slow response time.
+   - Lower resistance **improves response speed** but may reduce sensitivity.
+
+3. **Reading the Voltage with Arduino**:
+   - Connect the voltage junction (between the **photodiode and resistor**) to an **analog pin (A0, A1, etc.)**.
+   - Use `analogRead(pin)` to measure the voltage, which **varies based on light intensity**.
+
+---
+
+### **Arduino Code Example**
+```cpp
+const int sensorPin = A0; // Photodiode voltage divider junction
+void setup() {
+    Serial.begin(9600);
+}
+void loop() {
+    int sensorValue = analogRead(sensorPin); // Read voltage level
+    float voltage = sensorValue * (5.0 / 1023.0); // Convert ADC value to volts
+    Serial.println(voltage); // Print voltage to monitor
+    delay(500);
+}
+```
+This setup allows you to track changes in light levels and adjust the resistor value for better sensitivity.
 
 
