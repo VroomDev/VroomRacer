@@ -107,6 +107,13 @@ public:
     return true;
   }
 
+  void empty() {
+    T d;
+    while( pull(d)) {
+        playTone(450,10); //empty buffer
+        ph("Pulled");
+    }
+  }
   
 private:
   T buffer[Size];
