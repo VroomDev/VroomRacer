@@ -38,6 +38,7 @@ class Detection {
 
   void debug(){
     ph("Detection");
+    p("millis",millis());
     p("port",port);
     p("value",value);
     p("count",count);    
