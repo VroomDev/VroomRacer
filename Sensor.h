@@ -11,9 +11,9 @@
 // 3ms is 883ips=47mph=3030 1:64mph
 // 4ms is 625ips=36mph=2273 1:64mph, Tyco published 2000 scale mph was achievable, which is still crazy fast.
 // May need consider higher min ms time
-#define MIN_MS_TIME 1
-// 1
-//was 2
+#define MIN_MS_TIME 2
+//1 was used for drag racing
+//2 was used for road course... i think 2 will work for both
 #define MAXCOUNT 65535
 const int DEBOUNCE = 100; // Debounce delay in milliseconds
 
