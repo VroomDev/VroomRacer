@@ -113,11 +113,15 @@ class Lane {
         return false;
       }
       // if count is maxed out then not elig for best lap
+      bool personal=true;
       if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){
          allBestLapDur=lapDuration; //used for jumped lap detection
+         playToneNoBlock(4000,100); //high frequency beep to alert of new fast lap
+         personal=false;
       }
       if(lapDuration<bestLapDur || bestLapDur==0) {
         bestLapDur=lapDuration; //always set best first
+       if(personal) playToneNoBlock(2000,100); //high frequency beep to alert of new fast lap
       }else if(lapDuration>worstLapDur || worstLapDur==0){
         worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
       }
@@ -266,20 +270,23 @@ class Lane {
       if( start.timestamp<raceStart) { //jumped!
         ch='D';
       }
-      unsigned long reactionTime=start.timestamp<raceStart ? 9999000 : start.timestamp-raceStart;
+      //      unsigned long reactionTime=start.timestamp<raceStart ? 999000 : start.timestamp-raceStart;
+      signed long reactionTime=start.timestamp-raceStart;
       unsigned long lapDuration=finish.timestamp-start.timestamp;
-      if( lapDuration>9999){ //display both in seconds
+      unsigned long totTime=(reactionTime>=0?lapDuration+reactionTime:lapDuration);
+      if( totTime>9999){ //display both in seconds
         //display in seconds since so very slow!
-        sprintf(buffer,"%c%d R%3lus E%3lus S%3d   ",ch,laneNum+1,    reactionTime/1000,      lapDuration/1000,      (int)speed);
-      }else if(reactionTime>9999) {
-        sprintf(buffer,"%c%d R%3lus E%4lu S%3d   ",ch,laneNum+1,    reactionTime/1000,      lapDuration,      (int)speed);
+        sprintf(buffer,"%c%d R%4lds T%4lus%c   ",ch,laneNum+1, reactionTime/1000, totTime/1000,ch=='D'?'!':' ');
+//      }else if(reactionTime>9999 || reactionTime<-999) {
+//        sprintf(buffer,"%c%d R%4lds T%4lus%c   ",ch,laneNum+1, reactionTime/1000, totTime/1000,ch=='D'?'!':' ');
       }else{
-        sprintf(buffer,"%c%d R%4lu%cE%5lu S%3d   ",ch,laneNum+1,    reactionTime,reactionTime<0?'!':' ',lapDuration,      (int)speed);
+        sprintf(buffer,"%c%d R%5ld T%4lu%c     ",ch,laneNum+1, reactionTime,      totTime,     ch=='D'?'!':' ');
       }
       p("startTS",start.timestamp);
       p("finishTS",finish.timestamp);
       p("raceStart",raceStart);
       p("RT",reactionTime);
+      p("Spd",(int)speed);
       pln("ET",lapDuration);
     }
     lcd.printRow(2+laneNum,buffer);       
