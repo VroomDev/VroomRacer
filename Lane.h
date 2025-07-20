@@ -26,7 +26,11 @@ class Lane {
     bool crossedStart=false;
     int lapCounter=0;
     static unsigned long allBestLapDur;
-    
+    static int maxLapCounter;
+
+
+    char lapQuali=' ';
+    char raceStatus=' '; //how is this racer doing in the race at a glance?
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
     unsigned long topSpeed=0,lowSpeed=0,initialTime=0;
     unsigned long long totalDuration=0;
@@ -39,11 +43,14 @@ class Lane {
        finish.reset();
        crossedStart=false;
        speed=0;
+       speedCount=0;
        lastLapTime=0;
        fuel=MAXFUEL;
        fouls=0;
        lapCounter=0;
        initialTime=0;
+       maxLapCounter=0;
+       lapQuali=raceStatus=' ';
     }
        
     void setup(int pin){
@@ -77,6 +84,8 @@ class Lane {
   /** return false if a bad crossing, returns true with a good start/finish crossing
   */
   bool detect(Detection d){
+    lapQuali=' ';
+    raceStatus=' ';
     //LAP DETECTED
     lastLapTime = d.timestamp;
     if(prior.isEmpty()){
@@ -90,12 +99,16 @@ class Lane {
       //subtract "pit" time
       unsigned int pitTime=d.count/sensors[d.port].ticksPerMs;
       lapDuration = d.timestamp-prior.timestamp - pitTime;
+      if(allBestLapDur==bestLapDur){
+        lapQuali='^';
+      }
       Lap lap;
       lap.duration=lapDuration;
       if(fuelOn && fuel<=0 && speed>0){ //if speed is zero, then got at least a splash of gas
         fuel=0;
         sprintf(why,"Empty");
-        laps.pushAlways(lap);
+        //laps.pushAlways(lap); //empty tank
+        lapQuali='~';
         return false;
       }
       if(fuelOn){
@@ -104,29 +117,39 @@ class Lane {
       }
       if(lapDuration<minLapDuration){
         sprintf(why,"%d Hop",lapDuration);
-        laps.pushAlways(lap);
+        //laps.pushAlways(lap); //bad lap hop
+        lapQuali='!';
         return false;
       }else if(allBestLapDur!=0 && lapDuration<allBestLapDur*6/10){
         //jumped car, since better than anyone by too large of a margin
         sprintf(why,"%d Jump",lapDuration);
-        laps.pushAlways(lap);
+        //laps.pushAlways(lap); //bad lap hop 2nd check
+        lapQuali='#';
         return false;
       }
       // if count is maxed out then not elig for best lap
-      bool personal=true;
+      //bool personal=true;
       if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){
          allBestLapDur=lapDuration; //used for jumped lap detection
-         playToneNoBlock(4000,100); //high frequency beep to alert of new fast lap
-         personal=false;
+         playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
+         //personal=false;
+         lapQuali='*';
       }
       if(lapDuration<bestLapDur || bestLapDur==0) {
         bestLapDur=lapDuration; //always set best first
-       if(personal) playToneNoBlock(2000,100); //high frequency beep to alert of new fast lap
+        if(lapQuali==' ') lapQuali='+'; //if(personal) playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
       }else if(lapDuration>worstLapDur || worstLapDur==0){
+        lapQuali='-';
         worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
       }
-      lapCounter++; 
+      lapCounter++;
       lap.lap=lapCounter;
+      if(lapCounter>maxLapCounter){
+        maxLapCounter=lapCounter;
+        raceStatus='>'; //in the lead 
+      }else if(lapCounter<maxLapCounter){
+        raceStatus='<';//not on same lap down at least 1 lap
+      }
       totalDuration+=lapDuration;      
       avgLapDur = totalDuration/lapCounter;
       //lap counter is now the number of completed laps
@@ -146,7 +169,7 @@ class Lane {
         if(serialOn) Serial.print(buffer); 
       }
       prior=d;
-      laps.pushAlways(lap);
+      laps.pushSort(lap); //good lap
       return true;
     }
   }
@@ -240,6 +263,8 @@ class Lane {
         lcd.printSpeed(speed); //page1
       }
     }
+    lcd.print(19,1,raceStatus);
+    lcd.print(19,2,lapQuali);
   }
 
   void display1Drag(){    
@@ -358,7 +383,7 @@ class Lane {
     }
   }
 
-
+  //display for 2 player mode
   void display2(byte page,RaceFlag flag){    
     lcd.setCursor(0,0); //laneNum*2);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
@@ -381,8 +406,8 @@ class Lane {
       mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
       //mydtostrf(avgLapDur/1000.0, 4, floatBuffer2); // Convert float to string    
                     //01234567890123456789
-                    //C0 Lap00 00000s Time 
-      sprintf(buffer,"%c%d Lap%-2d %5ss Time            ",ch,laneNum+1,lapCounter,floatBuffer1);
+                    //C0 Lap00 00000s*Time    The * is the lapQuali indication, ^ holds best lap, * just made best overall lap etc.
+      sprintf(buffer,"%c%d Lap%-2d %5ss%cTime            ",ch,laneNum+1,lapCounter,floatBuffer1,lapQuali);
     }
     buffer[20]=0; //null terminate
     lcd.printRow(0,buffer);    
@@ -394,20 +419,25 @@ class Lane {
     if( page==2 ) { 
       //print out recent lap times
       byte offset=0;
-      for(int row=1;row<=3;row++){
+      for(int row=1;row<=3;row++){ //display up to 6
         buffer[0]=0;
         Lap lap1;
-        laps.top(lap1,offset++);
+        laps.bottom(lap1,offset++);
         mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
         Lap lap2;
-        laps.top(lap2,offset++);
+        laps.bottom(lap2,offset++);
         mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
-        sprintf(buffer,"%2d %6ss %2d %6ss",lap1.lap,floatBuffer1,lap2.lap,floatBuffer2);
+        sprintf(buffer,"%2d%c%5ss %2d%c%5ss",lap1.lap,
+          lap1.duration==allBestLapDur ? '*' : lap1.duration==worstLapDur ? '-' : lap1.duration==bestLapDur?'+': ' ', 
+          floatBuffer1,lap2.lap,
+          lap2.duration==allBestLapDur ? '*' : lap2.duration==worstLapDur ? '-' : lap2.duration==bestLapDur?'+': ' ',  
+          //a little dumb since usually only the first one would be best overall
+          floatBuffer2);
         lcd.printRow(row,buffer);
-      }           
-      delay(1000);
+      }  
     }else if( page ==0 ) {
       //01234567890123456789
+      
       //Lap Time  Avg 00000s//
       //Best 00000s Gas 00% //
       //Slow 00000s Fouls 00//
@@ -508,5 +538,5 @@ class Lane {
 };
 
 unsigned long Lane::allBestLapDur=0;
-
+int Lane::maxLapCounter=0;
 //EOF
