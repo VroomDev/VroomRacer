@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250715"; // 0526
+const char* title="VroomRacer v20250719"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -332,6 +332,10 @@ void loop(){
   delay(1);
   if(configByButtons()){
     return; //stay in config mode
+  }
+  if( minusButton()) {
+    while(minusButton()){delay(10);} //wait for depress
+    nextPageFlip=0;
   }
   if( (loopc & 255)==0 && needReset){
           lcd.setCursor(0,3);
