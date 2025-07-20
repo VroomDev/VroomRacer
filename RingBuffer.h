@@ -85,6 +85,28 @@ public:
     return true;
   }
 
+  /**
+   * @brief Peek at the oldest item in the buffer without removing it.
+   * 
+   * The index is relative to the oldest item pushed. For example, bottom(0) returns
+   * the oldest item (lowest lap time if buffer is sorted), bottom(1) returns the second-oldest, etc.
+   * 
+   * @param index The index relative to the oldest item.
+   * @param item The variable to store the peeked item.
+   * @return true if the item was successfully peeked, false if the index is out of range.
+   */
+  bool bottom(T& item, uint8_t index = 0) const {
+    noInterrupts();
+    if (index >= count) {
+      interrupts();
+      return false; // Index out of range
+    }
+    uint8_t pos = (tail + index) & (Size - 1); // Start from tail and move forward
+    item = buffer[pos];
+    interrupts();
+    return true;
+  }
+
 
   /**
    * @brief Peek at an item in the buffer without removing it.
@@ -114,6 +136,75 @@ public:
         ph("Pulled");
     }
   }
+
+
+   /**
+   * pushSort keeps the lowest duration laps.
+   * Not interrupt safe.  Do not use this on any RingBuffer that is used during interupts.
+   */
+   bool pushSort(const T& item) {
+    //noInterrupts();
+  
+    // Case 1: Buffer is not full – just insert at the correct position
+    if (!isFull()) {
+      uint8_t i = head;
+      // Find insertion point from tail to head (ascending order)
+      for (uint8_t idx = 0; idx < count; idx++) {
+        uint8_t pos = (tail + idx) & (Size - 1);
+        if (item < buffer[pos]) {
+          i = pos;
+          break;
+        }
+      }
+  
+      // Shift elements right to make space
+      uint8_t insertPos = i;
+      uint8_t cur = head;
+      while (cur != insertPos) {
+        uint8_t prev = (cur - 1 + Size) & (Size - 1);
+        buffer[cur] = buffer[prev];
+        cur = prev;
+      }
+  
+      buffer[insertPos] = item;
+      head = (head + 1) & (Size - 1);
+      count++;
+      //interrupts();
+      return true;
+    }
+  
+    // Case 2: Buffer is full – check if item is smaller than largest
+    uint8_t maxPos = (head - 1 + Size) & (Size - 1);
+    if (item >= buffer[maxPos]) {
+      //interrupts();
+      return false; // Item too large
+    }
+  
+    // Drop largest item and insert new one in correct place
+    uint8_t i = tail;
+    for (uint8_t idx = 0; idx < count; idx++) {
+      uint8_t pos = (tail + idx) & (Size - 1);
+      if (item < buffer[pos]) {
+        i = pos;
+        break;
+      }
+    }
+  
+    // Shift elements right from maxPos to insertion point
+    uint8_t cur = maxPos;
+    while (cur != i) {
+      uint8_t prev = (cur - 1 + Size) & (Size - 1);
+      buffer[cur] = buffer[prev];
+      cur = prev;
+    }
+  
+    buffer[i] = item;
+    head = (head + 1) & (Size - 1);
+    tail = (tail + 1) & (Size - 1); // Drop oldest to maintain size
+    //interrupts();
+    return true;
+  }
+
   
 private:
   T buffer[Size];
