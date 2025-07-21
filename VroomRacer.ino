@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250719"; // 0526
+const char* title="VroomRacer v20250720"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -109,6 +109,9 @@ RaceFlag raceFlag=FORMATION;
 #define ph(label)   if(serialOn){Serial.print(label);Serial.print(':');}
 #define p(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
 #define pln(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
+#define ph2(label)   if(true){Serial.print(label);Serial.print(':');}
+#define p2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
+#define pln2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
 
 
 void mydtostrf(float value, int width,char *buffer) {
@@ -205,12 +208,87 @@ void waveFlag(RaceFlag which){
   }
 }
 
+//#define TESTRBPS
+#ifdef TESTRBPS
 
+void testRBPS(){
+  RingBuffer<Lap, 8> laps;
+  Serial.println("testing ringbuffer pushSort, in reverse order");
+  for(int i=1;i<15;i++){
+    Lap x;
+    x.duration=100-i;
+    x.lap=i;
+    laps.pushSort(x);
+    p2("i",i)
+    for(int p=0;p<8;p++){
+      if(laps.bottom(x,p)){
+        p2(" p",p); 
+        p2("L",x.lap);
+        p2("d",x.duration); 
+      }     
+    }
+    pln2("","");
+    delay(500);
+  }
+  delay(1000);
+  pln2("rbps","now in order");
+  laps.empty();
+  for(int i=1;i<15;i++){
+    Lap x;
+    x.duration=100+i;
+    x.lap=i;
+    laps.pushSort(x);
+    p2("i",i)
+    for(int p=0;p<8;p++){
+      if(laps.bottom(x,p)){
+        p2(" p",p);
+        p2("L",x.lap);
+        p2("d",x.duration);
+      }      
+    }
+    pln2("","");
+    delay(500);
+  }
+  delay(1000);
+  pln2("rbps","now in middle");
+  laps.empty();
+  for(int i=1;i<15;i++){
+    Lap x;
+    if(i&1){
+      x.duration=100+i;
+    }else{
+      x.duration=110-i;
+    }
+    x.lap=i;
+    p2("i",i);
+    p2("xd",x.duration);
+    if(laps.pushSort(x)){
+      
+      for(int p=0;p<8;p++){
+        if(laps.bottom(x,p)){
+          p2(" p",p);
+          p2("L",x.lap);
+          p2("d",x.duration);
+        }      
+      }
+      pln2("","");
+    }else{
+      pln2("not","pushed");  
+    }
+    delay(500);
+  }
+  delay(32000);
+}
+#endif
 
 void setup() {
   Serial.begin(9600);
   delay(50);
   Serial.println("\n\nStarting");
+  #ifdef TESTRBPS
+  testRBPS();
+  #endif
+  
   if(scanDevices()==0){
     Serial.println("no LCD found");
   }
