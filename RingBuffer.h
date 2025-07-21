@@ -1,3 +1,4 @@
+
 /* 
  * Code by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
@@ -137,6 +138,24 @@ public:
     }
   }
 
+//  /**
+//   * This forces a new older item to be added.
+//   * Not interrupt safe!
+//   */
+//  bool enqueueForced(const T& item) {
+//    if (isFull()) {
+//      // Drop newest item: back up head
+//      head = (head - 1 + Size) & (Size - 1);
+//      count--;
+//    }
+//  
+//    // Insert item at tail (as new oldest)
+//    buffer[tail] = item;
+//    // Move tail back to new position
+//    tail = (tail - 1 + Size) & (Size - 1);
+//    count++;
+//    return true;
+//  }
 
    /**
    * pushSort keeps the lowest duration laps.
@@ -175,6 +194,8 @@ public:
   
     // Case 2: Buffer is full – check if item is smaller than largest
     uint8_t maxPos = (head - 1 + Size) & (Size - 1);
+    //    p2("head,maxPos,tail",head);
+    //    pln2(maxPos,tail);
     if (item >= buffer[maxPos]) {
       //interrupts();
       return false; // Item too large
@@ -197,14 +218,14 @@ public:
       buffer[cur] = buffer[prev];
       cur = prev;
     }
-  
     buffer[i] = item;
-    head = (head + 1) & (Size - 1);
-    tail = (tail + 1) & (Size - 1); // Drop oldest to maintain size
+    // We do not need move the head or tail around since we modified the buffer in place.
+    // If the item is less than the head, could more cheaply insert into the head instead.
+    //    head = (head + 1) & (Size - 1); 
+    //    tail = (tail + 1) & (Size - 1); 
     //interrupts();
     return true;
   }
-
   
 private:
   T buffer[Size];
