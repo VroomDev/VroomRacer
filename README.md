@@ -6,8 +6,31 @@ Vroom Racer is an Arduino Lap Timer for slot car racing using photo eyes that fe
 ## Project Goals
 The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs.
 
-## Race Control Lights
+## User Interface 
 
+### Buttons
+*There are 3 buttons*: Reset, Select, Minus, and Plus.
+
+- Reset: restarts in the default mode and starts the count down to start a race.
+- Reset+Minus: retarts in Fuel mode.
+- Reset+Plus: restarts in Fast speed, racing without fueling.
+- Reset+Minus+Plus: restarts in Test mode. This mode is ideal for tuning your car. Could also use for qualifying.
+- Select: Push this to enter configuration mode. Push select to advance to next option. Use Minus and Plus to change the options. One of the options is to exit configuration mode and another option is to permanently save the configuration.
+- Minus: cycles the screen to show different statistics during race mode.
+- Plus: while in drag racing mode, this will start a new drag race while preserving statistics.
+
+### Modes
+*There are 4 modes*: 
+- Fuel: racing with fueling and flsgs by default.
+- Fast: racing flags but without fueling.
+- Tune: racing without flags and no fueling.
+- Drag: This is for drag racing with 4 photo sensors.
+
+Remember everything is configurable, so each mode can be reconfigured.
+
+Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins it. Instead see who got the fastest lap.
+
+### Race Control Lights
 
 There is a RGB led flag light, that can emit different colors.
 - **Red**: Your car should be stopped. Laps are not counted.
@@ -15,6 +38,16 @@ There is a RGB led flag light, that can emit different colors.
 - **Green**: The race is on!
 - **Cyan**: there is a winner.
 
+### Display Screens 
+
+During racing when your lap time is presented, on the right most column are punctuation is hint at your ongoing personal race status.
+
+- ">" You are in the lead of the race.
+- "<" You are no longer on the lead lap.
+- "*" You just set the fastest lap of the race or qualifying session.
+- "+" You just set your own PR for the race or qualifying session.
+- "-" You just set your worst lap.
+- "^" You currently hold the fastest lap. 
 
 ## Lap Timing and Speed Calculation
 - **Lap Duration**: Measured from start to start with time in milliseconds.
