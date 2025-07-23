@@ -30,7 +30,7 @@ Remember everything is configurable, so each mode can be reconfigured.
 
 Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins it. Instead see who got the fastest lap.
 
-<img src="img/top-laps.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
+<img src="img/top-laps.jpg" style='height: 50%; width: 50%;">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
 
 ### Race Control Lights
 
