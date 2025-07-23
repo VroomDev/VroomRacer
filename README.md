@@ -114,7 +114,7 @@ A competition yellow is thrown at a configurable interval through the race.
 
 If a car is very late (configurable), the automated logic declares a red flag.
 
-During red, no laps are counted. But it does reset the lap start, so it does clear a red flag condition if the car was the cause of the red flag.
+During red, no laps are counted. Best to stop and wait on the photo sensor, filling with fuel.  Wait for the red to clear and then proceed.
 
 
 ## Sounds
@@ -123,7 +123,8 @@ During red, no laps are counted. But it does reset the lap start, so it does cle
 - **Green flag**: starting beeps.
 - **Winner**: Ode to Joy.
 - **Lost**: “engine“ sounds
-- Imperial March snippets: fast temp yellow, slow tempo red flag.
+- *Quick high pitch tone*: Fastest lap recorded
+- March snippets: fast temp yellow, slow tempo red flag.
 
 # Car Sensing 
 
