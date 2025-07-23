@@ -127,20 +127,19 @@ class Lane {
         lapQuali='#';
         return false;
       }
-      // if count is maxed out then not elig for best lap
-      //bool personal=true;
-      if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){
-         allBestLapDur=lapDuration; //used for jumped lap detection
-         playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
-         //personal=false;
-         lapQuali='*';
+
+      if(lapDuration>worstLapDur || worstLapDur==0){
+        lapQuali='-';
+        worstLapDur=lapDuration; //note the first lap sets the worst right away
       }
       if(lapDuration<bestLapDur || bestLapDur==0) {
-        bestLapDur=lapDuration; //always set best first
-        if(lapQuali==' ') lapQuali='+'; //if(personal) playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
-      }else if(lapDuration>worstLapDur || worstLapDur==0){
-        lapQuali='-';
-        worstLapDur=lapDuration; //need to have 2 laps to have worst lap.
+        bestLapDur=lapDuration; //note the first lap best right away 
+        lapQuali='+';
+      }
+      if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){ // if count is maxed out then not elig for best lap
+         allBestLapDur=lapDuration; //used for jumped lap detection
+         playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
+         lapQuali='*';
       }
       lapCounter++;
       lap.lap=lapCounter;
@@ -416,23 +415,25 @@ class Lane {
       Serial.print("\n");     
     }
 
-    if( page==2 ) { 
-      //print out recent lap times
+    if( page==2 ) { //print out recent lap times
       byte offset=0;
       for(int row=1;row<=3;row++){ //display up to 6
         buffer[0]=0;
         Lap lap1;
-        laps.bottom(lap1,offset++);
-        mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
-        Lap lap2;
-        laps.bottom(lap2,offset++);
-        mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
-        sprintf(buffer,"%2d%c%5ss %2d%c%5ss",lap1.lap,
-          lap1.duration==allBestLapDur ? '*' : lap1.duration==worstLapDur ? '-' : lap1.duration==bestLapDur?'+': ' ', 
-          floatBuffer1,lap2.lap,
-          lap2.duration==allBestLapDur ? '*' : lap2.duration==worstLapDur ? '-' : lap2.duration==bestLapDur?'+': ' ',  
-          //a little dumb since usually only the first one would be best overall
-          floatBuffer2);
+        if(laps.bottom(lap1,offset++)){
+          mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
+          Lap lap2;
+          laps.bottom(lap2,offset++);
+          mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
+          sprintf(buffer,"%2d %5ss%c%2d %5ss%c",lap1.lap,
+            floatBuffer1,
+            lap1.duration==allBestLapDur ? '*' : lap1.duration==bestLapDur ? '+' : lap1.duration==worstLapDur ?'-': ' ', 
+            lap2.lap,
+            floatBuffer2,
+            lap2.duration==allBestLapDur ? '*' : lap2.duration==bestLapDur ? '+' : lap2.duration==worstLapDur ?'-': ' '  
+            //a little dumb since usually only the first one would be best overall
+            );
+        }
         lcd.printRow(row,buffer);
       }  
     }else if( page ==0 ) {
