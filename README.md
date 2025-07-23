@@ -30,6 +30,8 @@ Remember everything is configurable, so each mode can be reconfigured.
 
 Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins it. Instead see who got the fastest lap.
 
+<img src="20250721_154922~2.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
+
 ### Race Control Lights
 
 There is a RGB led flag light, that can emit different colors.
