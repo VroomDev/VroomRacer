@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250720"; // 0526
+const char* title="VroomRacer v20250722"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
