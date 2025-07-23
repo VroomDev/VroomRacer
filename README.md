@@ -30,7 +30,7 @@ Remember everything is configurable, so each mode can be reconfigured.
 
 Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins it. Instead see who got the fastest lap.
 
-<img src="20250721_154922~2.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
+<img src="img/top-laps.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
 
 ### Race Control Lights
 
@@ -51,11 +51,28 @@ During racing when your lap time is presented, on the right most column are punc
 - "-" You just set your worst lap.
 - "^" You currently hold the fastest lap. 
 
+<img src="img/lap-time.jpg">This shows Car #2's lap time, crossed the start/finish at 38 inches per second, has 88% fuel, completed lap #3.  Currently leads the race and set fastest lap.</img>
+
+## Stopping for fuel
+
+Stop on the photo sensor to begin filling your tank.  There will be a progress bar and a sound. The longer the car sits, the more the tank is filled.
+If your fuel gauge reads 0%, the lap will not be counted.
+Fuel consumption is based on trap speed.
+<img src="img/laps-fuel.jpg">Notice the G76% showing the tank level.</img>
+
+
 ## Lap Timing and Speed Calculation
 - **Lap Duration**: Measured from start to start with time in milliseconds.
 - **Trap Speed**: Calculated based on the time the car breaks the beam. The car length is assumed to be 2.5 inches, and this is internally calculated as a count of interrupt "clicks" and given in inches per second.
+- **Reaction Time**: The time to take to cross the start line initially.  If during a road course, the start is jumped, the start won't be registered and the car must travel around to start the lap.
+
+<img src="img/reaction.jpg"></img>
+
 
 **Inches per Second is the Best Speed Measurement for Slot Cars**
+
+<img src="img/speed.jpg"></img>
+
 
 Using inches per second (in/s) to measure slot car speed is practical and relatable. Here’s why:
 
@@ -75,6 +92,12 @@ By using inches per second, we simplify speed measurement and enhance our racing
 - **Impossibly fast laps** There is a debounce timeout that if the detection is within then the detection is completely ignored.
 - **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is configurable. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap too quickly based on the fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
 
+<img src="img/jump.jpg">The car triggered a lap very early and will not be counted.</img>
+
+<img src="img/best-slow-fouls.jpg">This car is on lap 5, holds the fastest lap, but has one lap that did not count (fouls).</img>
+
+
+
 ![inches per second examples](./display2.jpg)
 *Car 0 on Lap 5 went through the photo eye at 10 inches per second and made a lap time of 3.280 seconds.*
 
@@ -83,6 +106,9 @@ By using inches per second, we simplify speed measurement and enhance our racing
 - Drivers must pass thru the sensor at a slower speed for the lap to count. Speeding the sensor results in that specific lap being ignored.
 
 A competition yellow is thrown at a configurable interval through the race.
+
+<img src="img/too-fast.jpg">If speeding through the yellow, this will be displayed and the lap will not be counted.</img>
+
 
 ## Automatic Red Flag
 
