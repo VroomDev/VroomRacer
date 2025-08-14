@@ -23,10 +23,10 @@ The aim of this project is to create an Arduino-based slot car tracker and timer
 *There are 4 modes*: 
 - Fuel: racing with fueling and flsgs by default.
 - Fast: racing flags but without fueling.
-- Tune: racing without flags and no fueling.
+- Tune: racing or qualifying without flags and no fueling.
 - Drag: This is for drag racing with 4 photo sensors.
 
-Remember everything is configurable, so each mode can be reconfigured.
+Remember everything is configurable, so each mode can be reconfigured to be what you want.
 
 Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins it. Instead see who got the fastest lap.
 
