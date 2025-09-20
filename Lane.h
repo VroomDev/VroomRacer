@@ -382,6 +382,22 @@ class Lane {
     }
   }
 
+  void selectionSort(long int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        int minIndex = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[minIndex]) {
+                minIndex = j;
+            }
+        }
+        // Swap the found minimum element with the first element
+        auto temp = arr[minIndex];
+        arr[minIndex] = arr[i];
+        arr[i] = temp;
+    }
+  }
+
+
   //display for 2 player mode
   void display2(byte page,RaceFlag flag){    
     lcd.setCursor(0,0); //laneNum*2);//col,row    
@@ -415,26 +431,61 @@ class Lane {
       Serial.print("\n");     
     }
 
-    if( page==2 ) { //print out recent lap times
-      byte offset=0;
-      for(int row=1;row<=3;row++){ //display up to 6
-        buffer[0]=0;
-        Lap lap1;
-        if(laps.bottom(lap1,offset++)){
-          mydtostrf((lap1.duration / 1000.0), 5, floatBuffer1);
-          Lap lap2;
-          laps.bottom(lap2,offset++);
-          mydtostrf((lap2.duration / 1000.0), 5, floatBuffer2);
-          sprintf(buffer,"%2d %5ss%c%2d %5ss%c",lap1.lap,
-            floatBuffer1,
-            lap1.duration==allBestLapDur ? '*' : lap1.duration==bestLapDur ? '+' : lap1.duration==worstLapDur ?'-': ' ', 
-            lap2.lap,
-            floatBuffer2,
-            lap2.duration==allBestLapDur ? '*' : lap2.duration==bestLapDur ? '+' : lap2.duration==worstLapDur ?'-': ' '  
-            //a little dumb since usually only the first one would be best overall
-            );
+    if( page==2 ) { //print out recent lap times\
+      ///load data
+      Lap lap1;
+      long int laparr[lapBufSize];
+      int N=0;
+      for(int i=0;i<lapBufSize;i++){
+        if(laps.bottom(lap1,i)){
+          laparr[N++]=lap1.duration;
         }
-        lcd.printRow(row,buffer);
+      }
+      if(N>0){
+        ///calculation stats
+        selectionSort(laparr,N);
+        auto median=laparr[(N&1)==1? N/2 : N/2-1];
+        for(int i=0;i<N;i++){
+          laparr[i]=abs(laparr[i]-median);
+        }
+        selectionSort(laparr,N);
+        auto mad=laparr[(N&1)==1? N/2 : N/2-1]; //Median Absolute Deviation
+        mad=(1.96*1.4826*mad);
+        mad=mad < median/10 ? median/10 : mad; //allow for at least a 10% improvement over the median
+        auto stewardsBound=median-mad;        
+        buffer[20]=0; //null terminate
+        sprintf(buffer,"%c%d Med:%ld +-%ld ",ch,laneNum+1,median,mad);
+        lcd.printRow(0,buffer); 
+        //loop to display
+        byte offset=0;
+        for(int row=1;row<=3;row++){ //display up to 6
+          buffer[0]=0;
+          
+          if(laps.bottom(lap1,offset++)){
+            mydtostrf((lap1.duration / 1000.0), 6, floatBuffer1);
+            Lap lap2;
+            laps.bottom(lap2,offset++);
+            mydtostrf((lap2.duration / 1000.0), 6, floatBuffer2);
+            sprintf(buffer,"%2d %6s%c%2d %6s%c",lap1.lap,
+              floatBuffer1,
+              lap1.duration<stewardsBound ? '?' :
+              lap1.duration==allBestLapDur ? '*' : 
+              lap1.duration==bestLapDur ? '+' : 
+              lap1.duration==worstLapDur ?'-': 
+              lap1.duration==median ? '#':
+              ' ', 
+              lap2.lap,
+              floatBuffer2,
+              lap2.duration<stewardsBound ? '?' :
+              lap2.duration==allBestLapDur ? '*' : 
+              lap2.duration==bestLapDur ? '+' :
+              lap2.duration==worstLapDur ?'-': 
+              lap2.duration==median ? '#':
+              ' '  
+              );
+          }
+          lcd.printRow(row,buffer);
+        }
       }  
     }else if( page ==0 ) {
       //01234567890123456789
@@ -444,20 +495,20 @@ class Lane {
       //Slow 00000s Fouls 00//
       buffer[0]=0;
       if(avgLapDur!=0) {
-        mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"Lap Time  Avg %6ss",floatBuffer1);
+        mydtostrf(avgLapDur/1000.0, 6, floatBuffer1); // Convert float to string
+        sprintf(buffer,"Lap Time Avg %6ss",floatBuffer1);
       }
       lcd.printRow(1,buffer);
       buffer[0]=0;
       floatBuffer1[0]=0;
       if(bestLapDur!=0) {
-        mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float  to string
+        mydtostrf((bestLapDur / 1000.0), 6, floatBuffer1); // Convert float  to string
       } 
       ///////////////
       if(fuelOn){
-        sprintf(buffer,"%4s %5s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
+        sprintf(buffer,"%4s%6s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
       }else{
-        sprintf(buffer,"%4s %5s%c          ",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s');
+        sprintf(buffer,"%4s%6s%c          ",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s');
       }
       lcd.printRow(2,buffer);
       buffer[0]=0;
@@ -519,7 +570,7 @@ class Lane {
         break;
       case 2:
         mydtostrf(avgLapDur/1000.0, 5, floatBuffer1); // Convert float to string
-        sprintf(buffer,"%c%d L%-2d Avg  %5ss %c",ch,laneNum+1,(int)lapCounter,floatBuffer1,flag);
+        sprintf(buffer,"%c%d L%-2d Avg %5ss %c",ch,laneNum+1,(int)lapCounter,floatBuffer1,flag);
         break;
       case 3:
         mydtostrf((bestLapDur / 1000.0), 5, floatBuffer1); // Convert float to string
