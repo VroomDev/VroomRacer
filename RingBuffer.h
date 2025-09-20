@@ -108,6 +108,20 @@ public:
     return true;
   }
 
+  
+  /**
+   * @brief get the middle value in the buffer.  if the buffer is sorted then it will return median.  
+   * If the buffer has even number of elements
+   * it will use the lower of the two.
+   */
+//  bool median(T& item) const {
+//    noInterrupts();
+//    uint8_t index = count/2;
+//    interrupts();
+//    return bottom(item,index);
+//  }
+
+  
 
   /**
    * @brief Peek at an item in the buffer without removing it.
@@ -118,17 +132,17 @@ public:
    * @param item The variable to store the peeked item.
    * @return true if the item was successfully peeked, false if the buffer is empty.
    */
-  bool peek(T& item, uint8_t offset = 0) const {
-    noInterrupts();
-    if (isEmpty() || offset >= count) {
-      interrupts();
-      return false; // Buffer is empty or offset is too large
-    }
-    uint8_t pos = (tail + offset) & (Size - 1); // Calculate the position with offset
-    item = buffer[pos]; // Peek at the item at the calculated position
-    interrupts();
-    return true;
-  }
+//  bool peek(T& item, uint8_t offset = 0) const {
+//    noInterrupts();
+//    if (isEmpty() || offset >= count) {
+//      interrupts();
+//      return false; // Buffer is empty or offset is too large
+//    }
+//    uint8_t pos = (tail + offset) & (Size - 1); // Calculate the position with offset
+//    item = buffer[pos]; // Peek at the item at the calculated position
+//    interrupts();
+//    return true;
+//  }
 
   void empty() {
     T d;
