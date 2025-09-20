@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250722"; // 0526
+const char* title="VroomRacer v20250919"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -116,23 +116,23 @@ RaceFlag raceFlag=FORMATION;
 
 void mydtostrf(float value, int width,char *buffer) {
   // Calculate the number of digits in the integer part of the value
-  int intPart = (int)value;
+  int intPart = abs((int)value);
   if(value>99999 || value<-9999 ){
     sprintf(buffer,"OVER!");
     return;
   }  
   int prec=3;
+  int digits=1; //for dot
   if (intPart >= 1000) {
-    prec=0;
+    digits+=4;
   } else if (intPart >= 100) {
-    prec=1;
+    digits+=3;
   } else if (intPart >= 10) {
-    prec=2;
+    digits+=2;
   } else if (intPart >= 1) {
-    prec=3;
+    digits+=1;
   }
-  if(width<=4 && prec>0) prec--;
-  if(width<=3 && prec>0) prec--; //hacky
+  while(prec>0 && digits+prec>width) prec--; //reduce digit use if required
   // Use dtostrf with the adjusted precision
   dtostrf(value, width, prec, buffer);
 }
