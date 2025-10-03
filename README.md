@@ -227,6 +227,10 @@ There are relatively few connections and many grounds and +5v pins to choose fro
 
 Note: the parallel resistor in the above diagram can be replaced with a single resistor of about 145 ohm.
 
+# Drag Racing Photo Eye Flap 
+
+<img src="img_2_1759488840312~4.jpg">This flap increases photo eye accuracy with fast cars, white chassis cars, or ones with wings. Even better to use black tape.</img>
+
 # Enclosure
 
 I built mine out of thin hobby plywood that can be cut with a utility knife. To ease assembly , taping the exterior together then gluing from the inside using toothpick joiners with quick set white glue is very effective. For the exterior, I printed "textures" on my ink jet printer. For the roof, I am using cardstock paper.
