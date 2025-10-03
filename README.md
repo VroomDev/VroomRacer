@@ -249,7 +249,7 @@ I built mine out of thin hobby plywood that can be cut with a utility knife. To 
 
 # About voltage dividers
 
-I have made 3 devices so far. First two being road course timers which work perfectly. The third one is a drag strip timer and had some issues tuning it. The extra speed and extra long wires makes it more delicate. To improve the detection, I split the paired wires to reduce capacitance. (Be sure to install the photo eye flaps.)
+I have made 3 devices so far. First two being road course timers which work perfectly which use photo resistors. The third one is a drag strip timer and I had some issues tuning it. The extra speed and extra long wires makes it more delicate. To improve the detection, I split the paired wires to reduce capacitance. (Be sure to install the photo eye flaps.) On the drag race timer I am using photo diodes.
 
 Using a **photodiode in reverse bias** within a **voltage divider** setup on an Arduino is a great way to measure light intensity with improved sensitivity and faster response times. Here’s how it works:
 
