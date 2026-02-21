@@ -5,7 +5,8 @@
  * No guarantees of being fit for purpose.
  */
 #include <Arduino.h> 
-#define PAGECOUNT 3
+// the page numbers run from 0 up to but not including PAGECOUNT
+#define PAGECOUNT 4
 unsigned int tock=0;
 
 const uint8_t lapBufSize = 8; // Must be a power of 2
@@ -202,9 +203,9 @@ class Lane {
     sprintf(buffer,"%c%d Lap%-2d In Pit G%2d%%  "
                    ,ch,laneNum+1,(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
     buffer[20]=0; //null terminate
-    lcd.print(buffer);
+    lcd.printRow(laneNum*2,buffer);
                              // 1234567890123467890
-    if(fuel<=0) sprintf(buffer,"EMPTY GAS TANK!    ");
+    if(fuel<=0) sprintf(buffer, "EMPTY GAS TANK!    ");
     else{
       int level=(int)((long)fuel*19/MAXFUEL);
       for(int i=0;i<20;i++){
@@ -212,7 +213,7 @@ class Lane {
       }
     }
     buffer[20]=0; //null terminate
-    lcd.printRow(1,buffer);
+    lcd.printRow(laneNum*2+1, buffer);
   }
 
   void banner(bool lapCounted,char* msg,byte page=0){
@@ -243,6 +244,9 @@ class Lane {
     buffer[20]=0; //null terminate
     lcd.print(buffer);
     if(page==2){
+        lcd.print(11,1,' '); //clear out some pesky gibberish
+        lcd.print(11,2,' ');
+        lcd.print(11,3,' ');
         if(fuelOn){
           sprintf(buffer,"%2dLAPS%2d%%",(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
         }else{
@@ -250,8 +254,8 @@ class Lane {
         }
         lcd.printBigString(buffer);
     }else if(page==1){
-        lcd.printSpeed(speed); //page1    
-    }else{
+        lcd.printSpeed(speed);     
+    }else{ //page 0
       int reactionTime=crossedStart?(int)((signed long)initialTime-(signed long)raceStart):0;
       ph("banner0"); p("lane#",laneNum); pln("reactionTime",reactionTime);
       if(lapCounted && (lapCounter>0) ){    
@@ -259,7 +263,7 @@ class Lane {
       }else if(crossedStart && lapCounter==0 && reactionTime<=9999 && reactionTime>=0){
         lcd.printReaction(reactionTime);
       }else{
-        lcd.printSpeed(speed); //page1
+        lcd.printSpeed(speed); //
       }
     }
     lcd.print(19,1,raceStatus);
@@ -431,7 +435,9 @@ class Lane {
       Serial.print("\n");     
     }
 
-    if( page==2 ) { //print out recent lap times\
+    if( page==0 ){
+      banner(true,"",2);
+    }else if( page==2 ) { //print out recent lap times\
       ///load data
       Lap lap1;
       long int laparr[lapBufSize];
@@ -487,7 +493,7 @@ class Lane {
           lcd.printRow(row,buffer);
         }
       }  
-    }else if( page ==0 ) {
+    }else if( page ==1 ) {
       //01234567890123456789
       
       //Lap Time  Avg 00000s//
@@ -517,7 +523,7 @@ class Lane {
         sprintf(buffer,"Slow %5ss Fouls%3d%c%d",floatBuffer1,fouls);
       }
       lcd.printRow(3,buffer);
-    }else{
+    }else{ //implied 3
       //01234567890123456789
       //Trap Speed 0000 in/s//
       // Top 0000 Avg 0000  //  

@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20250919"; // 0526
+const char* title="VroomRacer v20260221"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -100,7 +100,11 @@ typedef enum  {
 typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE='D' } RaceFlag;
 
 //how fast to flip the display page
-#define FLIPTIME 15000
+#define FLIPTIMEBOOST 10000
+#define FLIPTIMELONG 3200
+#define FLIPTIMESHORT 1500
+
+int flipStayBoost=0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
 
 RaceFlag raceFlag=FORMATION;
 
@@ -356,7 +360,7 @@ int loopc=0;
 
 int curPage=0;
 long nextPageFlip=0;
-bool bannerFlip=false;
+int8_t bannerFlip=-1; //this forces the showing of laps on the next flip for the given car
 unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 bool needReset=false;
@@ -374,7 +378,7 @@ void reset(){
   raceStarted=false;
   curPage=0;
   nextPageFlip=0;
-  bannerFlip=false;
+  bannerFlip=-1;
   compYellowStart=0;
   compYellowStop=0;
   d.reset(); 
@@ -414,6 +418,7 @@ void loop(){
   if( minusButton()) {
     while(minusButton()){delay(10);} //wait for depress
     nextPageFlip=0;
+    flipStayBoost=FLIPTIMEBOOST;
   }
   if( (loopc & 255)==0 && needReset){
           lcd.setCursor(0,3);
@@ -533,18 +538,13 @@ void handleDragDetection(){
 void updateDragLCD(){
   static uint8_t flipper=0;
   if(millis()>nextPageFlip){
-    nextPageFlip=millis()+FLIPTIME;
+    nextPageFlip=millis()+FLIPTIMELONG;
     if(nDevices>0){
       setDevice(0);
-      //      if(curPage==0){
       lcd.printRow(0,title);      
       lcd.printRow(1,won ? "Race complete!": (raceStarted?"Go!":"Press + to Drag Race"));
       lanes[++flipper % NUMLANES].display1Drag();
       lanes[++flipper % NUMLANES].display1Drag();
-      //      }else{
-      //        lanes[++flipper % NUMLANES].displayDrag(curPage);
-      //        lanes[++flipper % NUMLANES].displayDrag(curPage);
-      //      }
     }
     curPage = ++curPage>=PAGECOUNT ? 0:curPage;
   }
@@ -558,7 +558,7 @@ void alertDragDetection(int i) {
   pln("GOOD LAP car:",i);
   playTone(400+i*300, 100);
   lanes[i].banner0(true,"");
-  nextPageFlip=millis()+FLIPTIME/2;
+  nextPageFlip=millis()+FLIPTIMESHORT;
   if(lanes[i].lapCounter==raceLength){      
     lcd.setCursor(0,0);
     lcd.print("C");
@@ -579,10 +579,10 @@ void alertDragDetection(int i) {
   waveFlag(raceFlag);
 }
 
-
+/** param i is the car lane */
 void alertDragBadDetection(int i,char* msg){ //,Detection& d){
-  nextPageFlip=millis()+FLIPTIME/2;
-  bannerFlip=true;
+  nextPageFlip=millis()+FLIPTIMESHORT;
+  bannerFlip=i;
   p("BAD LAP car:",i);
   pln("msg:",msg);
   lanes[i].fouls++;
@@ -771,6 +771,9 @@ void raceLoop(){
 }
 
 
+/**
+ * param i is the car lane
+ */
 void alertGoodLap(int i) {
   if(! lanes[i].detect(d) ){
     alertBadLap(i,lanes[i].why);
@@ -787,8 +790,8 @@ void alertGoodLap(int i) {
     playTone(400+i*300-100, 50);
   }
   lanes[i].banner(true,"");
-  nextPageFlip=millis()+FLIPTIME/2;
-  bannerFlip=true;
+  nextPageFlip=millis()+FLIPTIMESHORT;
+  bannerFlip=i;
   if(config[COMPYELLOW]>0 
     && ((lanes[i].lapCounter)%(1+config[COMPYELLOW]))==(config[COMPYELLOW]) //happens every comp yellow lap 
     && millis()>compYellowStop){ //only turn it on if the comp yellow is not active
@@ -813,9 +816,12 @@ void alertGoodLap(int i) {
   waveFlag(raceFlag);
 }
 
+/**
+ * param i is the car lane
+ */
 void alertBadLap(int i,char* msg){ //,Detection& d){
-  nextPageFlip=millis()+FLIPTIME/2;
-  bannerFlip=true;
+  nextPageFlip=millis()+FLIPTIMESHORT;
+  bannerFlip=i;
   p("BAD LAP car:",i);
   pln("msg:",msg);
   lanes[i].fouls++;
@@ -831,23 +837,30 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 void updateLCD(){
   static uint8_t flipper=0;
   if(millis()>nextPageFlip){
-    nextPageFlip=millis()+FLIPTIME;
-    if(bannerFlip && nDevices>1){ //force showing laps
-      bannerFlip=false;
-      for(int i=0;i<NUMLANES;i++){
-         setDevice(i % nDevices);
-         lanes[i].banner(true,"",2);
+    nextPageFlip=millis()+FLIPTIMELONG+flipStayBoost;
+    flipStayBoost/=2;
+    if(bannerFlip>=0){ //force showing laps
+      if(nDevices==1){ //just show the driver's screen
+          lanes[bannerFlip].banner(true,"",2);
+      }else{ //show both drivers
+        for(int i=0;i<NUMLANES;i++){
+           setDevice(i % nDevices);
+           lanes[i].banner(true,"",2);
+        }
       }
+      bannerFlip=-1; //clear the override
     }else{
       if(nDevices==1){
-        lanes[++flipper % NUMLANES].display(curPage,raceFlag);
+        lanes[flipper].display(curPage,raceFlag);
+        flipper=++flipper % NUMLANES;
+        if( flipper==0)  curPage = ++curPage>=PAGECOUNT ? 0:curPage;  //only change the page after both cars are displayed!
       }else{
           for(int i=0;i<NUMLANES;i++){
              setDevice(i % nDevices);
              lanes[i].display(curPage,raceFlag);
           }
+          curPage = ++curPage>=PAGECOUNT ? 0:curPage;
       }
-      curPage = ++curPage>=PAGECOUNT ? 0:curPage;
     }
   }
 }
