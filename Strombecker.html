@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Strombecker Designer Pro</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; overflow: hidden; touch-action: none; }
+        canvas { background: #222; display: block; }
+        
+        .toolbar { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: rgba(0,0,0,0.9); padding: 10px; 
+            display: grid; grid-template-columns: repeat(4, 1fr); 
+            gap: 8px; border-top: 2px solid #444; 
+        }
+        
+        .info-panel {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; pointer-events: none;
+        }
+
+        button { 
+            padding: 12px 2px; font-size: 11px; font-weight: bold;
+            cursor: pointer; background: #444; color: white; 
+            border: 1px solid #666; border-radius: 6px; 
+        }
+        
+        button:active { background: #666; transform: scale(0.95); }
+        .special { background: #2e4a4a; }
+        .danger { background: #633; }
+        .save-btn { background: #4a4a2e; }
+        
+        .badge { background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 20px; border: 1px solid #00ffcc; color: #00ffcc; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="info-panel">
+        <div class="badge" id="selection-info">Select a piece</div>
+        <div class="badge" id="trackLength">0.0 ft</div>
+    </div>
+
+    <canvas id="trackCanvas"></canvas>
+
+    <div class="toolbar">
+        <button onclick="addPiece('S')">+ STRAIGHT</button>
+        <button onclick="addPiece('L')">+ LEFT</button>
+        <button onclick="addPiece('R')">+ RIGHT</button>
+        <button class="danger" onclick="deleteSelected()">DELETE</button>
+        
+        <button class="save-btn" onclick="exportTrack()">EXPORT</button>
+        <button class="save-btn" onclick="importTrack()">IMPORT</button>
+        <button class="special" onclick="centerTrack()">CENTER</button>
+        <button class="danger" onclick="reset()">RESET</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('trackCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Data structure: Array of segments to support branching
+        // Format: { x, y, angle, pieces: [] }
+        let segments = JSON.parse(localStorage.getItem('strom_v3')) || [{ x: 0, y: 0, angle: 0, pieces: [] }];
+        let selected = { segIdx: 0, pieceIdx: -1 }; // pieceIdx -1 is the start node
+        
+        let scale = 0.5;
+        let offset = { x: window.innerWidth/2, y: window.innerHeight/2 };
+        let isDragging = false, lastPos = { x: 0, y: 0 };
+
+        // Specs: 12 1/8" Straight, 28" OD (14" Radius)
+        const STRAIGHT_LEN = 121.25; 
+        const CURVE_RAD = 140; 
+        const TRACK_WIDTH = 40;
+
+        window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; draw(); };
+        window.onresize();
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(offset.x, offset.y);
+            ctx.scale(scale, scale);
+
+            let totalInches = 0;
+
+            segments.forEach((seg, sIdx) => {
+                let curX = seg.x, curY = seg.y, curAngle = seg.angle;
+
+                // Draw Start Node
+                ctx.fillStyle = (selected.segIdx === sIdx && selected.pieceIdx === -1) ? "#00ffcc" : "#ff4444";
+                ctx.beginPath(); ctx.arc(curX, curY, 12, 0, Math.PI*2); ctx.fill();
+
+                seg.pieces.forEach((type, pIdx) => {
+                    const isSel = (selected.segIdx === sIdx && selected.pieceIdx === pIdx);
+                    ctx.strokeStyle = isSel ? "#00ffcc" : (pIdx % 2 === 0 ? "#333" : "#444");
+                    ctx.lineWidth = TRACK_WIDTH;
+                    ctx.lineCap = "butt";
+
+                    let oldX = curX, oldY = curY, oldAngle = curAngle;
+
+                    if (type === 'S') {
+                        curX += Math.cos(curAngle * Math.PI/180) * STRAIGHT_LEN;
+                        curY += Math.sin(curAngle * Math.PI/180) * STRAIGHT_LEN;
+                        ctx.beginPath(); ctx.moveTo(oldX, oldY); ctx.lineTo(curX, curY); ctx.stroke();
+                        totalInches += 12.125;
+                    } else {
+                        let dir = type === 'R' ? 1 : -1;
+                        let cX = oldX + Math.cos((oldAngle + 90 * dir) * Math.PI/180) * CURVE_RAD;
+                        let cY = oldY + Math.sin((oldAngle + 90 * dir) * Math.PI/180) * CURVE_RAD;
+                        let sA = (oldAngle - 90 * dir) * Math.PI/180;
+                        let eA = sA + (60 * dir * Math.PI/180);
+                        
+                        ctx.beginPath(); 
+                        ctx.arc(cX, cY, CURVE_RAD, sA, eA, dir === -1); 
+                        ctx.stroke();
+                        
+                        curAngle += (60 * dir);
+                        curX = cX + Math.cos((curAngle - 90 * dir) * Math.PI/180) * CURVE_RAD;
+                        curY = cY + Math.sin((curAngle - 90 * dir) * Math.PI/180) * CURVE_RAD;
+                        totalInches += 14.66; // Arc length for 60 deg at 14" radius
+                    }
+                    
+                    // Draw Seam
+                    drawSeam(curX, curY, curAngle, isSel);
+                });
+            });
+
+            ctx.restore();
+            document.getElementById('trackLength').innerText = `${(totalInches/12).toFixed(1)} ft`;
+            localStorage.setItem('strom_v3', JSON.stringify(segments));
+        }
+
+        function drawSeam(x, y, angle, highlight) {
+            ctx.save();
+            ctx.strokeStyle = highlight ? "#00ffcc" : "#777"; 
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            let perp = (angle + 90) * Math.PI/180;
+            ctx.moveTo(x + Math.cos(perp) * 20, y + Math.sin(perp) * 20);
+            ctx.lineTo(x - Math.cos(perp) * 20, y - Math.sin(perp) * 20);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function addPiece(type) {
+            const seg = segments[selected.segIdx];
+            // If selecting the end of a segment, just append
+            if (selected.pieceIdx === seg.pieces.length - 1) {
+                seg.pieces.push(type);
+                selected.pieceIdx = seg.pieces.length - 1;
+            } else {
+                // Branching from middle or start point
+                const pos = getCoordsAt(selected.segIdx, selected.pieceIdx);
+                segments.push({
+                    x: pos.x, y: pos.y, angle: pos.angle, pieces: [type]
+                });
+                selected = { segIdx: segments.length - 1, pieceIdx: 0 };
+            }
+            draw();
+        }
+
+        function getCoordsAt(sIdx, pIdx) {
+            const seg = segments[sIdx];
+            let tx = seg.x, ty = seg.y, ta = seg.angle;
+            if (pIdx === -1) return { x: tx, y: ty, angle: ta };
+
+            for(let i=0; i<=pIdx; i++) {
+                let type = seg.pieces[i];
+                if(type === 'S') {
+                    tx += Math.cos(ta * Math.PI/180) * STRAIGHT_LEN;
+                    ty += Math.sin(ta * Math.PI/180) * STRAIGHT_LEN;
+                } else {
+                    let dir = type === 'R' ? 1 : -1;
+                    ta += (60 * dir);
+                    let chord = 2 * CURVE_RAD * Math.sin(30 * Math.PI/180);
+                    let moveA = (ta - (30 * dir)) * Math.PI/180;
+                    tx += Math.cos(moveA) * chord;
+                    ty += Math.sin(moveA) * chord;
+                }
+            }
+            return { x: tx, y: ty, angle: ta };
+        }
+
+        function deleteSelected() {
+            if (selected.pieceIdx === -1) return; 
+            segments[selected.segIdx].pieces.splice(selected.pieceIdx, 1);
+            selected.pieceIdx--;
+            draw();
+        }
+
+        function exportTrack() {
+            const str = segments.map(s => `${Math.round(s.x)},${Math.round(s.y)}${s.pieces.join('')}`).join(' ');
+            prompt("Track String (X,YPPP):", str);
+        }
+
+        function importTrack() {
+            const input = prompt("Paste X,YPPP string:");
+            if (!input) return;
+            segments = input.split(' ').map(part => {
+                const match = part.match(/(-?\d+),(-?\d+)([SLR]*)/);
+                return match ? { x: parseInt(match[1]), y: parseInt(match[2]), angle: 0, pieces: match[3].split('') } : null;
+            }).filter(x => x);
+            draw();
+        }
+
+        canvas.onclick = (e) => {
+            const mx = (e.clientX - offset.
