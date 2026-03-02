@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260221"; // 0526
+const char* title="VroomRacer v20260302"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -99,9 +99,12 @@ typedef enum  {
 
 typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE='D' } RaceFlag;
 
+
+static uint8_t laneDisplayed=0;  //the last lane displayed on the screen if using 1 screen
+  
 //how fast to flip the display page
 #define FLIPTIMEBOOST 10000
-#define FLIPTIMELONG 3200
+#define FLIPTIMELONG 4000
 #define FLIPTIMESHORT 1500
 
 int flipStayBoost=0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
@@ -360,7 +363,7 @@ int loopc=0;
 
 int curPage=0;
 long nextPageFlip=0;
-int8_t bannerFlip=-1; //this forces the showing of laps on the next flip for the given car
+
 unsigned long compYellowStart=0,compYellowStop=0;
 Detection d; 
 bool needReset=false;
@@ -378,7 +381,6 @@ void reset(){
   raceStarted=false;
   curPage=0;
   nextPageFlip=0;
-  bannerFlip=-1;
   compYellowStart=0;
   compYellowStop=0;
   d.reset(); 
@@ -536,7 +538,7 @@ void handleDragDetection(){
 //3 C2 R1234 E91234 S123
 
 void updateDragLCD(){
-  static uint8_t flipper=0;
+  static uint8_t flipper=0; //drag lcd
   if(millis()>nextPageFlip){
     nextPageFlip=millis()+FLIPTIMELONG;
     if(nDevices>0){
@@ -582,7 +584,6 @@ void alertDragDetection(int i) {
 /** param i is the car lane */
 void alertDragBadDetection(int i,char* msg){ //,Detection& d){
   nextPageFlip=millis()+FLIPTIMESHORT;
-  bannerFlip=i;
   p("BAD LAP car:",i);
   pln("msg:",msg);
   lanes[i].fouls++;
@@ -790,8 +791,8 @@ void alertGoodLap(int i) {
     playTone(400+i*300-100, 50);
   }
   lanes[i].banner(true,"");
+  laneDisplayed=i; 
   nextPageFlip=millis()+FLIPTIMESHORT;
-  bannerFlip=i;
   if(config[COMPYELLOW]>0 
     && ((lanes[i].lapCounter)%(1+config[COMPYELLOW]))==(config[COMPYELLOW]) //happens every comp yellow lap 
     && millis()>compYellowStop){ //only turn it on if the comp yellow is not active
@@ -821,11 +822,11 @@ void alertGoodLap(int i) {
  */
 void alertBadLap(int i,char* msg){ //,Detection& d){
   nextPageFlip=millis()+FLIPTIMESHORT;
-  bannerFlip=i;
   p("BAD LAP car:",i);
   pln("msg:",msg);
   lanes[i].fouls++;
   lanes[i].banner(false,msg);
+  laneDisplayed=i;
   for(int t=0;t<90;t+=10){
     playTone(400+i*300-t, 20);
   }
@@ -834,26 +835,28 @@ void alertBadLap(int i,char* msg){ //,Detection& d){
 }
 
 
+/**
+ * During the race, show the banner() when the race is over call display() which is more informational.
+ */
 void updateLCD(){
-  static uint8_t flipper=0;
   if(millis()>nextPageFlip){
     nextPageFlip=millis()+FLIPTIMELONG+flipStayBoost;
     flipStayBoost/=2;
-    if(bannerFlip>=0){ //force showing laps
+    if( !won && flipStayBoost==0){ //force showing laps during race unless push button flipping
       if(nDevices==1){ //just show the driver's screen
-          lanes[bannerFlip].banner(true,"",2);
+         laneDisplayed=++laneDisplayed % NUMLANES;
+         lanes[laneDisplayed].banner(true,"");
       }else{ //show both drivers
         for(int i=0;i<NUMLANES;i++){
            setDevice(i % nDevices);
-           lanes[i].banner(true,"",2);
+           lanes[i].banner(true,"");
         }
       }
-      bannerFlip=-1; //clear the override
-    }else{
+    }else{ //post race informational
       if(nDevices==1){
-        lanes[flipper].display(curPage,raceFlag);
-        flipper=++flipper % NUMLANES;
-        if( flipper==0)  curPage = ++curPage>=PAGECOUNT ? 0:curPage;  //only change the page after both cars are displayed!
+        laneDisplayed=++laneDisplayed % NUMLANES;
+        lanes[laneDisplayed].display(curPage,raceFlag);
+        if( laneDisplayed==0)  curPage = ++curPage>=PAGECOUNT ? 0:curPage;  //only change the page after both cars are displayed!
       }else{
           for(int i=0;i<NUMLANES;i++){
              setDevice(i % nDevices);
