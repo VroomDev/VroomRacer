@@ -226,19 +226,22 @@ class Lane {
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     
-    char buffer[40];
+    char buffer[60];
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
                     // 01234567890123456789
                     // C0 Lap00 Spd123 G23%
+                    // C0 Lap00 T00000 G23%
                 
     ////set top line
     if(msg[0]==0){   //C0 Lap00 Spd123 G23%
       if(fuelOn){    
-        sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
-                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
+          sprintf(buffer,"%c%d Lap%-2d T%5ld G%2d%%  "
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration,(int)((long)fuel*99/MAXFUEL));
+          //                   sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
+          //                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
       }else{
-        sprintf(buffer,"%c%d Lap%-2d Spd%3d         "
-                   ,ch,laneNum+1,(int)lapCounter,(int)speed);
+          sprintf(buffer,"%c%d Lap%-2d T%5ld         "
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration);
       }
     }else{           //01234567890123456789
                      //C0 Lap00 12345678901
@@ -257,14 +260,20 @@ class Lane {
       if( fuelOn ) {
         sprintf(buffer,"%2dLAPS%2d%%",(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
         lcd.printBigString(buffer);      
+        lcd.print(8,1,"Spd");
+        sprintf(buffer,"%3d",(int)speed);
+        lcd.print(8,2,buffer);
       }else{
         if(lapCounter>=raceLength-3){ //show #LAP left near end of race
           sprintf(buffer,"%2dLAPS  ",(int)lapCounter);
           lcd.printBigString(buffer);
-          mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
-          sprintf(buffer,"%6ss",floatBuffer1);
-          lcd.print(11,1,"Time:  ");
-          lcd.print(11,2,buffer);
+          lcd.print(11,1,"Spd");
+          sprintf(buffer,"%3d",(int)speed);
+          lcd.print(8,2,buffer);
+          //          mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
+          //          sprintf(buffer,"%6ss",floatBuffer1);
+          //          lcd.print(11,1,"Time:  ");
+          //          lcd.print(11,2,buffer);
         }else{
           lcd.printMillisAsSeconds(lapDuration); 
         }
@@ -273,6 +282,10 @@ class Lane {
       lcd.printReaction(reactionTime);
     }else if(crossedStart && speed>0){
       lcd.printSpeed(speed); //
+    }else{
+      lcd.printRow(1,"");
+      lcd.printRow(2,msg);
+      lcd.printRow(3,"");
     }
     lcd.print(19,1,raceStatus);
     lcd.print(19,2,lapQuali);

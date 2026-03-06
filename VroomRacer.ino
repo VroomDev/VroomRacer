@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260302"; // 0526
+const char* title="VroomRacer v20260306"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -103,9 +103,9 @@ typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GR
 static uint8_t laneDisplayed=0;  //the last lane displayed on the screen if using 1 screen
   
 //how fast to flip the display page
-#define FLIPTIMEBOOST 10000
-#define FLIPTIMELONG 4000
-#define FLIPTIMESHORT 1500
+#define FLIPTIMEBOOST 20000
+#define FLIPTIMELONG 10000
+#define FLIPTIMESHORT 5000
 
 int flipStayBoost=0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
 
@@ -776,6 +776,7 @@ void raceLoop(){
  * param i is the car lane
  */
 void alertGoodLap(int i) {
+  laneDisplayed=i;
   if(! lanes[i].detect(d) ){
     alertBadLap(i,lanes[i].why);
     return;
@@ -821,6 +822,7 @@ void alertGoodLap(int i) {
  * param i is the car lane
  */
 void alertBadLap(int i,char* msg){ //,Detection& d){
+  laneDisplayed=i;
   nextPageFlip=millis()+FLIPTIMESHORT;
   p("BAD LAP car:",i);
   pln("msg:",msg);
@@ -844,7 +846,6 @@ void updateLCD(){
     flipStayBoost/=2;
     if( !won && flipStayBoost==0){ //force showing laps during race unless push button flipping
       if(nDevices==1){ //just show the driver's screen
-         laneDisplayed=++laneDisplayed % NUMLANES;
          lanes[laneDisplayed].banner(true,"");
       }else{ //show both drivers
         for(int i=0;i<NUMLANES;i++){
