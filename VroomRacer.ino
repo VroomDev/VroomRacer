@@ -16,7 +16,7 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260306"; // 0526
+const char* title="VroomRacer v20260310"; // 0526
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -105,7 +105,7 @@ static uint8_t laneDisplayed=0;  //the last lane displayed on the screen if usin
 //how fast to flip the display page
 #define FLIPTIMEBOOST 20000
 #define FLIPTIMELONG 10000
-#define FLIPTIMESHORT 5000
+#define FLIPTIMESHORT 2000
 
 int flipStayBoost=0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
 
@@ -846,7 +846,9 @@ void updateLCD(){
     flipStayBoost/=2;
     if( !won && flipStayBoost==0){ //force showing laps during race unless push button flipping
       if(nDevices==1){ //just show the driver's screen
-         lanes[laneDisplayed].banner(true,"");
+         for(int i=0;i<NUMLANES;i++){
+           lanes[i].bannerShared("");
+        }
       }else{ //show both drivers
         for(int i=0;i<NUMLANES;i++){
            setDevice(i % nDevices);

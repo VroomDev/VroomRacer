@@ -194,7 +194,6 @@ class Lane {
 
   void gasBanner(){
     setDevice(laneNum);
-    lcd.setCursor(0,0);//col,row    
     char buffer[40];
     char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
                     // 1234567890123467890
@@ -221,6 +220,52 @@ class Lane {
     setDevice(laneNum);
     banner0(lapCounted,msg);
   }
+
+        // 1234567890123467890
+        //C0 Lap00 In Pit G99
+  void bannerShared(char* msg){   
+    char floatBuffer1[10]; // Buffer to hold the formatted float     
+    char floatBuffer2[10]; // Buffer to hold the formatted float     
+    char buffer[60];
+    char ch=!won?'C' : winner==laneNum ? 'W' : 'L';         
+                    // 01234567890123456789
+                    // C0 Lap00 Spd123 G23%
+                    // C0 Lap00 T00000 G23%
+                
+    ////set top line
+    if(msg[0]==0){   //C0 Lap00 Spd123 G23%
+      if(fuelOn){    
+          sprintf(buffer,"%c%d Lap%-2d T%5ld G%2d%%  "
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration,(int)((long)fuel*99/MAXFUEL));
+          //                   sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
+          //                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
+      }else{
+          sprintf(buffer,"%c%d Lap%-2d T%5ld         "
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration);
+      }
+    }else{           //01234567890123456789
+                     //C0 Lap00 12345678901
+      sprintf(buffer,"%c%d Lap%-2d %s         "
+                   ,ch,laneNum+1,(int)lapCounter,msg);
+    }
+    buffer[20]=0; //null terminate
+    lcd.printRow(laneNum*2,buffer);
+    //print bottom 
+    int reactionTime=crossedStart?(int)((signed long)initialTime-(signed long)raceStart):0;
+    ph("banner0"); p("lane#",laneNum); pln("reactionTime",reactionTime);
+    if(crossedStart && lapCounter==0 && reactionTime<=9999 && reactionTime>=0){
+      sprintf(buffer,"Reaction: %dms",reactionTime);
+    }else if(crossedStart && speed>0){
+      sprintf(buffer,"Spd: %d",speed);
+    }else{
+      sprintf(buffer,"");
+    }
+    lcd.printRow(laneNum*2+1,buffer);
+    lcd.print(18,laneNum*2+1,raceStatus);
+    lcd.print(19,laneNum*2+1,lapQuali);
+  }
+
+
   
   void banner0(bool lapCounted,char* msg){
     lcd.setCursor(0,0);//col,row    
