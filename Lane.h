@@ -25,7 +25,7 @@ class Lane {
     int speedCount=0;
     int fouls=0;
     bool crossedStart=false;
-    int lapCounter=0;
+    int lapCounter=0; //public instance var
     static unsigned long allBestLapDur;
     static int maxLapCounter;
 
@@ -142,7 +142,7 @@ class Lane {
          playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
          lapQuali='*';
       }
-      lapCounter++;
+      lapCounter++;//lap counter is now the number of completed laps
       lap.lap=lapCounter;
       if(lapCounter>maxLapCounter){
         maxLapCounter=lapCounter;
@@ -152,24 +152,31 @@ class Lane {
       }
       totalDuration+=lapDuration;      
       avgLapDur = totalDuration/lapCounter;
-      //lap counter is now the number of completed laps
-      if(lapCounter==raceLength){
-          if(won){
-            //didn't win :( 
-          }else{
-            winner=laneNum;
-            won=true;
-          }
-      }
       
+      prior=d;
+      laps.pushSort(lap); //good lap
+      if(lapCounter==raceLength){
+        int penalties=countStewardsPenalties(true);
+        if( penalties>0){
+          lapCounter-=penalties;
+          char buffer[40];
+          sprintf(buffer,"%d PENALTY",penalties);
+          banner(true,buffer);
+          playCarmen();
+          //need to keep going!      
+        }else if(won){
+            //didn't win :( 
+        }else{
+          winner=laneNum;
+          won=true;
+        }
+      }
       if(serialOn){        
         char buffer[200];
         sprintf(buffer,"C%d lapCounter:%d lapDuration:%lu \n",
           laneNum,lapCounter,lapDuration);
         if(serialOn) Serial.print(buffer); 
       }
-      prior=d;
-      laps.pushSort(lap); //good lap
       return true;
     }
   }
@@ -467,6 +474,72 @@ class Lane {
     }
   }
 
+  /* these variables only valid after doStewardsCheck */
+  long int median=-1,mad=-1,N=-1,stewardsBound=-1,bogusLaps=0;
+  
+  /**
+   * This checks the last lapBufSize laps in the lap buffer and calculates media, mad, stewardsBound.
+   * Returns the number of laps in the buffer.
+   */
+  int doStewardsCheck(){
+    median=-1;mad=-1;N=-1;stewardsBound=-1;
+      ///load data
+      Lap lap1;
+      long int laparr[lapBufSize];
+      int N=0;
+      for(int i=0;i<lapBufSize;i++){
+        if(laps.bottom(lap1,i)){
+          laparr[N++]=lap1.duration;
+          if(lap1.duration<0) {
+            // this is a cancelled lap, so skip it
+            N--;
+          }
+        }
+      }
+      if(N>0){
+        ///calculation stats
+        selectionSort(laparr,N);
+        auto median=laparr[(N&1)==1? N/2 : N/2-1];
+        for(int i=0;i<N;i++){
+          laparr[i]=abs(laparr[i]-median);
+        }
+        selectionSort(laparr,N);
+        mad=laparr[(N&1)==1? N/2 : N/2-1]; //Median Absolute Deviation
+        mad=(1.96*1.4826*mad);
+        mad=mad < median/10 ? median/10 : mad; //allow for at least a 10% improvement over the median
+        stewardsBound=median-mad;        
+
+        for(int i=0;i<lapBufSize;i++){
+          if(laps.bottom(lap1,i)){
+            if(lap1.duration>=0 && lap1.duration<stewardsBound ){
+              bogusLaps++;
+            }
+          }
+        }
+      
+      }
+      return N;
+  }
+
+  int countStewardsPenalties(bool ack){
+    int bogusLaps=0;
+    if(doStewardsCheck()>0){
+      Lap lap1;
+      for(int i=0;i<lapBufSize;i++){
+        if(laps.bottom(lap1,i)){
+          if(lap1.duration>=0 && lap1.duration<stewardsBound ){
+            bogusLaps++;
+            if(ack){
+              lap1.duration*=-1; //=-1*lap1.duration;
+              laps.setFromBottom(lap1,i); //we set the duration to be a negative value.  So can still see it. But it is acknowledged by the stewards.
+            }
+          }
+        }
+      }
+    }
+    return bogusLaps;
+  }
+
 
   //display for 2 player mode
   void display2(byte page,RaceFlag flag){    
@@ -503,36 +576,16 @@ class Lane {
 
     if( page==0 ){
       banner(true,"");
-    }else if( page==2 ) { //print out recent lap times\
-      ///load data
-      Lap lap1;
-      long int laparr[lapBufSize];
-      int N=0;
-      for(int i=0;i<lapBufSize;i++){
-        if(laps.bottom(lap1,i)){
-          laparr[N++]=lap1.duration;
-        }
-      }
-      if(N>0){
-        ///calculation stats
-        selectionSort(laparr,N);
-        auto median=laparr[(N&1)==1? N/2 : N/2-1];
-        for(int i=0;i<N;i++){
-          laparr[i]=abs(laparr[i]-median);
-        }
-        selectionSort(laparr,N);
-        auto mad=laparr[(N&1)==1? N/2 : N/2-1]; //Median Absolute Deviation
-        mad=(1.96*1.4826*mad);
-        mad=mad < median/10 ? median/10 : mad; //allow for at least a 10% improvement over the median
-        auto stewardsBound=median-mad;        
+    }else if( page==2 ) { //print out recent lap times
+      if(doStewardsCheck()) {
         buffer[20]=0; //null terminate
         sprintf(buffer,"%c%d Med:%ld +-%ld ",ch,laneNum+1,median,mad);
         lcd.printRow(0,buffer); 
         //loop to display
         byte offset=0;
+        Lap lap1;
         for(int row=1;row<=3;row++){ //display up to 6
           buffer[0]=0;
-          
           if(laps.bottom(lap1,offset++)){
             mydtostrf((lap1.duration / 1000.0), 6, floatBuffer1);
             Lap lap2;

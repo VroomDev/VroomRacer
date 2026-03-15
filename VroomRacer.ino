@@ -16,7 +16,10 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260310"; // 0526
+const char* title="VroomRacer v20260315"; // 0526
+
+//LOG:
+// v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -800,7 +803,7 @@ void alertGoodLap(int i) {
         compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4095ms or 4 seconds random amount
         compYellowStop=compYellowStart+lanes[i].avgLapDur+1000; //make it last for 1 typical lap
   }
-  if(lanes[i].lapCounter==raceLength){      
+  if(lanes[i].lapCounter==raceLength){
     lcd.setCursor(0,0);
     lcd.print("C");
     lcd.print(i+1);
