@@ -207,7 +207,7 @@ https://www.amazon.com/gp/aw/d/B01NCOXB2Q
 https://www.amazon.com/gp/aw/d/B077X95LRZ
 
 2 or 4 photo resistors (4 for drag racing)
-(Listed next on page)
+(Listed next)
 
 ## Light Sensors 
 
