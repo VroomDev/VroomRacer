@@ -108,6 +108,23 @@ public:
     return true;
   }
 
+
+  /**
+   * Steps as an index from the bottom, replaces the item there with the item provided.
+   * Returns true if actually set.
+   */
+  bool setFromBottom(T& item, uint8_t index) {
+    noInterrupts();
+    if (index >= count) {
+      interrupts();
+      return false; // Index out of range
+    }
+    uint8_t pos = (tail + index) & (Size - 1); // Start from tail and move forward
+    buffer[pos]=item;
+    interrupts();
+    return true;
+  }
+
   
   /**
    * @brief get the middle value in the buffer.  if the buffer is sorted then it will return median.  

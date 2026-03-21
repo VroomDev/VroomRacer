@@ -499,7 +499,7 @@ class Lane {
       if(N>0){
         ///calculation stats
         selectionSort(laparr,N);
-        auto median=laparr[(N&1)==1? N/2 : N/2-1];
+        median=laparr[(N&1)==1? N/2 : N/2-1];
         for(int i=0;i<N;i++){
           laparr[i]=abs(laparr[i]-median);
         }
