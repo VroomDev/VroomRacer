@@ -4,7 +4,7 @@ Vroom Racer is an Arduino Lap Timer for slot car racing using photo eyes that fe
 # Arduino-Based Slot Car Tracker and Timer
 
 ## Project Goals
-The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs.
+The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs. This is an experimental project to explore automated yellow, red, and steward review through mathematics and simple statistics.
 
 ## User Interface 
 
@@ -144,6 +144,7 @@ This has been play tested and the math does indeed work. In this way, lane hops 
 - **Lost**: “engine“ sounds
 - *Quick high pitch tone*: Fastest lap recorded
 - March snippets: fast temp yellow, slow tempo red flag.
+- special tune: played by the stewards 
 
 # Car Sensing 
 
@@ -184,6 +185,30 @@ Endif
 
 # Hardware 
 
+## Parts List
+ 
+CPU: 
+ELEGOO MEGA R3 Board ATmega 2560
+https://www.amazon.com/gp/aw/d/B01H4ZLZLQ
+
+2 Displays: 
+IIC I2C 2004 LCD Module 20x04 LCD Screen Module Display for Arduino Raspberry Pi
+https://www.amazon.com/gp/aw/d/B0C1G9GBRZ
+ 
+4 Push buttons: 
+Twidec/12PCS 3V-6V-12V-24V-250V Momentary Push Button Switch 2 Pins ON/Off SPST 7mm 6 Colors Normal Open 1A Mini Round Button Switch with Pre-soldered Wires PBS-110-X6C
+https://www.amazon.com/gp/aw/d/B07RTZVZ6L
+
+1 Passive speaker:
+5V 2 Terminals Passive Electronic Alarm Buzzer Electromagnetic Beeper AC Impedance for Arduino  CYT1008
+https://www.amazon.com/gp/aw/d/B01NCOXB2Q
+
+1 RGB LED: RGB Tri-Color (Red Green Blue Multicolor) 4Pin LED Diodes Common Cathode Clear Round Lens 29mm Long Lead +300pcs Resistors (for DC 6-12V) Included,Light Emitting Diodes
+https://www.amazon.com/gp/aw/d/B077X95LRZ
+
+2 or 4 photo resistors (4 for drag racing)
+(Listed elsewhere on page)
+
 ## Light Sensors 
 
 This project should be able to work with either LDRs or photo diodes.
@@ -198,7 +223,7 @@ Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo dio
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
-- Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive
+- Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive (*preferred sensor*)
 
 
 
