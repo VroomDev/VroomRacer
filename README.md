@@ -32,7 +32,20 @@ Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins 
 
 <img src="img/top-laps.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
 
-<img src="Messenger_creation_8FEDBA52-99AF-42F2-9A9C-1F98903B414A~2.jpeg">This screen now shows the median of the best 8 lap times with sigma or 10% of the median which ever is greater. If the best lap is less than the median minus that amount then a question mark is placed by the value warranting extra scrutiny since it is an outlier.
+<img src="Messenger_creation_8FEDBA52-99AF-42F2-9A9C-1F98903B414A~2.jpeg">This screen now shows the median of the best 8 lap. A question mark is placed by the value warranting extra scrutiny.
+
+The steward logic finds the Median (M) of recent laps. This middle value is used because it ignores atypical laps that would otherwise ruin a standard average.
+
+The logic calculates the Median Absolute Deviation (MAD) by finding the middle distance of each lap from that median:
+MAD = median(|xi - M|)
+
+stewardsBound =least( M - (1.96 * 1.4826 * MAD), M * 0.9)
+
+The first two constants set a 95% confidence interval and the 0.9 constant allows for a 10% improvement under the median no matter what.
+
+Any laps less than this equation are penalized and thus not counted.
+
+This has been play tested and the math does indeed work. In this way, lane hops won't act as a cheat.
 </img>
 
 ### Race Control Lights
