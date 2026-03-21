@@ -16,10 +16,11 @@
 //idea for laptime based fuel: minLapDuration*128/lapDuration
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260315"; // 0526
+const char* title="VroomRacer v20260320"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
+// v20260320 - fixed hidden median and checked in RingBuffer set function
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
