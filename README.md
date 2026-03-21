@@ -207,11 +207,11 @@ https://www.amazon.com/gp/aw/d/B01NCOXB2Q
 https://www.amazon.com/gp/aw/d/B077X95LRZ
 
 2 or 4 photo resistors (4 for drag racing)
-(Listed elsewhere on page)
+(Listed next on page)
 
 ## Light Sensors 
 
-This project should be able to work with either LDRs or photo diodes.
+This project works with either photo resistors (LDR) or photo diodes. That being said, using LDR as a sensor is best given flickering 60 Hertz lighting. 
 
 *Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. LDRs are relatively slow to fully change resistance. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. 
 
@@ -219,7 +219,7 @@ There are also photo transistors to consider but this code isn't designed for it
 
 The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track. The calculation of car speed does seem to be affected by the choice of sensor.
 
-Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing? So the slower LDR could be an advantage? (I confirmed that indeed photodiodes are sensitive to AC lighting flickering/strobing and a battery supplied light is better if photodiodes are used. The symptom of this is the trap speed calculation can be overly quick.) Photodiodes can also be sensitive to capacitance if long pairs of wires are used, to remedy this, pull the pair of wires apart.
+AC powered lights (cheaper LED or florescent bulbs) could be an issue with photo diodes and give false triggers due to the AC current induced strobing. So the slower LDR could be an advantage. (I confirmed that indeed photodiodes are sensitive to AC lighting flickering/strobing and a battery supplied light is better if photodiodes are used. The symptom of this is the trap speed calculation can be overly quick.) Photodiodes can also be sensitive to capacitance if long pairs of wires are used, to remedy this, pull the pair of wires apart. For these reasons, photo resistors are recommended.
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
