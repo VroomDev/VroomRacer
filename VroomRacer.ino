@@ -2,7 +2,7 @@
  * Vroom Racer by Chris Busch 
  * (c) 2024
  * 
- * Currently this project isn't broken into a compile+link arragement. 
+ * Currently this project isn't broken into a compile+link arrangement. 
  * It is kept simple by simply using .h and not all the preprocessor 
  * controls.  That may change in the future if the code base grows.
  */
