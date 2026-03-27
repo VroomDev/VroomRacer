@@ -60,6 +60,12 @@ class Lane {
     }
 
 
+  int calcFuelGauge(int fuel){
+    auto x= (int)((long)fuel*99/MAXFUEL);
+    if(fuel>0 && x==0) return 1; //gas gauge needs to show it is not empty
+    return x;
+  }
+
    int setSpeed(int s){
     speed=s;    
     if(speedCount<1024){
@@ -105,7 +111,7 @@ class Lane {
       }
       Lap lap;
       lap.duration=lapDuration;
-      if(fuelOn && fuel<=0 && speed>0){ //if speed is zero, then got at least a splash of gas
+      if(fuelOn && fuel<=0){ //out of fuel
         fuel=0;
         sprintf(why,"Empty");
         //laps.pushAlways(lap); //empty tank
@@ -113,7 +119,7 @@ class Lane {
         return false;
       }
       if(fuelOn){
-        fuel-=speed;
+        fuel-=allBestLapDur*pitLaneSpeedLimit/lapDuration + speed*3/4;
         if(fuel<0) fuel=0;
       }
       if(lapDuration<minLapDuration){
@@ -121,7 +127,7 @@ class Lane {
         //laps.pushAlways(lap); //bad lap hop
         lapQuali='!';
         return false;
-      }else if(allBestLapDur!=0 && lapDuration<allBestLapDur*6/10){
+      }else if(allBestLapDur!=0 && lapDuration<allBestLapDur*4/10){
         //jumped car, since better than anyone by too large of a margin
         sprintf(why,"%d Jump",lapDuration);
         //laps.pushAlways(lap); //bad lap hop 2nd check
@@ -140,7 +146,7 @@ class Lane {
       if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){ // if count is maxed out then not elig for best lap
          allBestLapDur=lapDuration; //used for jumped lap detection
          playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
-         lapQuali='*';
+         lapQuali='^';
       }
       lapCounter++;//lap counter is now the number of completed laps
       lap.lap=lapCounter;
@@ -207,7 +213,7 @@ class Lane {
                      //C0 Lap00 In Pit G99
                      
     sprintf(buffer,"%c%d Lap%-2d In Pit G%2d%%  "
-                   ,ch,laneNum+1,(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
+                   ,ch,laneNum+1,(int)lapCounter,calcFuelGauge(fuel));
     buffer[20]=0; //null terminate
     lcd.printRow(laneNum*2,buffer);
                              // 1234567890123467890
@@ -243,9 +249,7 @@ class Lane {
     if(msg[0]==0){   //C0 Lap00 Spd123 G23%
       if(fuelOn){    
           sprintf(buffer,"%c%d Lap%-2d T%5ld G%2d%%  "
-                   ,ch,laneNum+1,(int)lapCounter,lapDuration,(int)((long)fuel*99/MAXFUEL));
-          //                   sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
-          //                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration,calcFuelGauge(fuel));
       }else{
           sprintf(buffer,"%c%d Lap%-2d T%5ld         "
                    ,ch,laneNum+1,(int)lapCounter,lapDuration);
@@ -288,9 +292,7 @@ class Lane {
     if(msg[0]==0){   //C0 Lap00 Spd123 G23%
       if(fuelOn){    
           sprintf(buffer,"%c%d Lap%-2d T%5ld G%2d%%  "
-                   ,ch,laneNum+1,(int)lapCounter,lapDuration,(int)((long)fuel*99/MAXFUEL));
-          //                   sprintf(buffer,"%c%d Lap%-2d Spd%3d G%2d%%  "
-          //                   ,ch,laneNum+1,(int)lapCounter,(int)speed,(int)((long)fuel*99/MAXFUEL));
+                   ,ch,laneNum+1,(int)lapCounter,lapDuration,calcFuelGauge(fuel));
       }else{
           sprintf(buffer,"%c%d Lap%-2d T%5ld         "
                    ,ch,laneNum+1,(int)lapCounter,lapDuration);
@@ -310,22 +312,18 @@ class Lane {
       lcd.print(11,2,' ');
       lcd.print(11,3,' ');
       if( fuelOn ) {
-        sprintf(buffer,"%2dLAPS%2d%%",(int)lapCounter,(int)((long)fuel*99/MAXFUEL));
+        sprintf(buffer,"%2dLAPS%2d%%",(int)(lapCounter%100),calcFuelGauge(fuel));
         lcd.printBigString(buffer);      
         lcd.print(8,1,"Spd");
         sprintf(buffer,"%3d",(int)speed);
         lcd.print(8,2,buffer);
       }else{
         if(lapCounter>=raceLength-3){ //show #LAP left near end of race
-          sprintf(buffer,"%2dLAPS  ",(int)lapCounter);
+          sprintf(buffer,"%2dLAPS  ",(int)(lapCounter%100));
           lcd.printBigString(buffer);
           lcd.print(11,1,"Spd");
           sprintf(buffer,"%3d",(int)speed);
           lcd.print(8,2,buffer);
-          //          mydtostrf((lapDuration / 1000.0), 5, floatBuffer1); // Convert float to string
-          //          sprintf(buffer,"%6ss",floatBuffer1);
-          //          lcd.print(11,1,"Time:  ");
-          //          lcd.print(11,2,buffer);
         }else{
           lcd.printMillisAsSeconds(lapDuration); 
         }
@@ -631,7 +629,7 @@ class Lane {
       } 
       ///////////////
       if(fuelOn){
-        sprintf(buffer,"%4s%6s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',(int)((long)fuel*99/MAXFUEL));
+        sprintf(buffer,"%4s%6s%c Gas %2d%%",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s',calcFuelGauge(fuel));
       }else{
         sprintf(buffer,"%4s%6s%c          ",bestLapDur==0?"":"Best",floatBuffer1,bestLapDur==0?' ':'s');
       }
