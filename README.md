@@ -12,16 +12,16 @@ The aim of this project is to create an Arduino-based slot car tracker and timer
 *There are 3 buttons*: Reset, Select, Minus, and Plus.
 
 - Reset: restarts in the default mode and starts the count down to start a race.
-- Reset+Minus: retarts in Fuel mode.
-- Reset+Plus: restarts in Fast speed, racing without fueling.
-- Reset+Minus+Plus: restarts in Test mode. This mode is ideal for tuning your car. Could also use for qualifying.
+- Reset & Minus: restarts in Fuel mode.
+- Reset & Plus: restarts in Fast speed, racing without fueling.
+- Reset & Minus & Plus: restarts in Test mode. This mode is ideal for tuning your car. Could also use for qualifying.
 - Select: Push this to enter configuration mode. Push select to advance to next option. Use Minus and Plus to change the options. One of the options is to exit configuration mode and another option is to permanently save the configuration.
 - Minus: cycles the screen to show different statistics during race mode.
 - Plus: while in drag racing mode, this will start a new drag race while preserving statistics.
 
 ### Modes
 *There are 4 modes*: 
-- Fuel: racing with fueling and flsgs by default.
+- Fuel: racing with fueling and flags by default.
 - Fast: racing flags but without fueling.
 - Tune: racing or qualifying without flags and no fueling.
 - Drag: This is for drag racing with 4 photo sensors.
@@ -60,12 +60,11 @@ There is a RGB led flag light, that can emit different colors.
 
 During racing when your lap time is presented, on the right most column are punctuation is hint at your ongoing personal race status.
 
-- ">" You are in the lead of the race.
+- ">" You are on the lead lap of the race.
 - "<" You are no longer on the lead lap.
-- "*" You just set the fastest lap of the race or qualifying session.
+- "^" You have the fastest lap of the race or qualifying session.
 - "+" You just set your own PR for the race or qualifying session.
 - "-" You just set your worst lap.
-- "^" You currently hold the fastest lap. 
 
 <img src="img/lap-time.jpg">This shows Car #2's lap time, crossed the start/finish at 38 inches per second, has 88% fuel, completed lap #3.  Currently leads the race and set fastest lap.</img>
 
