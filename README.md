@@ -4,7 +4,7 @@ Vroom Racer is an Arduino Lap Timer for slot car racing using photo eyes that fe
 # Arduino-Based Slot Car Tracker and Timer
 
 ## Project Goals
-The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs.
+The aim of this project is to create an Arduino-based slot car tracker and timer that provides reliable counting and timing in a compact form. Using a laptop is impractical due to space constraints and the inconvenience of using Windows. By coding my own solution, I can tailor it to my specific needs. This is an experimental project to explore automated yellow, red, and steward review through mathematics and simple statistics.
 
 ## User Interface 
 
@@ -33,19 +33,6 @@ Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins 
 <img src="img/top-laps.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
 
 <img src="Messenger_creation_8FEDBA52-99AF-42F2-9A9C-1F98903B414A~2.jpeg">This screen now shows the median of the best 8 lap. A question mark is placed by the value warranting extra scrutiny.
-
-The steward logic finds the Median (M) of recent laps. This middle value is used because it ignores atypical laps that would otherwise ruin a standard average.
-
-The logic calculates the Median Absolute Deviation (MAD) by finding the middle distance of each lap from that median:
-MAD = median(|xi - M|)
-
-stewardsBound =least( M - (1.96 * 1.4826 * MAD), M * 0.9)
-
-The first two constants set a 95% confidence interval and the 0.9 constant allows for a 10% improvement under the median no matter what.
-
-Any laps less than this equation are penalized and thus not counted.
-
-This has been play tested and the math does indeed work. In this way, lane hops won't act as a cheat.
 </img>
 
 ### Race Control Lights
@@ -131,6 +118,22 @@ If a car is very late (configurable), the automated logic declares a red flag.
 
 During red, no laps are counted. Best to stop and wait on the photo sensor, filling with fuel.  Wait for the red to clear and then proceed.
 
+## Automatic Steward's Review 
+
+The steward's review happens at the end of the final lap. If bogus laps are discovered, those laps are penalized (not counted) and thus the race continues. A special song and display alerts the driver to the penalty.
+
+The steward logic finds the Median (M) of recent laps. This middle value is used because it ignores atypical laps that would otherwise ruin a standard average.
+
+The logic calculates the Median Absolute Deviation (MAD) by finding the middle distance of each lap from that median:
+MAD = median(|xi - M|)
+
+stewardsBound =least( M - (1.96 * 1.4826 * MAD), M * 0.9)
+
+The first two constants set a 95% confidence interval and the 0.9 constant allows for a 10% improvement under the median no matter what.
+
+Any laps less than this equation are penalized and thus not counted.
+
+This has been play tested and the math does indeed work. In this way, lane hops won't act as a cheat.
 
 ## Sounds
 - **Single Tone**: Lap counted.
@@ -140,6 +143,7 @@ During red, no laps are counted. Best to stop and wait on the photo sensor, fill
 - **Lost**: “engine“ sounds
 - *Quick high pitch tone*: Fastest lap recorded
 - March snippets: fast temp yellow, slow tempo red flag.
+- special tune: played by the stewards 
 
 # Car Sensing 
 
@@ -180,9 +184,33 @@ Endif
 
 # Hardware 
 
+## Parts List
+ 
+CPU: 
+ELEGOO MEGA R3 Board ATmega 2560
+https://www.amazon.com/gp/aw/d/B01H4ZLZLQ
+
+2 Displays: 
+IIC I2C 2004 LCD Module 20x04 LCD Screen Module Display for Arduino Raspberry Pi
+https://www.amazon.com/gp/aw/d/B0C1G9GBRZ
+ 
+4 Push buttons: 
+Twidec/12PCS 3V-6V-12V-24V-250V Momentary Push Button Switch 2 Pins ON/Off SPST 7mm 6 Colors Normal Open 1A Mini Round Button Switch with Pre-soldered Wires PBS-110-X6C
+https://www.amazon.com/gp/aw/d/B07RTZVZ6L
+
+1 Passive speaker:
+5V 2 Terminals Passive Electronic Alarm Buzzer Electromagnetic Beeper AC Impedance for Arduino  CYT1008
+https://www.amazon.com/gp/aw/d/B01NCOXB2Q
+
+1 RGB LED: RGB Tri-Color (Red Green Blue Multicolor) 4Pin LED Diodes Common Cathode Clear Round Lens 29mm Long Lead +300pcs Resistors (for DC 6-12V) Included,Light Emitting Diodes
+https://www.amazon.com/gp/aw/d/B077X95LRZ
+
+2 or 4 photo resistors (4 for drag racing)
+(Listed next)
+
 ## Light Sensors 
 
-This project should be able to work with either LDRs or photo diodes.
+This project works with either photo resistors (LDR) or photo diodes. That being said, using LDR as a sensor is best given flickering 60 Hertz lighting. 
 
 *Photoresistors* (LDRs) and *photodiodes* are both light-sensitive components, but they operate differently. A photoresistor changes its resistance based on the intensity of light; as light increases, its resistance decreases, making it useful for simple light-sensing applications. LDRs are relatively slow to fully change resistance. In contrast, a photodiode generates a current or voltage when exposed to light, offering higher sensitivity and faster response times. 
 
@@ -190,11 +218,11 @@ There are also photo transistors to consider but this code isn't designed for it
 
 The code and wiring has been tested with photodiodes and photo resistors and they both work. Polarity matters with diodes, so if it isn't working swap the polarity. With drag racing photo resistors may be too slow and photodiodes would be favorable. Photodiodes are smaller and are easier to install in the track. The calculation of car speed does seem to be affected by the choice of sensor.
 
-Perhaps, if you have strobing lights (cheaper LED or florescent bulbs) photo diodes speed could be an issue and false trigger due to the AC current induced strobing? So the slower LDR could be an advantage? (I confirmed that indeed photodiodes are sensitive to AC lighting flickering/strobing and a battery supplied light is better if photodiodes are used. The symptom of this is the trap speed calculation can be overly quick.) Photodiodes can also be sensitive to capacitance if long pairs of wires are used, to remedy this, pull the pair of wires apart.
+AC powered lights (cheaper LED or florescent bulbs) could be an issue with photo diodes and give false triggers due to the AC current induced strobing. So the slower LDR could be an advantage. (I confirmed that indeed photodiodes are sensitive to AC lighting flickering/strobing and a battery supplied light is better if photodiodes are used. The symptom of this is the trap speed calculation can be overly quick.) Photodiodes can also be sensitive to capacitance if long pairs of wires are used, to remedy this, pull the pair of wires apart. For these reasons, photo resistors are recommended.
 
 Examples of 
 - uxcell 20pcs Photosensitive Diode Photodiodes Light Sensitive Sensors,3mm Clear Flat Head Receiver Diode
-- Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive
+- Chanzon 5mm 0.2 Ω ohm Photoresistor LDR Resistor 5506 GL5506 Light-Dependent Photoconductor 20pcs Photo Light Sensitive (*preferred sensor*)
 
 
 
