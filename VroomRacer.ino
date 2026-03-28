@@ -15,12 +15,12 @@
 
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260327"; 
+const char* title="VroomRacer v20260328"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
 // v20260320 - fixed hidden median and checked in RingBuffer set function
-// v20260327 - changed fueling so cannot cross start/finish by going 0 and using no fuel.  So now ratio of bestLap/lap burns some fuel too.
+// v2026038  - perfecting fuel logic to include lap time drain as well as speed drain 
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64

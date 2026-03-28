@@ -103,8 +103,11 @@ class Lane {
       crossedStart=true; 
       return true;      
     }else{      
-      //subtract "pit" time
+      //subtract "pit" time, ticksPerMs is commonly 18, thus max pit time is 65535/18=3640 ms 
       unsigned int pitTime=d.count/sensors[d.port].ticksPerMs;
+      ph("Detect");
+      p("d.count",d.count);
+      pln("pitTime",pitTime);
       lapDuration = d.timestamp-prior.timestamp - pitTime;
       if(allBestLapDur==bestLapDur){
         lapQuali='^';
@@ -118,8 +121,8 @@ class Lane {
         lapQuali='~';
         return false;
       }
-      if(fuelOn){
-        fuel-=allBestLapDur*pitLaneSpeedLimit/lapDuration + speed*3/4;
+      if(fuelOn && pitTime<1000){ //if you waited a second, you stopped for fuel. 
+        fuel-=(allBestLapDur>0?allBestLapDur:lapDuration)*pitLaneSpeedLimit/(lapDuration+pitTime) + speed*3/4;
         if(fuel<0) fuel=0;
       }
       if(lapDuration<minLapDuration){
@@ -144,6 +147,7 @@ class Lane {
         lapQuali='+';
       }
       if(d.count!=MAXCOUNT && (lapDuration<allBestLapDur || allBestLapDur==0)){ // if count is maxed out then not elig for best lap
+         //We do not use MAXCOUNT count laps due to them including some pit time in the lap
          allBestLapDur=lapDuration; //used for jumped lap detection
          playToneNoBlock(1046,100); //high frequency beep to alert of new fast lap
          lapQuali='^';
@@ -179,7 +183,7 @@ class Lane {
       }
       if(serialOn){        
         char buffer[200];
-        sprintf(buffer,"C%d lapCounter:%d lapDuration:%lu \n",
+        sprintf(buffer,"C%d lapCounter:%d lapDuration:%lu\n",
           laneNum,lapCounter,lapDuration);
         if(serialOn) Serial.print(buffer); 
       }

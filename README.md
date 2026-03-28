@@ -59,7 +59,8 @@ During racing when your lap time is presented, on the right most column are punc
 
 Stop on the photo sensor to begin filling your tank.  There will be a progress bar and a sound. The longer the car sits, the more the tank is filled.
 If your fuel gauge reads 0%, the lap will not be counted.
-Fuel consumption is based on trap speed.
+Fuel consumption is based on trap speed as well as lap time. The units of fuel is configurable.  The logic for fuel consumption is the yellow speed limit * best lap time / (current lap time + pit stop time) + trap speed. Speed is calculated in inches per second. If someone spends at least 1 second fueling their car, they will not be decreased the fuel amount for that lap.
+
 <img src="img/laps-fuel.jpg">Notice the G76% showing the tank level.</img>
 
 
@@ -84,6 +85,8 @@ Using inches per second (in/s) to measure slot car speed is practical and relata
 4. **Consistency**: Ensures uniformity across different tracks and setups.
 
 By using inches per second, we simplify speed measurement and enhance our racing experience. 
+
+The inches per second calculation is based on an car length of 2.5 inches long.  Obviously for 1:32, cars are twice as long as that, so actual speed would be twice as fast.
 
 ![inches per second examples](./inchesPerSecond_Examples.jpg)
 
