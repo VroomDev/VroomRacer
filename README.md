@@ -58,8 +58,8 @@ During racing when your lap time is presented, on the right most column are punc
 ## Stopping for fuel
 
 Stop on the photo sensor to begin filling your tank.  There will be a progress bar and a sound. The longer the car sits, the more the tank is filled.
-If your fuel gauge reads 0%, the lap will not be counted.
-Fuel consumption is based on trap speed as well as lap time. The units of fuel is configurable.  The logic for fuel consumption is the yellow speed limit * best lap time / (current lap time + pit stop time) + trap speed. Speed is calculated in inches per second. If someone spends at least 1 second fueling their car, they will not be decreased the fuel amount for that lap.
+If your fuel gauge reads 0%, the lap will not be counted unless you stop for fuel.
+Fuel consumption is based on trap speed as well as lap time. The number of units of fuel is configurable.  The logic for fuel consumption is the yellow speed limit * best lap time / (current lap time + pit stop time) + trap speed. Speed is calculated in inches per second. If someone spends at least 1 second fueling their car, they will not be decreased the fuel amount for that lap.
 
 <img src="img/laps-fuel.jpg">Notice the G76% showing the tank level.</img>
 
