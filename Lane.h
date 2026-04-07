@@ -6,7 +6,7 @@
  */
 #include <Arduino.h> 
 // the page numbers run from 0 up to but not including PAGECOUNT
-#define PAGECOUNT 4
+#define PAGECOUNT 5
 unsigned int tock=0;
 
 const uint8_t lapBufSize = 8; // Must be a power of 2
@@ -25,7 +25,7 @@ class Lane {
     int speedCount=0;
     int fouls=0;
     bool crossedStart=false;
-    int lapCounter=0; //public instance var
+    int lapCounter=0,finalLapsCompleted=-1; //public instance var
     static unsigned long allBestLapDur;
     static int maxLapCounter;
 
@@ -33,7 +33,7 @@ class Lane {
     char lapQuali=' ';
     char raceStatus=' '; //how is this racer doing in the race at a glance?
     unsigned long lapDuration=0,bestLapDur=0,worstLapDur=0,avgLapDur=0,totalSpeed=0;
-    unsigned long topSpeed=0,lowSpeed=0,initialTime=0;
+    unsigned long topSpeed=0,lowSpeed=0,initialTime=0,personalFinishTime=0;
     unsigned long long totalDuration=0;
     char why[40]=""; //this holds the reason why a lap was not counted.
 
@@ -42,6 +42,8 @@ class Lane {
        prior.reset();
        start.reset();
        finish.reset();
+       finalLapsCompleted=-1; // at the end of the race, how many laps did this racer complete?
+       personalFinishTime=0; //personalFinishTime, not for drag racing
        crossedStart=false;
        speed=0;
        speedCount=0;
@@ -162,10 +164,9 @@ class Lane {
       }
       totalDuration+=lapDuration;      
       avgLapDur = totalDuration/lapCounter;
-      
       prior=d;
-      laps.pushSort(lap); //good lap
-      if(lapCounter==raceLength){
+      laps.pushSort(lap); //good lap     
+      if((personalFinishTime==0) && (lapCounter==raceLength || (winner>=0))){ //we need stewards check at the end of the race for the driver
         int penalties=countStewardsPenalties(true);
         if( penalties>0){
           lapCounter-=penalties;
@@ -174,11 +175,24 @@ class Lane {
           banner(true,buffer);
           playCarmen();
           //need to keep going!      
-        }else if(won){
-            //didn't win :( 
+        }
+        // If no penalties, then will proceed to display finish 
+      }else{
+        banner(true,""); //lap has counted, let's display that.  
+      }
+      if((personalFinishTime==0) && (lapCounter==raceLength || winner>=0)){ //there was a winner  
+        finalLapsCompleted=lapCounter;
+        personalFinishTime=d.timestamp; //if set, then the race is over for this driver
+        if(won){ //someone has won
+          //didn't win :( 
+          displayFinish();
+          playEngine();
         }else{
           winner=laneNum;
           won=true;
+          raceCheckersTime=d.timestamp;
+          displayFinish();
+          playMusic(odeToJoyMelody,odeToJoyNotes,80*4);
         }
       }
       if(serialOn){        
@@ -191,6 +205,80 @@ class Lane {
     }
   }
 
+
+  // Define the struct to hold our time components
+  struct TimeSplit {
+    unsigned long minutes;
+    unsigned long seconds;
+    unsigned long milliseconds;
+  };
+  
+  // Function that takes total milliseconds and returns the struct
+  TimeSplit splitTime(unsigned long totalMilli) {
+    TimeSplit t;
+  
+    t.milliseconds = totalMilli % 1000;
+    unsigned long totalSeconds = totalMilli / 1000;
+    t.seconds = totalSeconds % 60;
+    t.minutes = totalSeconds / 60;
+  
+    return t;
+  }
+
+
+
+  /**
+  * 
+  */
+  void displayFinish(){
+    setDevice(laneNum);    
+    lcd.setCursor(0,0); //laneNum*2);//col,row    
+    char floatBuffer1[10]; // Buffer to hold the formatted float     
+    char floatBuffer2[10]; // Buffer to hold the formatted float     
+    char buffer[40];
+    
+    // raceStart start of race in millis
+    // raceCheckersTime  P1 time
+    // personalFinishTime // this car's finish time
+    // finalLapsCompleted how many laps completed
+    //01234567890123456789
+    //W1 
+    //
+    if( personalFinishTime == 0 ){
+      //01234567890123456789
+      //C1 has not finished!
+      //C1 winner!
+      //RaceTime: 00:00.000
+      //     Gap:+00:00.000
+      sprintf(buffer,"C%d has not finished!",laneNum+1);
+      buffer[20]=0; //null terminate
+      lcd.printRow(0,buffer);
+      unsigned long raceDuration = (raceCheckersTime>0?raceCheckersTime: millis())-raceStart;
+      TimeSplit t=splitTime(raceDuration);
+      sprintf(buffer, "RaceTime: %02lu:%02lu.%03lu", t.minutes, t.seconds, t.milliseconds);
+      buffer[20]=0; //null terminate
+      lcd.printRow(1,buffer);
+      lcd.printRow(2,raceCheckersTime>0 ? "Checkers waved." :"Keep going!");
+      lcd.printRow(3,""); 
+    }else{
+      sprintf(buffer,"C%d %s",laneNum+1,winner==laneNum ? "Winner!" : "Finished!");
+      buffer[20]=0; //null terminate
+      lcd.printRow(0,buffer);
+      unsigned long raceDuration=raceCheckersTime-raceStart;
+      unsigned long diff=personalFinishTime-raceCheckersTime;
+      TimeSplit t=splitTime(raceDuration);
+      sprintf(buffer, "RaceTime: %02lu:%02lu.%03lu", t.minutes, t.seconds, t.milliseconds);
+      buffer[20]=0; //null terminate
+      lcd.printRow(1,buffer);
+      t=splitTime(diff);
+      sprintf(buffer, "     Gap:+%02lu:%02lu.%03lu", t.minutes, t.seconds, t.milliseconds);
+      buffer[20]=0; //null terminate
+      lcd.printRow(2,buffer);
+      sprintf(buffer, "     Lap:+%d", raceLength-finalLapsCompleted);
+      buffer[20]=0; //null terminate
+      lcd.printRow(3,buffer);
+    }
+  }
 
 
   void display(byte page,char flag){
@@ -543,6 +631,9 @@ class Lane {
   }
 
 
+  
+
+
   //display for 2 player mode
   void display2(byte page,RaceFlag flag){    
     lcd.setCursor(0,0); //laneNum*2);//col,row    
@@ -644,7 +735,9 @@ class Lane {
         sprintf(buffer,"Slow %5ss Fouls%3d%c%d",floatBuffer1,fouls);
       }
       lcd.printRow(3,buffer);
-    }else{ //implied 3
+    }else if(page==3){
+      displayFinish();
+    }else{ //implied 4
       //01234567890123456789
       //Trap Speed 0000 in/s//
       // Top 0000 Avg 0000  //  
@@ -676,6 +769,7 @@ class Lane {
       //        
   }
 
+  
   void display4(byte page,char flag){    
      lcd.setCursor(0,laneNum);//col,row    
     //        012345678901234567890

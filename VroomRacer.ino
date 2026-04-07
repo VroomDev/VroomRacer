@@ -12,10 +12,8 @@
  * No guarantees of being fit for purpose.
  */
 
-
-
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260328"; 
+const char* title="VroomRacer v20260406"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
@@ -162,7 +160,8 @@ MyLCD lcd;
 volatile int winner=-1;
 volatile bool won=false;
 
-unsigned long raceStart=0;
+unsigned long raceStart=0,
+   raceCheckersTime=0; //the time the checkers flag first waved
 
 volatile bool raceStarted=false;
 
@@ -795,7 +794,6 @@ void alertGoodLap(int i) {
     delay(50);
     playTone(400+i*300-100, 50);
   }
-  lanes[i].banner(true,"");
   laneDisplayed=i; 
   nextPageFlip=millis()+FLIPTIMESHORT;
   if(config[COMPYELLOW]>0 
@@ -804,20 +802,15 @@ void alertGoodLap(int i) {
         compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4095ms or 4 seconds random amount
         compYellowStop=compYellowStart+lanes[i].avgLapDur+1000; //make it last for 1 typical lap
   }
-  if(lanes[i].lapCounter==raceLength){
-    lcd.setCursor(0,0);
-    lcd.print("C");
-    lcd.print(i+1);
+  if(lanes[i].lapCounter==raceLength ){ //simply to change the light eventually to off if enough laps ran
     if( winner==lanes[i].laneNum ) {
       ///////////12345678901234567890  
       waveFlag(CHECKERS);
-      lcd.print(  " is the WINNER!!! ");
-      playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
     }else{                            
-      lcd.print(  " finished.        ");
-      playEngine();
       waveFlag(DONE);
     }
+  }else if(lanes[i].lapCounter>raceLength){
+    waveFlag(DONE); //enough laps ran, let's turn off light
   }
   waveFlag(raceFlag);
 }
