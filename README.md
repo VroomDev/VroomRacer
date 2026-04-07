@@ -276,7 +276,11 @@ Note: the parallel resistor in the above diagram can be replaced with a single r
 
 # Enclosure
 
-I built mine out of thin hobby plywood that can be cut with a utility knife. To ease assembly , taping the exterior together then gluing from the inside using toothpick joiners with quick set white glue is very effective. For the exterior, I printed "textures" on my ink jet printer. For the roof, I am using cardstock paper.
+![housing](./ideal-enclosure.jpg)
+
+The above is the ideal enclosure if both drivers are standing on the same side of the table.
+
+I built several out of thin hobby plywood that can be cut with a utility knife. To ease assembly , taping the exterior together then gluing from the inside using toothpick joiners with quick set white glue is very effective. 
 
 ![housing](./House1.jpg)
 
