@@ -404,13 +404,17 @@ class Lane {
       lcd.print(11,2,' ');
       lcd.print(11,3,' ');
       if( fuelOn ) {
-        sprintf(buffer,"%2dLAPS%2d%%",(int)(lapCounter%100),calcFuelGauge(fuel));
-        lcd.printBigString(buffer);      
-        lcd.print(8,1,"Spd");
-        sprintf(buffer,"%3d",(int)speed);
-        lcd.print(8,2,buffer);
+        if( won && calcFuelGauge(fuel) > 20) {
+          lcd.printMillisAsSeconds(lapDuration);
+        }else{
+          sprintf(buffer,"%2dLAPS%2d%%",(int)(lapCounter%100),calcFuelGauge(fuel));
+          lcd.printBigString(buffer);      
+          lcd.print(8,1,"Spd");
+          sprintf(buffer,"%3d",(int)speed);
+          lcd.print(8,2,buffer);
+        }
       }else{
-        if(lapCounter>=raceLength-3){ //show #LAP left near end of race
+        if(lapCounter>=raceLength-3 && ! won){ //show #LAP left near end of race
           sprintf(buffer,"%2dLAPS  ",(int)(lapCounter%100));
           lcd.printBigString(buffer);
           lcd.print(11,1,"Spd");

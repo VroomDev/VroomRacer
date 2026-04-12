@@ -13,7 +13,7 @@
  */
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260406"; 
+const char* title="VroomRacer v20260412"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
@@ -158,7 +158,7 @@ MyLCD lcd;
 
 
 volatile int winner=-1;
-volatile bool won=false;
+volatile bool won=false; //race is over if true
 
 unsigned long raceStart=0,
    raceCheckersTime=0; //the time the checkers flag first waved
@@ -700,7 +700,7 @@ void raceLoop(){
     }else if( raceFlag==REDFLAG ){ //lap doesn't count
       alertBadLap(i,"Red Flag");     
     }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
-      if(aspeed==0 || speed <= pitLaneSpeedLimit || speed<aspeed*3/5) { //lap counts
+      if( speed <= pitLaneSpeedLimit ) { //lap counts (prev had: || speed<aspeed*3/5)
         alertGoodLap(i); 
       }else{ // too fast!
         alertBadLap(i,"Too fast!"); 
