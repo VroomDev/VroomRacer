@@ -342,4 +342,7 @@ void loop() {
 ```
 This setup allows you to track changes in light levels and adjust the resistor value for better sensitivity.
 
+# How the light logic actually reads the sensors 
+
+The Arduino Mega is set up to use an ISR interrupt. In **Free Running Mode**, the Arduino Mega’s Analog-to-Digital Converter (ADC) operates as a high-frequency sampling engine that functions independently of the main CPU's instruction cycle. Once the initial conversion is initiated by setting the `ADSC` bit, the hardware enters a loop where it automatically begins a new conversion the instant the previous one finishes. This process is managed by the Auto Trigger circuitry, which monitors the interrupt flag and immediately re-arms the ADC. For applications like slot car timing, this mode significantly reduces software overhead by offloading the sampling trigger to the hardware. When paired with the `ADC_vect` interrupt, the system minimizes the interval between samples, providing sufficient temporal resolution to capture high-speed "shadow" events that might be missed by standard polling methods.
 
