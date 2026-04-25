@@ -13,7 +13,7 @@
  */
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260412"; 
+const char* title="VroomRacer v20260424"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
@@ -303,10 +303,12 @@ void setup() {
     Serial.println("no LCD found");
   }
   // set up the LCD's number of columns and rows:
-  for(int d=0;d<nDevices;d++){
-    setDevice(d);
-    lcd.begin(16, 2);
-  }
+//  for(int d=0;d<nDevices;d++){
+//    setDevice(d);
+//    lcd.begin(20, 4);
+//    lcd.setCursor(0, 0);
+//    lcd.print("Hello Mario!");
+//  }
   //  Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
@@ -349,7 +351,7 @@ void setup() {
   setDevice(0);
   ////////////
   ISR::setup();
-  ////////////
+  //////////
 }
 
 

@@ -39,7 +39,7 @@ int scanDevices() {
   Serial.println("Scanning...");
 
   nDevices = 0;
-  for(address = 8; address < 120; address++ ) {
+  for(address = 1; address < 127; address++ ) {
     Serial.println(address);
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
@@ -49,6 +49,13 @@ int scanDevices() {
       if (address < 16) Serial.print("0");
       Serial.println(address, HEX);
       curLcd=plcds[nDevices]=new LiquidCrystal_I2C(address, 20, 4);
+      curLcd->init();
+      curLcd->backlight();
+      curLcd->setCursor(0, 0);
+      curLcd->print("LCD Detected");
+      curLcd->setCursor(0, 1);
+      curLcd->print("Addr: 0x");
+      curLcd->print(address, HEX);
       nDevices++;
       if(nDevices==MAXLCDS) return nDevices;
     }
