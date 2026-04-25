@@ -302,13 +302,6 @@ void setup() {
   if(scanDevices()==0){
     Serial.println("no LCD found");
   }
-  // set up the LCD's number of columns and rows:
-//  for(int d=0;d<nDevices;d++){
-//    setDevice(d);
-//    lcd.begin(20, 4);
-//    lcd.setCursor(0, 0);
-//    lcd.print("Hello Mario!");
-//  }
   //  Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
   noTone(speakerPin);
