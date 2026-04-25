@@ -1,3 +1,8 @@
+/* 
+ * VroomRacer by Chris Busch (c) 2024
+ * There are no warranties express or implied with this code.
+ * No guarantees of being fit for purpose.
+ */
 
 
 #define USELCD 1
@@ -30,8 +35,8 @@ int nDevices;
 
 //big font code is refactored/based on Hifiduino https://downloadcode.wordpress.com/2009/06/22/code-v-0-7/
 
-#define B 0xFF             // The character for a completely filled box
-#define A 0x20             // The character for blank
+#define B ((char)0xFF)             // The character for a completely filled box
+#define A ((char)0x20)             // The character for blank
 
 
 int scanDevices() {
@@ -436,9 +441,9 @@ class MyLCD {
 
 // Array index into parts of big numbers. Numbers consist of 9 custom characters in 3 lines
 // 0 1 2 3 4 5 6 7 8 9 
-static const char MyLCD::bn1[]{B,2,1, 2,1,A, 2,2,1, 2,2,1, 3,A,B, B,2,2, B,2,2, 2,2,B, B,2,1, B,2,1};
-static const char MyLCD::bn2[]{B,A,B, A,B,A ,3,2,2, A,6,1, 5,6,B, 5,6,7, B,6,7, A,3,2, B,6,B, 5,6,B};
-static const char MyLCD::bn3[]{4,3,B, 3,B,3, B,3,3, 3,3,B, A,A,B, 3,3,B, 4,3,B, A,B,A, 4,3,B, A,A,B};
+const char MyLCD::bn1[]{B,2,1, 2,1,A, 2,2,1, 2,2,1, 3,A,B, B,2,2, B,2,2, 2,2,B, B,2,1, B,2,1};
+const char MyLCD::bn2[]{B,A,B, A,B,A ,3,2,2, A,6,1, 5,6,B, 5,6,7, B,6,7, A,3,2, B,6,B, 5,6,B};
+const char MyLCD::bn3[]{4,3,B, 3,B,3, B,3,3, 3,3,B, A,A,B, 3,3,B, 4,3,B, A,B,A, 4,3,B, A,A,B};
 
 
 //EOF

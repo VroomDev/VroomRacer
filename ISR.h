@@ -1,5 +1,5 @@
 /*
- * Code by Chris Busch (c) 2024
+ * VroomRacer by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */
@@ -38,7 +38,7 @@ int checkSensors(){
 class ISR{
   public:
   
-  static setup(){
+  static void setup(){
     ADCSRA = 0;             // clear ADCSRA register
     ADCSRB = 0;             // clear ADCSRB register
     ADMUX = (ADMUX & 0xF0) | 0x00; // We will start with pin A0

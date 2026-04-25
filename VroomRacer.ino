@@ -5,15 +5,12 @@
  * Currently this project isn't broken into a compile+link arrangement. 
  * It is kept simple by simply using .h and not all the preprocessor 
  * controls.  That may change in the future if the code base grows.
- */
-/*
- * Code by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260424"; 
+const char* title="VroomRacer v20260425"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
@@ -580,7 +577,7 @@ void alertDragDetection(int i) {
 }
 
 /** param i is the car lane */
-void alertDragBadDetection(int i,char* msg){ //,Detection& d){
+void alertDragBadDetection(int i,const char* msg){ //,Detection& d){
   nextPageFlip=millis()+FLIPTIMESHORT;
   p("BAD LAP car:",i);
   pln("msg:",msg);
@@ -813,7 +810,7 @@ void alertGoodLap(int i) {
 /**
  * param i is the car lane
  */
-void alertBadLap(int i,char* msg){ //,Detection& d){
+void alertBadLap(int i,const char* msg){ //,Detection& d){
   laneDisplayed=i;
   nextPageFlip=millis()+FLIPTIMESHORT;
   p("BAD LAP car:",i);

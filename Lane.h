@@ -1,6 +1,6 @@
 ////////////////////////Lane.h by Chris Busch
 /*
- * Code by Chris Busch (c) 2024
+ * VroomRacer by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */
@@ -281,7 +281,7 @@ class Lane {
   }
 
 
-  void display(byte page,char flag){
+  void display(byte page,RaceFlag flag){
     if(NUMLANES==2) display2(page,flag);
     else display4(page,flag);
   }
@@ -321,14 +321,14 @@ class Lane {
   }
 
 
-  void banner(bool lapCounted,char* msg){
+  void banner(bool lapCounted,const char* msg){
     setDevice(laneNum);
     banner0(lapCounted,msg);
   }
 
         // 1234567890123467890
         //C0 Lap00 In Pit G99
-  void bannerShared(char* msg){   
+  void bannerShared(const char* msg){   
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     
     char buffer[60];
@@ -370,7 +370,7 @@ class Lane {
 
 
   
-  void banner0(bool lapCounted,char* msg){
+  void banner0(bool lapCounted,const char* msg){
     lcd.setCursor(0,0);//col,row    
     char floatBuffer1[10]; // Buffer to hold the formatted float     
     char floatBuffer2[10]; // Buffer to hold the formatted float     

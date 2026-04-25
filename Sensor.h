@@ -1,5 +1,5 @@
 /*
- * Code by Chris Busch (c) 2024
+ * VroomRacer by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */

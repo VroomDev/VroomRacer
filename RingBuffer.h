@@ -1,9 +1,12 @@
-
 /* 
- * Code by Chris Busch (c) 2024
+ * VroomRacer by Chris Busch (c) 2024
  * There are no warranties express or implied with this code.
  * No guarantees of being fit for purpose.
  */
+
+
+void playTone(int frequency, unsigned int duration); //predeclare
+
  
  template <typename T, uint8_t Size>
 class RingBuffer {
