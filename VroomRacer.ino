@@ -10,12 +10,14 @@
  */
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260425"; 
+const char* title="VroomRacer v20260429"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
 // v20260320 - fixed hidden median and checked in RingBuffer set function
 // v2026038  - perfecting fuel logic to include lap time drain as well as speed drain 
+// v20260429 - fixed big numbers
+
 
 #define FUELSTEP 64
 #define MINLAPDURSTEP 64
@@ -298,6 +300,17 @@ void setup() {
   
   if(scanDevices()==0){
     Serial.println("no LCD found");
+  }else{
+    for(int i=0;i<nDevices;i++) {
+      setDevice(i);
+      lcd.boot(); //we need to configure the large font
+      delay(100);
+    }
+    delay(1000);
+    for(int i=0;i<nDevices;i++) {
+      setDevice(i);
+      lcd.clear();
+    }
   }
   //  Serial.println("speaker...");
   pinMode(speakerPin, OUTPUT);
@@ -643,9 +656,8 @@ void raceLoop(){
   }
    if(!raceStarted){  
       // Print a message to the LCD.  
-      lcd.setCursor(0,2);
       ///////////01234567890123456789        
-      lcd.print("   Get ready.       ");
+      lcd.printRowBoth(2,"   Get ready.       ");
       for(int i=0;i<NUMLANES;i++){
         lanes[i].fuel=MAXFUEL;
       }
@@ -669,10 +681,8 @@ void raceLoop(){
       }
       waveFlag(GREENFLAG);
       playTone(1000, 500);  
-      //  delay(100);
-      lcd.setCursor(0,3);
       ///////////01234567890123456789         
-      lcd.print("     GO!!!!!!!!     ");    
+      lcd.printRowBoth(3,"     GO!!!!!!!!     ");    
   }
   if (  ringBuffer.pull(d)) {
     //nextPageFlip=0;

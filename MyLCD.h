@@ -5,6 +5,8 @@
  */
 
 
+
+
 #define USELCD 1
 
 #ifdef USELCD
@@ -57,11 +59,12 @@ int scanDevices() {
       curLcd->init();
       curLcd->backlight();
       curLcd->setCursor(0, 0);
-      curLcd->print("LCD Detected");
-      curLcd->setCursor(0, 1);
-      curLcd->print("Addr: 0x");
+      curLcd->print(title);
+      curLcd->setCursor(5, 3);
+      curLcd->print("LCD 0x");
       curLcd->print(address, HEX);
       nDevices++;
+      delay(50);
       if(nDevices==MAXLCDS) return nDevices;
     }
     else if (error == 4) {
@@ -98,7 +101,17 @@ class MyLCD {
   static const char bn1[];//{B,2,1, 2,1,A, 2,2,1, 2,2,1, 3,A,B, B,2,2, B,2,2, 2,2,B, B,2,1, B,2,1};
   static const char bn2[];//{B,A,B, A,B,A ,3,2,2, A,6,1, 5,6,B, 5,6,7, B,6,7, A,3,2, B,6,B, 5,6,B};
   static const char bn3[];//{4,3,B, 3,B,3, B,3,3, 3,3,B, A,A,B, 3,3,B, 4,3,B, A,B,A, 4,3,B, A,A,B};
-    
+
+  void boot(){
+    defineLargeChars();
+    printBigString("VR00M!",5,1);
+  }
+
+  void clear(){
+    if(curLcd==NULL) return;
+    curLcd->clear();
+  }
+  
 
   // The routine to create the custom characters in the LCD
   void defineLargeChars(){
@@ -254,6 +267,13 @@ class MyLCD {
     print(buffer);
   }
 
+  void printRowBoth(int r,const char* msg){
+    for(int i=0;i<nDevices;i++) {
+        setDevice(i);
+        printRow(r,msg);
+    }
+  }
+
   void eraseBigDigit(byte col, byte row){
     if(curLcd==NULL) return;
     curLcd->setCursor(col,row+0);
@@ -372,19 +392,22 @@ class MyLCD {
     setCursor(19,3);
     print("S");
   }
-
-  void begin(int a,int b){
-    if(curLcd==NULL) return;
-    #ifdef USELCD
-    //initialize lcd screen
-    curLcd->begin(20,4);
-    curLcd->init();
-    // turn on the backlight
-    curLcd->backlight();
-
-    defineLargeChars();
-    #endif
-  }
+  
+//
+//  void begin(){ //(int a,int b){
+//    if(curLcd==NULL) return;
+//    #ifdef USELCD
+//    //initialize lcd screen
+//    //curLcd->begin(20,4);
+//    //curLcd->init();
+//    // turn on the backlight
+//    //curLcd->backlight();
+//
+//      
+//
+//    defineLargeChars();
+//    #endif
+//  }
 
   
 
@@ -444,6 +467,5 @@ class MyLCD {
 const char MyLCD::bn1[]{B,2,1, 2,1,A, 2,2,1, 2,2,1, 3,A,B, B,2,2, B,2,2, 2,2,B, B,2,1, B,2,1};
 const char MyLCD::bn2[]{B,A,B, A,B,A ,3,2,2, A,6,1, 5,6,B, 5,6,7, B,6,7, A,3,2, B,6,B, 5,6,B};
 const char MyLCD::bn3[]{4,3,B, 3,B,3, B,3,3, 3,3,B, A,A,B, 3,3,B, 4,3,B, A,B,A, 4,3,B, A,A,B};
-
 
 //EOF

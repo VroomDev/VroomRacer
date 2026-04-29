@@ -307,7 +307,7 @@ class Lane {
     sprintf(buffer,"%c%d Lap%-2d In Pit G%2d%%  "
                    ,ch,laneNum+1,(int)lapCounter,calcFuelGauge(fuel));
     buffer[20]=0; //null terminate
-    lcd.printRow(laneNum*2,buffer);
+    lcd.printRow(nDevices==1 ? laneNum*2 : 0,buffer);
                              // 1234567890123467890
     if(fuel<=0) sprintf(buffer, "EMPTY GAS TANK!    ");
     else{
@@ -317,7 +317,7 @@ class Lane {
       }
     }
     buffer[20]=0; //null terminate
-    lcd.printRow(laneNum*2+1, buffer);
+    lcd.printRow(nDevices==1 ? laneNum*2+1 : 1, buffer);
   }
 
 
@@ -382,7 +382,9 @@ class Lane {
                 
     ////set top line
     if(msg[0]==0){   //C0 Lap00 Spd123 G23%
-      if(fuelOn){    
+      if( !crossedStart){ 
+          sprintf(buffer,title);
+      }else if(fuelOn){    
           sprintf(buffer,"%c%d Lap%-2d T%5ld G%2d%%  "
                    ,ch,laneNum+1,(int)lapCounter,lapDuration,calcFuelGauge(fuel));
       }else{
@@ -428,6 +430,8 @@ class Lane {
       lcd.printReaction(reactionTime);
     }else if(crossedStart && speed>0){
       lcd.printSpeed(speed); //
+    }else if(msg[0]==0 && !crossedStart){
+      return;
     }else{
       lcd.printRow(1,"");
       lcd.printRow(2,msg);
