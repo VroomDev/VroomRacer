@@ -5,22 +5,19 @@
  */
 
 
-
+#define USEHDLIB 1
 
 #define USELCD 1
 
 #ifdef USELCD
-#include <Wire.h>
+  #include <Wire.h>
+  #ifdef USEHDLIB
+    #include <hd44780.h>                       // main hd44780 header
+    #include <hd44780ioClass/hd44780_I2Cexp.h> // i2c expander i/o class header    
+  #else
+    #include <LiquidCrystal_I2C.h>
+  #endif
 
-
-
-/*
- * Code by Chris Busch (c) 2024
- * There are no warranties express or implied with this code.
- * No guarantees of being fit for purpose.
- */
-
-#include <LiquidCrystal_I2C.h>
 #endif
 
 //initialize the liquid crystal library
@@ -28,12 +25,18 @@
 //the parameter is how many columns are on your screen
 //the parameter is how many rows are on your screen
 #ifdef USELCD
-#define MAXLCDS 2
-LiquidCrystal_I2C* plcds[MAXLCDS]{NULL}; //pointers to LCDs   //realLcd(0x26, 20, 4);
-LiquidCrystal_I2C* curLcd=NULL;
-int nDevices;
+  #define MAXLCDS 2
+  #ifdef USEHDLIB
+    // Change the pointer type here:
+    hd44780_I2Cexp* plcds[MAXLCDS]{NULL}; 
+    hd44780_I2Cexp* curLcd = NULL;
+  #else
+    LiquidCrystal_I2C* plcds[MAXLCDS]{NULL}; //pointers to LCDs   //realLcd(0x26, 20, 4);
+    LiquidCrystal_I2C* curLcd=NULL;
+  #endif
 #endif
 
+int nDevices;
 
 //big font code is refactored/based on Hifiduino https://downloadcode.wordpress.com/2009/06/22/code-v-0-7/
 
@@ -45,14 +48,6 @@ int scanDevices() {
   byte error, address;
   Serial.println("Scanning...");
 
-  Serial.print("TWI Bit Rate Register: ");
-  Serial.println(TWBR);
-
-// Initialize the I2C hardware and set the speed
-  // 10000 (10kHz) is great for overcoming loose connections or long wires
-  Wire.begin(); 
-  Wire.setClock(10000);
-  
   nDevices = 0;
   for(address = 1; address < 127; address++ ) {
     Serial.println(address);
@@ -63,15 +58,33 @@ int scanDevices() {
       Serial.print("I2C device found at address 0x");
       if (address < 16) Serial.print("0");
       Serial.println(address, HEX);
-      curLcd=plcds[nDevices]=new LiquidCrystal_I2C(address, 20, 4);
-      curLcd->init();
-      curLcd->backlight();
-      curLcd->setCursor(0, 0);
-      curLcd->print(title);
-      curLcd->setCursor(5, 3);
-      curLcd->print("LCD 0x");
-      curLcd->print(address, HEX);
-      nDevices++;
+      //hd44780_I2Cexp
+      #ifdef USEHDLIB
+        curLcd=plcds[nDevices]=new hd44780_I2Cexp(address);
+        // Initialize with begin() - returns 0 on success
+        if (curLcd->begin(20, 4) == 0) {
+            curLcd->backlight();
+            curLcd->setCursor(0, 0);
+            curLcd->print(title);
+            curLcd->setCursor(5, 3);
+            curLcd->print("LCD 0x");
+            curLcd->print(address, HEX);
+            nDevices++;
+        } else {
+            Serial.println("LCD init failed!");
+        }
+      #else
+        curLcd=plcds[nDevices]=new LiquidCrystal_I2C(address, 20, 4);
+        curLcd->init();
+        curLcd->backlight();
+        curLcd->setCursor(0, 0);
+        curLcd->print(title);
+        curLcd->setCursor(5, 3);
+        curLcd->print("LCD 0x");
+        curLcd->print(address, HEX);
+        nDevices++;
+      #endif
+      
       delay(50);
       if(nDevices==MAXLCDS) return nDevices;
     }
@@ -81,10 +94,6 @@ int scanDevices() {
       Serial.println(address, HEX);
     }
   }
-
-  Serial.print("TWI Bit Rate Register: ");
-  Serial.println(TWBR);
-  
   if (nDevices == 0) {
     Serial.println("No I2C devices found");
   } 
