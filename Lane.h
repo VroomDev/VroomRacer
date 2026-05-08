@@ -6,10 +6,10 @@
  */
 #include <Arduino.h> 
 // the page numbers run from 0 up to but not including PAGECOUNT
-#define PAGECOUNT 5
+#define PAGECOUNT 6
 unsigned int tock=0;
 
-const uint8_t lapBufSize = 8; // Must be a power of 2
+const uint8_t lapBufSize = 16; // Must be a power of 2
 
 class Lane {
   public:
@@ -574,6 +574,41 @@ class Lane {
 
   /* these variables only valid after doStewardsCheck */
   long int median=-1,mad=-1,N=-1,stewardsBound=-1,bogusLaps=0;
+
+
+  void graphLaps(){
+    lcd.clear();
+    auto offSet =  lapCounter>20 ? lapCounter-20: 0;
+    Lap lap1;
+    long min=-1;
+    long max=-1;
+    float avg=0;
+    long n=0;
+    for(int i=0;i<lapBufSize;i++){
+        if(laps.bottom(lap1,i)){
+            auto d=abs(lap1.duration);  
+            min=min<d || min==-1 ? d : min;
+            max=max>d || max==-1 ? d : max;
+            avg+=d;
+            n++;   
+        }
+    }
+    avg/=n;
+    uint8_t arr[20]{};
+    for(int i=0;i<lapBufSize;i++){
+        if(laps.bottom(lap1,i)){
+           auto d=abs(lap1.duration);
+           auto lap=lap1.lap;
+           int p=d/avg*4*8/2;
+           if(p>4*8) p=4*8;
+           if(lap-offSet>=0 && lap-offSet<20){
+              arr[lap-offSet]=p;
+           }
+        }
+    }
+    lcd.drawBarChart(arr,20);
+  }
+  
   
   /**
    * This checks the last lapBufSize laps in the lap buffer and calculates media, mad, stewardsBound.
@@ -745,6 +780,8 @@ class Lane {
       lcd.printRow(3,buffer);
     }else if(page==3){
       displayFinish();
+    }else if(page==5){
+      graphLaps();
     }else{ //implied 4
       //01234567890123456789
       //Trap Speed 0000 in/s//
