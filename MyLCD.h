@@ -45,6 +45,9 @@ int scanDevices() {
   byte error, address;
   Serial.println("Scanning...");
 
+  Serial.print("TWI Bit Rate Register: ");
+  Serial.println(TWBR);
+
 // Initialize the I2C hardware and set the speed
   // 10000 (10kHz) is great for overcoming loose connections or long wires
   Wire.begin(); 
@@ -78,6 +81,10 @@ int scanDevices() {
       Serial.println(address, HEX);
     }
   }
+
+  Serial.print("TWI Bit Rate Register: ");
+  Serial.println(TWBR);
+  
   if (nDevices == 0) {
     Serial.println("No I2C devices found");
   } 
