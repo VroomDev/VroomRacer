@@ -10,7 +10,7 @@
  */
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260429"; 
+const char* title="VroomRacer v20260508"; 
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
