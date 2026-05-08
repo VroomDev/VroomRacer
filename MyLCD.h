@@ -224,13 +224,13 @@ class MyLCD {
     if(curLcd==NULL) return;
   
     // send custom characters to the display
-    curLcd->load_custom_character(1,cc1);
-    curLcd->load_custom_character(2,cc2);
-    curLcd->load_custom_character(3,cc3);
-    curLcd->load_custom_character(4,cc4);
-    curLcd->load_custom_character(5,cc5);
-    curLcd->load_custom_character(6,cc6);
-    curLcd->load_custom_character(7,cc7);
+    curLcd->createChar(1,cc1);
+    curLcd->createChar(2,cc2);
+    curLcd->createChar(3,cc3);
+    curLcd->createChar(4,cc4);
+    curLcd->createChar(5,cc5);
+    curLcd->createChar(6,cc6);
+    curLcd->createChar(7,cc7);
   
   }
   
@@ -330,7 +330,7 @@ class MyLCD {
     curLcd->write(extra=='.' || extra==':' ?DOTCHAR:' ');
   }
 
-  void printBigString(char* msg,int col=0,int row=1){
+  void printBigString(const char* msg,int col=0,int row=1){
     bool needpad=false;
     for(int i=0;msg[i]!=0 && col<20 && row<4;i++){
       char c=msg[i];
