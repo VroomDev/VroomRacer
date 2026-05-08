@@ -1,21 +1,21 @@
 /*
- * Vroom Racer by Chris Busch 
- * (c) 2024
- * 
- * Currently this project isn't broken into a compile+link arrangement. 
- * It is kept simple by simply using .h and not all the preprocessor 
- * controls.  That may change in the future if the code base grows.
- * There are no warranties express or implied with this code.
- * No guarantees of being fit for purpose.
- */
+   Vroom Racer by Chris Busch
+   (c) 2024
+
+   Currently this project isn't broken into a compile+link arrangement.
+   It is kept simple by simply using .h and not all the preprocessor
+   controls.  That may change in the future if the code base grows.
+   There are no warranties express or implied with this code.
+   No guarantees of being fit for purpose.
+*/
 
 //////////////////////////// CONFIG VALUES
-const char* title="VroomRacer v20260508"; 
+const char* title = "VroomRacer v20260509";
 
 //LOG:
 // v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
 // v20260320 - fixed hidden median and checked in RingBuffer set function
-// v2026038  - perfecting fuel logic to include lap time drain as well as speed drain 
+// v2026038  - perfecting fuel logic to include lap time drain as well as speed drain
 // v20260429 - fixed big numbers
 
 
@@ -23,12 +23,13 @@ const char* title="VroomRacer v20260508";
 #define MINLAPDURSTEP 64
 #define FRACTIONDENOM 8
 
-typedef enum : uint8_t {RESUME,BANKMODE,BRIGHTNESS,SOUND,RACELEN,FUELING,COMPYELLOW,SPEEDLIMIT,MINLAPDUR,SERIALMONITOR,DEMODIAG,DEFAULTS,
-YELLOWDELTA,
-REDLAPSNUMER,
-NUMCONFIG} Configs; //14 configs
+typedef enum : uint8_t {RESUME, BANKMODE, BRIGHTNESS, SOUND, RACELEN, FUELING, COMPYELLOW, SPEEDLIMIT, MINLAPDUR, SERIALMONITOR, DEMODIAG, DEFAULTS,
+                        YELLOWDELTA,
+                        REDLAPSNUMER,
+                        NUMCONFIG
+                       } Configs; //14 configs
 
-uint8_t config[NUMCONFIG]; 
+uint8_t config[NUMCONFIG];
 const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "- to Exit, + to Save\0", //
   "Boot up mode:       \0",
@@ -44,21 +45,21 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Revert defaults?    \0", //
   "Yellow millis:      \0", //
   "Red Multiplier+:    \0"
- //01234567890123456789
+  //01234567890123456789
 };
 #define NUMBANKS 4
-typedef enum : uint8_t {FUELMODE,FASTMODE,TUNEMODE,DRAGMODE} ModeBanks;
-const char* BANKNAMES[NUMBANKS]={"Fuel","Fast","Tune","Drag"};
+typedef enum : uint8_t {FUELMODE, FASTMODE, TUNEMODE, DRAGMODE} ModeBanks;
+const char* BANKNAMES[NUMBANKS] = {"Fuel", "Fast", "Tune", "Drag"};
 #define BANKSIZE 128
-uint8_t curBank=0; 
+uint8_t curBank = 0;
 ///////////////////////////////resume, mode, bright,    sound, laps, fuel, compy, limit, minlapdur, sermon, demo, defaults YelDel RedLaps
-const uint8_t VMAX[NUMCONFIG]={ 0,  NUMBANKS-1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254 }; //max vmax is 254
-const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
-   //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-    {0,0,   8, 1,   10,   6,   5,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 1*FRACTIONDENOM}, //FUEL MODE
-    {0,0,   8, 1,   10,   0,   0,      45,   2500/MINLAPDURSTEP,  1,  0,   0, 2000/MINLAPDURSTEP, 1*FRACTIONDENOM}, //Fast MODE
-    {0,0,   8, 0,   99,   0,   0,     254,  2500/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //TUNE MODE
-    {0,0,   8, 1,   1,    0,   0,     254,   128/MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //DRAG MODE
+const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254 }; //max vmax is 254
+const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
+  //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
+  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM}, //FUEL MODE
+  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM}, //Fast MODE
+  {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //TUNE MODE
+  {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //DRAG MODE
 };
 
 #define compYellowOn ((bool)config[COMPYELLOW]>0)
@@ -77,7 +78,7 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG]={
 #define redLapsNumer ((int)config[REDLAPSNUMER])
 ////////////////////////////END OF CONFIG
 
-const int NUMLANES=2;
+const int NUMLANES = 2;
 
 
 // Define an enum to represent different colors
@@ -94,23 +95,23 @@ typedef enum  {
   NUM_COLORS // Keeps track of the number of colors
 } Color;
 
- 
+
 #include "pitches.h"
 #define REST 0
 
-typedef enum : char {FORMATION='F', SET='S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE='D' } RaceFlag;
+typedef enum : char {FORMATION = 'F', SET = 'S', REDFLAG = 'R', YELLOWFLAG = 'Y', GREENFLAG = 'G', CHECKERS = 'C', DONE = 'D' } RaceFlag;
 
 
-static uint8_t laneDisplayed=0;  //the last lane displayed on the screen if using 1 screen
-  
+static uint8_t laneDisplayed = 0; //the last lane displayed on the screen if using 1 screen
+
 //how fast to flip the display page
 #define FLIPTIMEBOOST 20000
 #define FLIPTIMELONG 10000
 #define FLIPTIMESHORT 2000
 
-int flipStayBoost=0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
+int flipStayBoost = 0; //this makes the screen stay longer for a while.  Get's divided by 2 each time.
 
-RaceFlag raceFlag=FORMATION;
+RaceFlag raceFlag = FORMATION;
 
 
 //for debugging
@@ -122,25 +123,25 @@ RaceFlag raceFlag=FORMATION;
 #define pln2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
 
 
-void mydtostrf(float value, int width,char *buffer) {
+void mydtostrf(float value, int width, char *buffer) {
   // Calculate the number of digits in the integer part of the value
   int intPart = abs((int)value);
-  if(value>99999 || value<-9999 ){
-    sprintf(buffer,"OVER!");
+  if (value > 99999 || value < -9999 ) {
+    sprintf(buffer, "OVER!");
     return;
-  }  
-  int prec=3;
-  int digits=1; //for dot
-  if (intPart >= 1000) {
-    digits+=4;
-  } else if (intPart >= 100) {
-    digits+=3;
-  } else if (intPart >= 10) {
-    digits+=2;
-  } else if (intPart >= 1) {
-    digits+=1;
   }
-  while(prec>0 && digits+prec>width) prec--; //reduce digit use if required
+  int prec = 3;
+  int digits = 1; //for dot
+  if (intPart >= 1000) {
+    digits += 4;
+  } else if (intPart >= 100) {
+    digits += 3;
+  } else if (intPart >= 10) {
+    digits += 2;
+  } else if (intPart >= 1) {
+    digits += 1;
+  }
+  while (prec > 0 && digits + prec > width) prec--; //reduce digit use if required
   // Use dtostrf with the adjusted precision
   dtostrf(value, width, prec, buffer);
 }
@@ -156,13 +157,13 @@ MyLCD lcd;
 #include "Lights.h"
 
 
-volatile int winner=-1;
-volatile bool won=false; //race is over if true
+volatile int winner = -1;
+volatile bool won = false; //race is over if true
 
-unsigned long raceStart=0,
-   raceCheckersTime=0; //the time the checkers flag first waved
+unsigned long raceStart = 0,
+              raceCheckersTime = 0; //the time the checkers flag first waved
 
-volatile bool raceStarted=false;
+volatile bool raceStarted = false;
 
 
 #include "Detection.h"
@@ -184,35 +185,35 @@ RingBuffer<Detection, bufferSize> ringBuffer;
 Lights lights;
 Lane lanes[NUMLANES];
 
-void setColor(Color c){
+void setColor(Color c) {
   lights.setColor(c);
 }
 
 #include "Buttons.h"
 
 
-void waveFlag(RaceFlag which){
-  raceFlag=which;
-  switch(which){
+void waveFlag(RaceFlag which) {
+  raceFlag = which;
+  switch (which) {
     case FORMATION:
       setColor(BLACK);
-    break;
+      break;
     case SET:
       setColor(WHITE);
-    break;
-    case REDFLAG:      
+      break;
+    case REDFLAG:
       setColor(RED);
-    break;
+      break;
     case YELLOWFLAG:
       setColor(YELLOW);
-    break;
+      break;
     case GREENFLAG:
       setColor(GREEN);
-    break;
+      break;
     case CHECKERS:
       setColor(CYAN);
-    break;
-    default: 
+      break;
+    default:
       setColor(BLACK);
   }
 }
@@ -220,69 +221,69 @@ void waveFlag(RaceFlag which){
 //#define TESTRBPS
 #ifdef TESTRBPS
 
-void testRBPS(){
+void testRBPS() {
   RingBuffer<Lap, 8> laps;
   Serial.println("testing ringbuffer pushSort, in reverse order");
-  for(int i=1;i<15;i++){
+  for (int i = 1; i < 15; i++) {
     Lap x;
-    x.duration=100-i;
-    x.lap=i;
+    x.duration = 100 - i;
+    x.lap = i;
     laps.pushSort(x);
-    p2("i",i)
-    for(int p=0;p<8;p++){
-      if(laps.bottom(x,p)){
-        p2(" p",p); 
-        p2("L",x.lap);
-        p2("d",x.duration); 
-      }     
-    }
-    pln2("","");
-    delay(500);
-  }
-  delay(1000);
-  pln2("rbps","now in order");
-  laps.empty();
-  for(int i=1;i<15;i++){
-    Lap x;
-    x.duration=100+i;
-    x.lap=i;
-    laps.pushSort(x);
-    p2("i",i)
-    for(int p=0;p<8;p++){
-      if(laps.bottom(x,p)){
-        p2(" p",p);
-        p2("L",x.lap);
-        p2("d",x.duration);
-      }      
-    }
-    pln2("","");
-    delay(500);
-  }
-  delay(1000);
-  pln2("rbps","now in middle");
-  laps.empty();
-  for(int i=1;i<15;i++){
-    Lap x;
-    if(i&1){
-      x.duration=100+i;
-    }else{
-      x.duration=110-i;
-    }
-    x.lap=i;
-    p2("i",i);
-    p2("xd",x.duration);
-    if(laps.pushSort(x)){
-      
-      for(int p=0;p<8;p++){
-        if(laps.bottom(x,p)){
-          p2(" p",p);
-          p2("L",x.lap);
-          p2("d",x.duration);
-        }      
+    p2("i", i)
+    for (int p = 0; p < 8; p++) {
+      if (laps.bottom(x, p)) {
+        p2(" p", p);
+        p2("L", x.lap);
+        p2("d", x.duration);
       }
-      pln2("","");
-    }else{
-      pln2("not","pushed");  
+    }
+    pln2("", "");
+    delay(500);
+  }
+  delay(1000);
+  pln2("rbps", "now in order");
+  laps.empty();
+  for (int i = 1; i < 15; i++) {
+    Lap x;
+    x.duration = 100 + i;
+    x.lap = i;
+    laps.pushSort(x);
+    p2("i", i)
+    for (int p = 0; p < 8; p++) {
+      if (laps.bottom(x, p)) {
+        p2(" p", p);
+        p2("L", x.lap);
+        p2("d", x.duration);
+      }
+    }
+    pln2("", "");
+    delay(500);
+  }
+  delay(1000);
+  pln2("rbps", "now in middle");
+  laps.empty();
+  for (int i = 1; i < 15; i++) {
+    Lap x;
+    if (i & 1) {
+      x.duration = 100 + i;
+    } else {
+      x.duration = 110 - i;
+    }
+    x.lap = i;
+    p2("i", i);
+    p2("xd", x.duration);
+    if (laps.pushSort(x)) {
+
+      for (int p = 0; p < 8; p++) {
+        if (laps.bottom(x, p)) {
+          p2(" p", p);
+          p2("L", x.lap);
+          p2("d", x.duration);
+        }
+      }
+      pln2("", "");
+    } else {
+      pln2("not", "pushed");
     }
     delay(500);
   }
@@ -294,20 +295,21 @@ void setup() {
   Serial.begin(9600);
   delay(50);
   Serial.println("\n\nStarting");
-  #ifdef TESTRBPS
+#ifdef TESTRBPS
   testRBPS();
-  #endif
-  
-  if(scanDevices()==0){
+#endif
+
+  if (scanDevices() == 0) {
     Serial.println("no LCD found");
-  }else{
-    for(int i=0;i<nDevices;i++) {
+  } else {
+    for (int i = 0; i < nDevices; i++) {
       setDevice(i);
       lcd.boot(); //we need to configure the large font
       delay(100);
     }
+    lcd.demoBarChart();
     delay(1000);
-    for(int i=0;i<nDevices;i++) {
+    for (int i = 0; i < nDevices; i++) {
       setDevice(i);
       lcd.clear();
     }
@@ -324,30 +326,30 @@ void setup() {
   Serial.print("analogRead A1:");
   Serial.println(analogRead(A1));
   delay(10);
-  if(dragOn){ //Set up drag racing
-      NUMSENSORS=4;
-      Serial.println("NUMSENSORS TO 4");
-      Serial.print("analogRead A2:");
-      Serial.println(analogRead(A2));
-      delay(10);
-      Serial.print("analogRead A3:");
-      Serial.println(analogRead(A3));
-      delay(10);
-          
+  if (dragOn) { //Set up drag racing
+    NUMSENSORS = 4;
+    Serial.println("NUMSENSORS TO 4");
+    Serial.print("analogRead A2:");
+    Serial.println(analogRead(A2));
+    delay(10);
+    Serial.print("analogRead A3:");
+    Serial.println(analogRead(A3));
+    delay(10);
+
   }
-  
+
   //  Serial.println("set up lanes...");
   lanes[0].setup(0);
-  lanes[1].setup(1); 
+  lanes[1].setup(1);
   //  Serial.println("lights...");
-  lights.setup(6,7,8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
+  lights.setup(6, 7, 8); //MUST AVOID PINS: 9,10 ON MEGA see https://docs.simplefoc.com/choosing_pwm_pins
   //setting up display
-  for(int d=0;d<nDevices;d++){
+  for (int d = 0; d < nDevices; d++) {
     setDevice(d);
     //////     /////01234567890123456789
-    lcd.printRow(0,title);  
-    lcd.printRow(1,"Copyright 2024 by CB");
-    lcd.setCursor(0,2);
+    lcd.printRow(0, title);
+    lcd.printRow(1, "Copyright 2024 by CB");
+    lcd.setCursor(0, 2);
     lcd.print(BANKNAMES[curBank]);
     lcd.print(" Mode");
   }
@@ -358,7 +360,7 @@ void setup() {
 }
 
 
-int loopc=0;
+int loopc = 0;
 
 #define AVG_CAR_LEN_INCHES 2.5
 #define INCHMS_TO_INCHSEC 1000
@@ -369,172 +371,175 @@ int loopc=0;
 //10:40:29.620 -> S#:1,mph:0.15,Sensor:acc:872,lastLapTime:22000,minAcc:866,maxAcc:873,count:0,initialThreshold:652,mainThreshold:435,ticks per ms:18,n:65535
 // 2500*18/17432=2.58 inches/second
 
-int curPage=0;
-long nextPageFlip=0;
+int curPage = 0;
+long nextPageFlip = 0;
 
-unsigned long compYellowStart=0,compYellowStop=0;
-Detection d; 
-bool needReset=false;
+unsigned long compYellowStart = 0, compYellowStop = 0;
+Detection d;
+bool needReset = false;
 bool lcdDark[MAXSENSORS];
 
 
-void reset(){
+void reset() {
   resetSensors();
-  for(int i=0;i<NUMLANES;i++){
-     lanes[i].reset();
+  for (int i = 0; i < NUMLANES; i++) {
+    lanes[i].reset();
   }
-  winner=-1;
-  won=false;
-  raceStart=0;
-  raceStarted=false;
-  curPage=0;
-  nextPageFlip=0;
-  compYellowStart=0;
-  compYellowStop=0;
-  d.reset(); 
-  needReset=false;
+  winner = -1;
+  won = false;
+  raceStart = 0;
+  raceStarted = false;
+  curPage = 0;
+  nextPageFlip = 0;
+  compYellowStart = 0;
+  compYellowStop = 0;
+  d.reset();
+  needReset = false;
   ringBuffer.empty();
 }
 
 
-void fueling(){
-  if(fuelOn){
-    int s=loopc % NUMSENSORS;
-    if(sensors[s].darkEnough && sensors[s].longEnough){
+void fueling() {
+  if (fuelOn) {
+    int s = loopc % NUMSENSORS;
+    if (sensors[s].darkEnough && sensors[s].longEnough) {
       //in the sensor
-      if(lanes[s].fuel<MAXFUEL){
-        if( sensors[s].count>250*sensors[s].ticksPerMs) { //in pit
-            lanes[s].fuel+=MAXFUEL/20+1;
-            if(lanes[s].fuel<MAXFUEL) {
-              playTone(400+s*300+lanes[s].fuel, 2); //was playTone ,1
-            }else{
-              lanes[s].fuel=MAXFUEL;
-              dingDing();
-            }
-            lanes[s].gasBanner();
-            nextPageFlip=millis()+500;
+      if (lanes[s].fuel < MAXFUEL) {
+        if ( sensors[s].count > 250 * sensors[s].ticksPerMs) { //in pit
+          lanes[s].fuel += MAXFUEL / 20 + 1;
+          if (lanes[s].fuel < MAXFUEL) {
+            playTone(400 + s * 300 + lanes[s].fuel, 2); //was playTone ,1
+          } else {
+            lanes[s].fuel = MAXFUEL;
+            dingDing();
+          }
+          lanes[s].gasBanner();
+          delay(200);
+          nextPageFlip = millis() + 500;
         }
       }
     }
   }
 }
 
-void loop(){
+void loop() {
   loopc++;
   delay(1);
-  if(configByButtons()){
+  if (configByButtons()) {
     return; //stay in config mode
   }
-  if( minusButton()) {
-    while(minusButton()){delay(10);} //wait for depress
-    nextPageFlip=0;
-    flipStayBoost=FLIPTIMEBOOST;
+  if ( minusButton()) {
+    while (minusButton()) {
+      delay(10); //wait for depress
+    }
+    nextPageFlip = 0;
+    flipStayBoost = FLIPTIMEBOOST;
   }
-  if( (loopc & 255)==0 && needReset){
-          lcd.setCursor(0,3);
-          ///////////01234567890123456789
-          lcd.print("Please reset");
-          for(int i=0;i<8;i++){
-             lcd.print(i<(loopc & 7) ? "." : " ");
-          }    
-          return; //stop the loop    
+  if ( (loopc & 255) == 0 && needReset) {
+    lcd.setCursor(0, 3);
+    ///////////01234567890123456789
+    lcd.print("Please reset");
+    for (int i = 0; i < 8; i++) {
+      lcd.print(i < (loopc & 7) ? "." : " ");
+    }
+    return; //stop the loop
   }
-  if(curBank==DRAGMODE) dragLoop();
+  if (curBank == DRAGMODE) dragLoop();
   else raceLoop();
 }
 
-bool dragReady=false;
+bool dragReady = false;
 
 
 
-bool verbose=true;
+bool verbose = true;
 //drag racing logic in here
-void dragLoop(){
-  if((loopc & 511)==510){
-    if(verbose) pln("NUMSENSORS",NUMSENSORS);
+void dragLoop() {
+  if ((loopc & 511) == 510) {
+    if (verbose) pln("NUMSENSORS", NUMSENSORS);
   }
-  if((loopc & 2047)==0){
-    for(int i=0;i<NUMSENSORS;i++){
-       if(verbose) p("S#",i);
-       if(verbose) sensors[i].debug();
+  if ((loopc & 2047) == 0) {
+    for (int i = 0; i < NUMSENSORS; i++) {
+      if (verbose) p("S#", i);
+      if (verbose) sensors[i].debug();
     }
-  }else if((loopc & 63)==0){
-    for(int i=0;i<NUMSENSORS;i++){
-       if(verbose) p(",",sensors[i].acc);
+  } else if ((loopc & 63) == 0) {
+    for (int i = 0; i < NUMSENSORS; i++) {
+      if (verbose) p(",", sensors[i].acc);
     }
-    if(verbose) pln("<--","Sensors");
+    if (verbose) pln("<--", "Sensors");
   }
-  if(! dragReady) {
-    for(int i=0;i<NUMSENSORS;i++){
-      if(sensors[i].n<5000){
-       return;
+  if (! dragReady) {
+    for (int i = 0; i < NUMSENSORS; i++) {
+      if (sensors[i].n < 5000) {
+        return;
       }
     }
     ISR::calcThresholds();
-    dragReady=true;
+    dragReady = true;
     ISR::go();
-  }else if(! raceStarted ) {
-      if(plusButton()){
-          startDragRace();    
-      }
-  }else{
-      if( plusButton()) {
-         raceStarted=false; //do not have to wait for the other finisher
-      }
-      if(  ringBuffer.pull(d)) {
-        handleDragDetection();
-      }     
-  }  
+  } else if (! raceStarted ) {
+    if (plusButton()) {
+      startDragRace();
+    }
+  } else {
+    if ( plusButton()) {
+      raceStarted = false; //do not have to wait for the other finisher
+    }
+    if (  ringBuffer.pull(d)) {
+      handleDragDetection();
+    }
+  }
   updateDragLCD();
 }
 
-void handleDragDetection(){
-  nextPageFlip=0;
+void handleDragDetection() {
+  nextPageFlip = 0;
   d.debug();
-  auto i=d.port;
-  playToneNoBlock(400+i*300, 50);
-  if(d.port<2){ //start sensors
-    if(!lanes[i].start.isEmpty()) {
-      pln("already started",i);
+  auto i = d.port;
+  playToneNoBlock(400 + i * 300, 50);
+  if (d.port < 2) { //start sensors
+    if (!lanes[i].start.isEmpty()) {
+      pln("already started", i);
       return; //ignore this as we already started!
-    }      
-    lanes[i].start=d;
-    auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
-    p("port",d.port+1);
-    pln("ispeed",speed);
-  }else{ //finish sensors
-    i-=2;
-    if(lanes[i].start.isEmpty()) {
-      pln("not crossed start",i);
+    }
+    lanes[i].start = d;
+    auto speed = lanes[i].setSpeed(CONVERSION * sensors[d.port].ticksPerMs / d.count);
+    p("port", d.port + 1);
+    pln("ispeed", speed);
+  } else { //finish sensors
+    i -= 2;
+    if (lanes[i].start.isEmpty()) {
+      pln("not crossed start", i);
       return;  //we haven't crossed start
     }
-    if(!lanes[i].finish.isEmpty()) {
-      pln("we already finished",i);
+    if (!lanes[i].finish.isEmpty()) {
+      pln("we already finished", i);
       return; //ignore this as we already finished!
     }
-    playToneNoBlock(400+i*300, 100);
-    lanes[i].finish=d;
-    auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
-    lcd.setCursor(0,0);
+    playToneNoBlock(400 + i * 300, 100);
+    lanes[i].finish = d;
+    auto speed = lanes[i].setSpeed(CONVERSION * sensors[d.port].ticksPerMs / d.count);
+    lcd.setCursor(0, 0);
     lcd.print("C");
-    lcd.print(i+1);
-    if(lanes[i].start.timestamp<raceStart) {
+    lcd.print(i + 1);
+    if (lanes[i].start.timestamp < raceStart) {
       //DQ
       lcd.print(  " is the DQed!!! ");
-    }else if(won){
+    } else if (won) {
       //didn't win :(
       lcd.print(  " finished.        ");
       //playEngine();
       waveFlag(DONE);
-      raceStarted=false;
-      curPage=0; 
-    }else{
-       won=true;
-       winner=i;
-       ///////////12345678901234567890  
-       waveFlag(CHECKERS);
-       lcd.print(  " is the WINNER!!! ");
-    } 
+      raceStarted = false;
+      curPage = 0;
+    } else {
+      won = true;
+      winner = i;
+      ///////////12345678901234567890
+      waveFlag(CHECKERS);
+      lcd.print(  " is the WINNER!!! ");
+    }
   }
 }
 
@@ -545,232 +550,234 @@ void handleDragDetection(){
 //2 C1 R1234 E91234 S123
 //3 C2 R1234 E91234 S123
 
-void updateDragLCD(){
-  static uint8_t flipper=0; //drag lcd
-  if(millis()>nextPageFlip){
-    nextPageFlip=millis()+FLIPTIMELONG;
-    if(nDevices>0){
+void updateDragLCD() {
+  static uint8_t flipper = 0; //drag lcd
+  if (millis() > nextPageFlip) {
+    nextPageFlip = millis() + FLIPTIMELONG;
+    if (nDevices > 0) {
       setDevice(0);
-      lcd.printRow(0,title);      
-      lcd.printRow(1,won ? "Race complete!": (raceStarted?"Go!":"Press + to Drag Race"));
+      lcd.printRow(0, title);
+      lcd.printRow(1, won ? "Race complete!" : (raceStarted ? "Go!" : "Press + to Drag Race"));
       lanes[++flipper % NUMLANES].display1Drag();
       lanes[++flipper % NUMLANES].display1Drag();
     }
-    curPage = ++curPage>=PAGECOUNT ? 0:curPage;
+    curPage = ++curPage >= PAGECOUNT ? 0 : curPage;
   }
 }
 
 void alertDragDetection(int i) {
-  if(! lanes[i].detect(d) ){
-    alertDragBadDetection(i,lanes[i].why);
+  if (! lanes[i].detect(d) ) {
+    alertDragBadDetection(i, lanes[i].why);
     return;
   }
-  pln("GOOD LAP car:",i);
-  playTone(400+i*300, 100);
-  lanes[i].banner0(true,"");
-  nextPageFlip=millis()+FLIPTIMESHORT;
-  if(lanes[i].lapCounter==raceLength){      
-    lcd.setCursor(0,0);
+  pln("GOOD LAP car:", i);
+  playTone(400 + i * 300, 100);
+  lanes[i].banner0(true, "");
+  nextPageFlip = millis() + FLIPTIMESHORT;
+  if (lanes[i].lapCounter == raceLength) {
+    lcd.setCursor(0, 0);
     lcd.print("C");
-    lcd.print(i+1);
-    if( winner==lanes[i].laneNum ) {
-      ///////////12345678901234567890  
+    lcd.print(i + 1);
+    if ( winner == lanes[i].laneNum ) {
+      ///////////12345678901234567890
       waveFlag(CHECKERS);
       lcd.print(  " is the WINNER!!! ");
-      //playMusic(odeToJoyMelody,odeToJoyNotes,80*4);                        
-    }else{                            
+      //playMusic(odeToJoyMelody,odeToJoyNotes,80*4);
+    } else {
       lcd.print(  " finished.        ");
       //playEngine();
       waveFlag(DONE);
-      raceStarted=false;
-      curPage=0;
+      raceStarted = false;
+      curPage = 0;
     }
   }
   waveFlag(raceFlag);
 }
 
 /** param i is the car lane */
-void alertDragBadDetection(int i,const char* msg){ //,Detection& d){
-  nextPageFlip=millis()+FLIPTIMESHORT;
-  p("BAD LAP car:",i);
-  pln("msg:",msg);
+void alertDragBadDetection(int i, const char* msg) { //,Detection& d){
+  nextPageFlip = millis() + FLIPTIMESHORT;
+  p("BAD LAP car:", i);
+  pln("msg:", msg);
   lanes[i].fouls++;
-  lanes[i].banner(false,msg);
-  for(int t=0;t<90;t+=10){
-    playTone(400+i*300-t, 20);
+  lanes[i].banner(false, msg);
+  for (int t = 0; t < 90; t += 10) {
+    playTone(400 + i * 300 - t, 20);
   }
   waveFlag(raceFlag);
-  lanes[i].prior=d; //reset start of this lap
+  lanes[i].prior = d; //reset start of this lap
 }
 
 
 extern volatile unsigned long timer0_millis;
 
-void resetClock(){
-//  noInterrupts();
-//  timer0_millis=0;
-//  interrupts();
+void resetClock() {
+  //  noInterrupts();
+  //  timer0_millis=0;
+  //  interrupts();
 }
 
-void startDragRace(){
+void startDragRace() {
   resetClock();
-  lcd.printRow(0,title);
-  lcd.printRow(1,"Get ready.");
-  lcd.printRow(2,"");
-  lcd.printRow(3,"");
-  while(plusButton()){delay(10);} //wait for depress
+  lcd.printRow(0, title);
+  lcd.printRow(1, "Get ready.");
+  lcd.printRow(2, "");
+  lcd.printRow(3, "");
+  while (plusButton()) {
+    delay(10); //wait for depress
+  }
   reset();
   delay(1000); //debounce
-  // Print a message to the LCD.  
-  /////     //////01234567890123456789        
-  lcd.printRow(1,"Get set.");
+  // Print a message to the LCD.
+  /////     //////01234567890123456789
+  lcd.printRow(1, "Get set.");
   playF1StartSound1();
-  raceStart=millis();      
-  auto chk=checkSensors();
-  if(chk>=0){
-      lcd.setCursor(0,2);
-      lcd.print("Sensor fault:");
-      lcd.print(chk);
-      lcd.print(" ");
-      lcd.printRow(3,"Please reset.");
-      playTone(250,100);
-      needReset=true;
-      delay(100);         
-      return;
-  }else{
-    raceStarted=true;
+  raceStart = millis();
+  auto chk = checkSensors();
+  if (chk >= 0) {
+    lcd.setCursor(0, 2);
+    lcd.print("Sensor fault:");
+    lcd.print(chk);
+    lcd.print(" ");
+    lcd.printRow(3, "Please reset.");
+    playTone(250, 100);
+    needReset = true;
+    delay(100);
+    return;
+  } else {
+    raceStarted = true;
   }
   waveFlag(GREENFLAG);
-  playTone(1000, 500);  
-  ///////////01234567890123456789         
-  lcd.printRow(1,"GO!!!!!!!!");
+  playTone(1000, 500);
+  ///////////01234567890123456789
+  lcd.printRow(1, "GO!!!!!!!!");
 }
 
-void raceLoop(){
+void raceLoop() {
   fueling();
-  if(diagOn && (loopc & 63)==0){
-    for(int i=0;i<NUMSENSORS;i++){
-       p("S#",i);
-       sensors[i].debug();
+  if (diagOn && (loopc & 63) == 0) {
+    for (int i = 0; i < NUMSENSORS; i++) {
+      p("S#", i);
+      sensors[i].debug();
     }
   }
-   if(!raceStarted){  
-      // Print a message to the LCD.  
-      ///////////01234567890123456789        
-      lcd.printRowBoth(2,"   Get ready.       ");
-      for(int i=0;i<NUMLANES;i++){
-        lanes[i].fuel=MAXFUEL;
-      }
-      playF1StartSound1();      
-      ISR::calcThresholds();
-      auto chk=checkSensors();
-      if(chk>=0){
-          lcd.setCursor(0,2);
-          lcd.print("Sensor fault Lane:");
-          lcd.print(chk);
-          lcd.print(" ");
-          lcd.printRow(3,"Please reset.");
-          playTone(250,100);
-          needReset=true;
-          delay(100);         
-          return;
-      }else{
-        ISR::go();
-        raceStart=millis();
-        raceStarted=true;
-      }
-      waveFlag(GREENFLAG);
-      playTone(1000, 500);  
-      ///////////01234567890123456789         
-      lcd.printRowBoth(3,"     GO!!!!!!!!     ");    
+  if (!raceStarted) {
+    // Print a message to the LCD.
+    ///////////01234567890123456789
+    lcd.printRowBoth(2, "   Get ready.       ");
+    for (int i = 0; i < NUMLANES; i++) {
+      lanes[i].fuel = MAXFUEL;
+    }
+    playF1StartSound1();
+    ISR::calcThresholds();
+    auto chk = checkSensors();
+    if (chk >= 0) {
+      lcd.setCursor(0, 2);
+      lcd.print("Sensor fault Lane:");
+      lcd.print(chk);
+      lcd.print(" ");
+      lcd.printRow(3, "Please reset.");
+      playTone(250, 100);
+      needReset = true;
+      delay(100);
+      return;
+    } else {
+      ISR::go();
+      raceStart = millis();
+      raceStarted = true;
+    }
+    waveFlag(GREENFLAG);
+    playTone(1000, 500);
+    ///////////01234567890123456789
+    lcd.printRowBoth(3, "     GO!!!!!!!!     ");
   }
   if (  ringBuffer.pull(d)) {
     //nextPageFlip=0;
-    auto i=d.port;
-    auto aspeed=lanes[i].avgSpeed();
-    auto speed=lanes[i].setSpeed(CONVERSION*sensors[d.port].ticksPerMs/d.count);
-    if(serialOn){
-      pln("-----------------NEW DETECTION-------------","");
-      p("C#",d.port);
+    auto i = d.port;
+    auto aspeed = lanes[i].avgSpeed();
+    auto speed = lanes[i].setSpeed(CONVERSION * sensors[d.port].ticksPerMs / d.count);
+    if (serialOn) {
+      pln("-----------------NEW DETECTION-------------", "");
+      p("C#", d.port);
       sensors[d.port].debug();
       d.debug();
-      p("avgSpeed",aspeed);
-      pln("inch/sec",speed);
+      p("avgSpeed", aspeed);
+      pln("inch/sec", speed);
     }
-    if(lanes[i].lapCounter>=raceLength) { //driver done with race
-      alertGoodLap(i);     
-    }else if( raceFlag==REDFLAG ){ //lap doesn't count
-      alertBadLap(i,"Red Flag");     
-    }else if(raceFlag==YELLOWFLAG){  // need to make sure going slowly through trap
-      if( speed <= pitLaneSpeedLimit ) { //lap counts (prev had: || speed<aspeed*3/5)
-        alertGoodLap(i); 
-      }else{ // too fast!
-        alertBadLap(i,"Too fast!"); 
+    if (lanes[i].lapCounter >= raceLength) { //driver done with race
+      alertGoodLap(i);
+    } else if ( raceFlag == REDFLAG ) { //lap doesn't count
+      alertBadLap(i, "Red Flag");
+    } else if (raceFlag == YELLOWFLAG) { // need to make sure going slowly through trap
+      if ( speed <= pitLaneSpeedLimit ) { //lap counts (prev had: || speed<aspeed*3/5)
+        alertGoodLap(i);
+      } else { // too fast!
+        alertBadLap(i, "Too fast!");
       }
-    }else{ //lap is green
-      alertGoodLap(i); 
+    } else { //lap is green
+      alertGoodLap(i);
     }
   }
-  if((loopc&127)==0){ //STEWARDS
+  if ((loopc & 127) == 0) { //STEWARDS
     //check for yellows
-    bool anyYellow=false,anyRed=false;    
-    if(!won){
+    bool anyYellow = false, anyRed = false;
+    if (!won) {
       // if we are in a red flag situation, stay red.  Otherwise check to see if in comp yellow period.
-      if(compYellowOn && raceFlag!=REDFLAG && millis()>compYellowStart && millis()<compYellowStop){
-        if(raceFlag!=YELLOWFLAG){
-            ph("Mid race competition yellow")
+      if (compYellowOn && raceFlag != REDFLAG && millis() > compYellowStart && millis() < compYellowStop) {
+        if (raceFlag != YELLOWFLAG) {
+          ph("Mid race competition yellow")
         }
-        anyYellow=true;
-      }else{
-        for(int i=0;i<NUMLANES;i++){
+        anyYellow = true;
+      } else {
+        for (int i = 0; i < NUMLANES; i++) {
           //is a car very late? definitely crashed
           //////////////////////////RED CHECK
-          if( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
-              && redLapsNumer>0
-              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+lanes[i].avgLapDur+yellowDelta+(lanes[i].avgLapDur*redLapsNumer/FRACTIONDENOM)){
+          if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
+               && redLapsNumer > 0
+               && lanes[i].avgLapDur > 0 && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / FRACTIONDENOM)) {
             //car is late!
-            if(raceFlag!=REDFLAG && !anyRed && !anyYellow ){
-              p("Red flag detected Car late",(char)raceFlag)
-              pln("Car",i);
+            if (raceFlag != REDFLAG && !anyRed && !anyYellow ) {
+              p("Red flag detected Car late", (char)raceFlag)
+              pln("Car", i);
             }
-            anyRed=true;
-          //is a car getting late, probably crashed
-          //////////////////////////YELLOW CHECK
-          }else if( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
-              && yellowDelta>0
-              && lanes[i].avgLapDur>0 && millis()>lanes[i].prior.timestamp+lanes[i].avgLapDur+yellowDelta){
+            anyRed = true;
+            //is a car getting late, probably crashed
+            //////////////////////////YELLOW CHECK
+          } else if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
+                      && yellowDelta > 0
+                      && lanes[i].avgLapDur > 0 && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta) {
             //car is late!
-            if(raceFlag!=YELLOWFLAG && raceFlag!=REDFLAG && !anyRed && !anyYellow){
-              p("Yellow detected Car late",(char)raceFlag)
-              pln("Car",i);
+            if (raceFlag != YELLOWFLAG && raceFlag != REDFLAG && !anyRed && !anyYellow) {
+              p("Yellow detected Car late", (char)raceFlag)
+              pln("Car", i);
             }
-            anyYellow=true;
+            anyYellow = true;
           }
         }
       }
     }
-    if(anyRed){
-      if(raceFlag!=REDFLAG){
-        pln("wave","red flag");
-        raceFlag=REDFLAG;
+    if (anyRed) {
+      if (raceFlag != REDFLAG) {
+        pln("wave", "red flag");
+        raceFlag = REDFLAG;
         waveFlag(raceFlag);
-        playMusic(imperialMarchMelody,imperialMarchNotes,3*120); 
-        nextPageFlip=0;    
-      }             
-    }else if(anyYellow){
-      if(raceFlag!=YELLOWFLAG){
-        pln("wave","yellow flag");
-        raceFlag=YELLOWFLAG;
+        playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
+        nextPageFlip = 0;
+      }
+    } else if (anyYellow) {
+      if (raceFlag != YELLOWFLAG) {
+        pln("wave", "yellow flag");
+        raceFlag = YELLOWFLAG;
         waveFlag(raceFlag);
-        playMusic(imperialMarchMelody,imperialMarchNotes,120); 
-        nextPageFlip=0;    
-      }             
-    }else if(raceFlag==YELLOWFLAG || raceFlag==REDFLAG){  //go back to green!
-      pln("back to","green");            
+        playMusic(imperialMarchMelody, imperialMarchNotes, 120);
+        nextPageFlip = 0;
+      }
+    } else if (raceFlag == YELLOWFLAG || raceFlag == REDFLAG) { //go back to green!
+      pln("back to", "green");
       playF1Restart();
-      raceFlag=GREENFLAG;
+      raceFlag = GREENFLAG;
       waveFlag(raceFlag);
-      nextPageFlip=0;
+      nextPageFlip = 0;
     }
   }
   updateLCD();
@@ -778,93 +785,93 @@ void raceLoop(){
 
 
 /**
- * param i is the car lane
- */
+   param i is the car lane
+*/
 void alertGoodLap(int i) {
-  laneDisplayed=i;
-  if(! lanes[i].detect(d) ){
-    alertBadLap(i,lanes[i].why);
+  laneDisplayed = i;
+  if (! lanes[i].detect(d) ) {
+    alertBadLap(i, lanes[i].why);
     return;
   }
-  p("fuel",lanes[i].fuel);
-  pln("GOOD LAP car:",i);
-  playTone(400+i*300, 100);
-  if(lanes[i].fuel<MAXFUEL/5){
+  p("fuel", lanes[i].fuel);
+  pln("GOOD LAP car:", i);
+  playTone(400 + i * 300, 100);
+  if (lanes[i].fuel < MAXFUEL / 5) {
     ph("LOW FUEL");
     delay(50);
-    playTone(400+i*300-100, 50);
+    playTone(400 + i * 300 - 100, 50);
     delay(50);
-    playTone(400+i*300-100, 50);
+    playTone(400 + i * 300 - 100, 50);
   }
-  laneDisplayed=i; 
-  nextPageFlip=millis()+FLIPTIMESHORT;
-  if(config[COMPYELLOW]>0 
-    && ((lanes[i].lapCounter)%(1+config[COMPYELLOW]))==(config[COMPYELLOW]) //happens every comp yellow lap 
-    && millis()>compYellowStop){ //only turn it on if the comp yellow is not active
-        compYellowStart=millis()+(millis() & 0xFFF); //start in up to 4095ms or 4 seconds random amount
-        compYellowStop=compYellowStart+lanes[i].avgLapDur+1000; //make it last for 1 typical lap
+  laneDisplayed = i;
+  nextPageFlip = millis() + FLIPTIMESHORT;
+  if (config[COMPYELLOW] > 0
+      && ((lanes[i].lapCounter) % (1 + config[COMPYELLOW])) == (config[COMPYELLOW]) //happens every comp yellow lap
+      && millis() > compYellowStop) { //only turn it on if the comp yellow is not active
+    compYellowStart = millis() + (millis() & 0xFFF); //start in up to 4095ms or 4 seconds random amount
+    compYellowStop = compYellowStart + lanes[i].avgLapDur + 1000; //make it last for 1 typical lap
   }
-  if(lanes[i].lapCounter==raceLength ){ //simply to change the light eventually to off if enough laps ran
-    if( winner==lanes[i].laneNum ) {
-      ///////////12345678901234567890  
+  if (lanes[i].lapCounter == raceLength ) { //simply to change the light eventually to off if enough laps ran
+    if ( winner == lanes[i].laneNum ) {
+      ///////////12345678901234567890
       waveFlag(CHECKERS);
-    }else{                            
+    } else {
       waveFlag(DONE);
     }
-  }else if(lanes[i].lapCounter>raceLength){
+  } else if (lanes[i].lapCounter > raceLength) {
     waveFlag(DONE); //enough laps ran, let's turn off light
   }
   waveFlag(raceFlag);
 }
 
 /**
- * param i is the car lane
- */
-void alertBadLap(int i,const char* msg){ //,Detection& d){
-  laneDisplayed=i;
-  nextPageFlip=millis()+FLIPTIMESHORT;
-  p("BAD LAP car:",i);
-  pln("msg:",msg);
+   param i is the car lane
+*/
+void alertBadLap(int i, const char* msg) { //,Detection& d){
+  laneDisplayed = i;
+  nextPageFlip = millis() + FLIPTIMESHORT;
+  p("BAD LAP car:", i);
+  pln("msg:", msg);
   lanes[i].fouls++;
-  lanes[i].banner(false,msg);
-  laneDisplayed=i;
-  for(int t=0;t<90;t+=10){
-    playTone(400+i*300-t, 20);
+  lanes[i].banner(false, msg);
+  laneDisplayed = i;
+  for (int t = 0; t < 90; t += 10) {
+    playTone(400 + i * 300 - t, 20);
   }
   waveFlag(raceFlag);
-  lanes[i].prior=d; //reset start of this lap
+  lanes[i].prior = d; //reset start of this lap
 }
 
 
 /**
- * During the race, show the banner() when the race is over call display() which is more informational.
- */
-void updateLCD(){
-  if(millis()>nextPageFlip){
-    nextPageFlip=millis()+FLIPTIMELONG+flipStayBoost;
-    flipStayBoost/=2;
-    if( !won && flipStayBoost==0){ //force showing laps during race unless push button flipping
-      if(nDevices==1){ //just show the driver's screen
-         for(int i=0;i<NUMLANES;i++){
-           lanes[i].bannerShared("");
+   During the race, show the banner() when the race is over call display() which is more informational.
+*/
+void updateLCD() {
+  if (millis() > nextPageFlip) {
+    nextPageFlip = millis() + FLIPTIMELONG + flipStayBoost;
+    flipStayBoost /= 2;
+    if ( !won && flipStayBoost == 0) { //force showing laps during race unless push button flipping
+      if (nDevices == 1) { //just show the driver's screen
+        for (int i = 0; i < NUMLANES; i++) {
+          lanes[i].bannerShared("");
         }
-      }else{ //show both drivers
-        for(int i=0;i<NUMLANES;i++){
-           setDevice(i % nDevices);
-           lanes[i].banner(true,"");
+      } else { //show both drivers
+        for (int i = 0; i < NUMLANES; i++) {
+          setDevice(i % nDevices);
+          lanes[i].banner(true, "");
         }
       }
-    }else{ //post race informational
-      if(nDevices==1){
-        laneDisplayed=++laneDisplayed % NUMLANES;
-        lanes[laneDisplayed].display(curPage,raceFlag);
-        if( laneDisplayed==0)  curPage = ++curPage>=PAGECOUNT ? 0:curPage;  //only change the page after both cars are displayed!
-      }else{
-          for(int i=0;i<NUMLANES;i++){
-             setDevice(i % nDevices);
-             lanes[i].display(curPage,raceFlag);
-          }
-          curPage = ++curPage>=PAGECOUNT ? 0:curPage;
+    } else { //post race informational
+      if (nDevices == 1) {
+        laneDisplayed = ++laneDisplayed % NUMLANES;
+        lanes[laneDisplayed].display(curPage, raceFlag);
+        if ( laneDisplayed == 0)  curPage = ++curPage >= PAGECOUNT ? 0 : curPage; //only change the page after both cars are displayed!
+      } else {
+        for (int i = 0; i < NUMLANES; i++) {
+          setDevice(i % nDevices);
+          lanes[i].display(curPage, raceFlag);
+        }
+        curPage = ++curPage >= PAGECOUNT ? 0 : curPage;
       }
     }
   }
