@@ -45,6 +45,11 @@ int scanDevices() {
   byte error, address;
   Serial.println("Scanning...");
 
+// Initialize the I2C hardware and set the speed
+  // 10000 (10kHz) is great for overcoming loose connections or long wires
+  Wire.begin(); 
+  Wire.setClock(10000);
+  
   nDevices = 0;
   for(address = 1; address < 127; address++ ) {
     Serial.println(address);
