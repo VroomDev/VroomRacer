@@ -581,23 +581,30 @@ class Lane {
       if (allBestLapDur < 1 || lapCounter < 1) return;
       auto offset =  lapCounter > 20 ? lapCounter - 20 : 0;
       Lap lap1;
-      uint8_t arr[20] {};
+      int8_t arr[20];
+      memset(arr, '-', sizeof(arr));
       for (int i = 0; i < lapBufSize; i++) {
         if (laps.bottom(lap1, i)) {
           auto d = lap1.duration; //measured in milliseconds
           auto lap = lap1.lap;
+          ph("graphlaps");
+          p("i",i);
+          p("d",d);
+          p("lap",lap);
           long p;
           //this shows the graph in terms of tenths lost, scale to 0 to 32
           // 1. Explicitly handle the "New Best Lap" or "Invalid" case
           if (d < 0) {
-            p = 32;
+            p = '?'; //7bit printable chars get printed
           } else if ((unsigned long)d <= allBestLapDur) {
             p = 0; // This is the best lap or tied for it
           } else {
             // 2. Now it is safe to subtract because we know d > allBestLapDur
-            p = min(32L, (long)(d - allBestLapDur) / 100);
+            p = min(33L, (long)(d - allBestLapDur) / 100);
           }
           int index = lap - offset - 1;
+          p("p",p);
+          pln("index",index);
           if (index >= 0 && index < sizeof(arr)) {
             arr[index] = p;
           }

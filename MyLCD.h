@@ -482,16 +482,13 @@ class MyLCD {
        @param data Array of 20 integers (0-32)
        @param len  Length of the array (up to 20)
     */
-    void drawBarChart(uint8_t data[], int len) {
+    void drawBarChart(int8_t data[], int len) {
       if (curLcd == NULL) return;
       ensureFont(CustomFont::BAR);
       for (int col = 0; col < len && col < 20; col++) {
         int value = data[col];
 
-        // Constrain value to our 0-32 range
-        if (value > 32) value = 32;
-        if (value < 0) value = 0;
-
+        // Constrain value
         for (int row = 0; row < 4; row++) {
           // We process from bottom (row 3) to top (row 0)
           // Row 3 handles values 1-8
@@ -502,10 +499,16 @@ class MyLCD {
 
           // Calculate how many units apply to this specific 8-pixel row
           int rowValue = value - (row * 8);
-
           curLcd->setCursor(col, displayRow);
-
-          if (rowValue >= 8) {
+          if (value > 33) {
+            curLcd->write( displayRow == 3 ? (char)value : ' '); //overflow, so print as ASCII character
+          } else if (value > 32) {
+            curLcd->write((char)value); //overflow, so print as ASCII character
+          } else if (value < 0) {
+            curLcd->write( displayRow == 3 ? 'x' : ' '); //underflow
+          } else if (value == 0) {
+            curLcd->write( displayRow == 3 ? '0' : ' '); //zero
+          } else if (rowValue >= 8) {
             // This row is completely full
             // Using custom char 7 (assuming 8 lines tall is index 7)
             // Note: If 'B' (0xFF) is your full block, use B instead.
@@ -525,14 +528,14 @@ class MyLCD {
     }
 
     void demoBarChart() {
-      uint8_t myStats[20] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 30, 25, 20, 15, 10, 5, 2, 0, 0, 0, 0};
-      for (int i = 0; i < 16; i++) {
-        drawBarChart(myStats, 20);
-        for (int j = 1; j < sizeof(myStats); j++) {
-          myStats[i - 1] = myStats[i];
-        }
-        delay(15);
-      }
+      //      uint8_t myStats[20] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 30, 25, 20, 15, 10, 5, 2, 0, 0, 0, 0};
+      //      for (int i = 0; i < 16; i++) {
+      //        drawBarChart(myStats, 20);
+      //        for (int j = 1; j < sizeof(myStats); j++) {
+      //          myStats[j - 1] = myStats[j];
+      //        }
+      //        delay(15);
+      //      }
     }
 
 };
