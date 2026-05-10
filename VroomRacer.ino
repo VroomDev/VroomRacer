@@ -408,7 +408,8 @@ void fueling() {
             dingDing();
           }
           lanes[s].gasBanner();
-          delay(200);
+          // "Balance of Performance" (BoP) adjustment for solo fueling, since pit crew would work faster due to urgency
+          delay(lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter < Lane::maxLapCounter ? 100 : 200));
           nextPageFlip = millis() + 500;
         }
       }

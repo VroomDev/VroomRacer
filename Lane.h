@@ -119,24 +119,25 @@ class Lane {
         if (fuelOn && fuel <= 0) { //out of fuel
           fuel = 0;
           snprintf(why, sizeof(why), "Empty");
-          //laps.pushAlways(lap); //empty tank
-          lapQuali = '~';
+          lapQuali = ' ';
           return false;
         }
         if (fuelOn && pitTime < 1000) { //if you waited a second, you stopped for fuel.
-          fuel -= (allBestLapDur > 0 ? allBestLapDur : lapDuration) * pitLaneSpeedLimit / (lapDuration + pitTime) + speed * 3 / 4;
+          int drain = (allBestLapDur > 0 ? allBestLapDur : lapDuration) * pitLaneSpeedLimit / (lapDuration + pitTime) + speed * 3 / 4;
+          //BoP adjustments, going so slowly, must be using less fuel
+          if (lapCounter + 2 < maxLapCounter) drain /= 3;  //slow the fuel usage for BoP adjustment
+          else if (lapCounter + 1 < maxLapCounter) drain /= 2;
+          fuel -= drain;
           if (fuel < 0) fuel = 0;
         }
         if (lapDuration < minLapDuration) {
           snprintf(why, sizeof(why), "%d Hop", lapDuration);
-          //laps.pushAlways(lap); //bad lap hop
           lapQuali = '!';
           return false;
         } else if (allBestLapDur != 0 && lapDuration < allBestLapDur * 4 / 10) {
           //jumped car, since better than anyone by too large of a margin
           snprintf(why, sizeof(why), "%d Jump", lapDuration);
-          //laps.pushAlways(lap); //bad lap hop 2nd check
-          lapQuali = '#';
+          lapQuali = ' ';
           return false;
         }
 
@@ -588,9 +589,9 @@ class Lane {
           auto d = lap1.duration; //measured in milliseconds
           auto lap = lap1.lap;
           ph("graphlaps");
-          p("i",i);
-          p("d",d);
-          p("lap",lap);
+          p("i", i);
+          p("d", d);
+          p("lap", lap);
           long p;
           //this shows the graph in terms of tenths lost, scale to 0 to 32
           // 1. Explicitly handle the "New Best Lap" or "Invalid" case
@@ -603,8 +604,8 @@ class Lane {
             p = min(33L, (long)(d - allBestLapDur) / 100);
           }
           int index = lap - offset - 1;
-          p("p",p);
-          pln("index",index);
+          p("p", p);
+          pln("index", index);
           if (index >= 0 && index < sizeof(arr)) {
             arr[index] = p;
           }
