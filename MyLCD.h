@@ -131,7 +131,7 @@ class MyLCD {
 
 
     void defineBarChart() {
-      curFont=CustomFont::BAR;
+      curFont = CustomFont::BAR;
       uint8_t cc1[8] = {     // Custom Character 1
         B01110,
         B01110,
@@ -151,7 +151,7 @@ class MyLCD {
 
     // The routine to create the custom characters in the LCD
     void defineLargeChars() {
-      curFont=CustomFont::BIG;
+      curFont = CustomFont::BIG;
       // A 1 in the binary representation of the character means it is filled in
       // characters are 5 pixels wide by 8 pixels tall
 
@@ -266,11 +266,11 @@ class MyLCD {
 
   public:
 
-  enum class CustomFont {
-    UNDEFINED,  // Defaults to 0
-    BIG,  // Defaults to 1
-    BAR    // Defaults to 2
-  };
+    enum class CustomFont {
+      UNDEFINED,  // Defaults to 0
+      BIG,  // Defaults to 1
+      BAR    // Defaults to 2
+    };
 
     static CustomFont curFont;
     int lefts;
@@ -279,23 +279,23 @@ class MyLCD {
     MyLCD(): lefts(0), scrolled(millis()) {}
 
 
-    void ensureFont(CustomFont f){
-       if(f!=curFont){
-          if(f==CustomFont::BIG){
-            defineLargeChars();        
-          }else if(f==CustomFont::BAR){
-            defineBarChart();
-          }
-       }
-       curFont=f;
+    void ensureFont(CustomFont f) {
+      if (f != curFont) {
+        if (f == CustomFont::BIG) {
+          defineLargeChars();
+        } else if (f == CustomFont::BAR) {
+          defineBarChart();
+        }
+      }
+      curFont = f;
     }
 
-  
+
 
     //fills the entire line
     void printRow(int r, const char* msg) {
       char buffer[40] = "";
-      sprintf(buffer, "%-20s", msg);
+      snprintf(buffer, sizeof(buffer), "%-20s", msg);
       buffer[20] = 0; //null term
       setCursor(0, r);
       print(buffer);
@@ -428,22 +428,6 @@ class MyLCD {
       print("S");
     }
 
-    //
-    //  void begin(){ //(int a,int b){
-    //    if(curLcd==NULL) return;
-    //    #ifdef USELCD
-    //    //initialize lcd screen
-    //    //curLcd->begin(20,4);
-    //    //curLcd->init();
-    //    // turn on the backlight
-    //    //curLcd->backlight();
-    //
-    //
-    //
-    //    defineLargeChars();
-    //    #endif
-    //  }
-
 
 
     void setCursor(int col, int row) {
@@ -541,8 +525,14 @@ class MyLCD {
     }
 
     void demoBarChart() {
-      uint8_t myStats[20] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 30, 25, 20, 15, 10, 5, 2, 0, 8, 16, 32};
-      drawBarChart(myStats, 20);
+      uint8_t myStats[20] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 30, 25, 20, 15, 10, 5, 2, 0, 0, 0, 0};
+      for (int i = 0; i < 16; i++) {
+        drawBarChart(myStats, 20);
+        for (int j = 1; j < sizeof(myStats); j++) {
+          myStats[i - 1] = myStats[i];
+        }
+        delay(15);
+      }
     }
 
 };
@@ -560,7 +550,7 @@ MyLCD::CustomFont MyLCD::curFont = MyLCD::CustomFont::UNDEFINED;
 void setDevice(int n) {
   if (n >= nDevices) n = 0; //use 0 if you can if no other
   if (n < nDevices) curLcd = plcds[n];
-  MyLCD::curFont=MyLCD::CustomFont::UNDEFINED;
+  MyLCD::curFont = MyLCD::CustomFont::UNDEFINED;
 }
 
 

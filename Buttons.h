@@ -115,7 +115,7 @@ void displayConfig(bool header=true) {
   ///////////01234567890123456789
   char label[22];
   if(header) {
-    sprintf(label,"Config %s mode:",BANKNAMES[curBank]);
+    snprintf(label,sizeof(label),"Config %s mode:",BANKNAMES[curBank]);
     lcd.printRow(2,label);
   }
   strncpy_P(label, VLABELS[v], sizeof(label) - 1); 
@@ -150,7 +150,7 @@ void displayConfig(bool header=true) {
 void displayAllConfig(){
   char buf[40];
              //01234567890123456789
-  sprintf(buf,"%s Mode",BANKNAMES[curBank]);
+  snprintf(buf,sizeof(buf),"%s Mode",BANKNAMES[curBank]);
   lcd.printRow(0,buf);
   for(v=0;v<NUMCONFIG;v++){
     displayConfig(false);

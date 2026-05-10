@@ -10,13 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260509";
-
-//LOG:
-// v20260315 - added end of race penalties where laps can be removed if it was deemed too fast by stewards (lane jumping perhaps?)
-// v20260320 - fixed hidden median and checked in RingBuffer set function
-// v2026038  - perfecting fuel logic to include lap time drain as well as speed drain
-// v20260429 - fixed big numbers
+const char* title = "VroomRacer v20260510";
 
 
 #define FUELSTEP 64
@@ -123,11 +117,11 @@ RaceFlag raceFlag = FORMATION;
 #define pln2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
 
 
-void mydtostrf(float value, int width, char *buffer) {
+void mydtostrf(float value, int width, char (&buffer)[20]) {
   // Calculate the number of digits in the integer part of the value
   int intPart = abs((int)value);
   if (value > 99999 || value < -9999 ) {
-    sprintf(buffer, "OVER!");
+    snprintf(buffer, 20, "OVER!"); //DANGER, could overflow if buffer is too small
     return;
   }
   int prec = 3;
