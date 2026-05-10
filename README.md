@@ -32,7 +32,7 @@ Remember qualifying is an agreed upon *concept*. Run a race but ignore who wins 
 
 <img src="img/top-laps.jpg">This screen shows your fastest laps. Notice this racer has the fastest lap.</img>
 
-<img src="Messenger_creation_8FEDBA52-99AF-42F2-9A9C-1F98903B414A~2.jpeg">This screen now shows the median of the best 8 lap. A question mark is placed by the value warranting extra scrutiny.
+<img src="scrutiny.jpg">This screen now shows the median of the best 8 lap. A question mark is placed by the value warranting extra scrutiny.
 </img>
 
 ### Race Control Lights
