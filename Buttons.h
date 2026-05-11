@@ -184,7 +184,7 @@ void seeChange(bool inc){
      }
      delay(300);
    }else if(v==SOUND){
-     playTone(200,100);
+     playToneBlocking(200,100);
    }else if(v==DEMODIAG && inc){    
       lcd.printRow(3,"Reading sensors.");
       delay(50);

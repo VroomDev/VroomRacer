@@ -5,7 +5,7 @@
  */
 
 
-void playTone(int frequency, unsigned int duration); //predeclare
+void playToneBlocking(int frequency, unsigned int duration); //predeclare
 
  
  template <typename T, uint8_t Size>
@@ -167,7 +167,7 @@ public:
   void empty() {
     T d;
     while( pull(d)) {
-        playTone(450,10); //empty buffer
+        playToneBlocking(450,10); //empty buffer
         ph("Pulled");
     }
   }
