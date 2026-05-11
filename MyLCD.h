@@ -301,6 +301,25 @@ class MyLCD {
       print(buffer);
     }
 
+    void printRowCentered(int r, const char* msg) {
+      int len = 0;
+      const int LCD_COLS=20;      
+      while (msg[len] != '\0' && len < LCD_COLS) len++;
+
+      int startCol = (LCD_COLS - len) / 2;
+      setCursor(0, r);
+
+      // Print leading spaces
+      for (int i = 0; i < startCol; i++) print(' ');
+
+      // Print the message
+      for (int i = 0; i < len; i++) print(msg[i]);
+
+      // Print trailing spaces to clear old chars
+      for (int i = startCol + len; i < LCD_COLS; i++) print(' ');
+    }
+
+
     void printRowBoth(int r, const char* msg) {
       for (int i = 0; i < nDevices; i++) {
         setDevice(i);
