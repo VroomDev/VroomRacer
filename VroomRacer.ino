@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260510";
+const char* title = "VroomRacer v20260511";
 
 
 #define FUELSTEP 64
@@ -407,7 +407,7 @@ void fueling() {
       if (lanes[s].fuel < MAXFUEL) {
         if ( sensors[s].count > 250 * sensors[s].ticksPerMs) { //in pit
           // "Balance of Performance" (BoP) adjustment for solo fueling, since pit crew would work faster due to urgency
-          nextFuelCheck = millis() + (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter < Lane::maxLapCounter ? 100 : 200));
+          nextFuelCheck = millis() + (lanes[s].lapCounter + 2 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 100 : 200));
           lanes[s].fuel += MAXFUEL / 20 + 1;
           if (lanes[s].fuel < MAXFUEL) {
             playToneNoBlock(400 + s * 300 + lanes[s].fuel, 2); //was playTone ,1
@@ -683,7 +683,7 @@ void checkFinishLine() {
     } else if ( raceFlag == REDFLAG ) { //lap doesn't count
       alertBadLap(i, "Red Flag");
     } else if (raceFlag == YELLOWFLAG) { // need to make sure going slowly through trap
-      if ( speed <= pitLaneSpeedLimit ) { //lap counts (prev had: || speed<aspeed*3/5)
+      if ( speed <= pitLaneSpeedLimit ) { //lap counts
         alertGoodLap(i);
       } else { // too fast!
         alertBadLap(i, "Too fast!");
@@ -696,7 +696,7 @@ void checkFinishLine() {
 
 void checkStewards() {
   if (millis() > nextStewardsCheck) { //STEWARDS
-    nextStewardsCheck = millis() + 127;
+    nextStewardsCheck = millis() + 231; // try to have the time offset be relatively prime compared with others
     //check for yellows
     bool anyYellow = false, anyRed = false;
     if (!won) {
@@ -708,6 +708,7 @@ void checkStewards() {
         if (raceFlag == GREENFLAG) {
           ////////////////01234567890123456789
           lcd.printRowBoth(0, "Competition Yellow!");
+          nextPageFlip += 213;
         }
         anyYellow = true;
       } else {
@@ -716,8 +717,10 @@ void checkStewards() {
           //////////////////////////RED CHECK
           if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
                && redLapsNumer > 0
-               && lanes[i].avgLapDur > 0 && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / FRACTIONDENOM)) {
-            //car is late!
+               && lanes[i].avgLapDur > 0
+               && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / FRACTIONDENOM)
+               && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur / 2 ) {
+            //car is late, and the other is nearing start/finish
             if (raceFlag != REDFLAG && !anyRed && !anyYellow ) {
               p("Red flag detected Car late", (char)raceFlag)
               pln("Car", i);
@@ -725,13 +728,16 @@ void checkStewards() {
             if ( raceFlag != REDFLAG) {
               setDevice(i);
               lcd.printRowCentered(0, "Car is very late!");
+              nextPageFlip += 211;
             }
             anyRed = true;
             //is a car getting late, probably crashed
             //////////////////////////YELLOW CHECK
           } else if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
                       && yellowDelta > 0
-                      && lanes[i].avgLapDur > 0 && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta) {
+                      && lanes[i].avgLapDur > 0
+                      && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta
+                      && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur  / 2) {
             //car is late!
             if (raceFlag != YELLOWFLAG && raceFlag != REDFLAG && !anyRed && !anyYellow) {
               p("Yellow detected Car late", (char)raceFlag)
@@ -740,6 +746,7 @@ void checkStewards() {
             if ( raceFlag != YELLOWFLAG) {
               setDevice(i);
               lcd.printRowCentered(0, "Car is late!");
+              nextPageFlip += 301;
             }
             anyYellow = true;
           }
@@ -752,7 +759,7 @@ void checkStewards() {
         raceFlag = REDFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
-        nextPageFlip = 0;
+        nextPageFlip = millis() + 257;
       }
     } else if (anyYellow) {
       if (raceFlag != YELLOWFLAG) {
@@ -760,7 +767,7 @@ void checkStewards() {
         raceFlag = YELLOWFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody, imperialMarchNotes, 120);
-        nextPageFlip = 0;
+        nextPageFlip = millis() + 265;
       }
     } else if (raceFlag == YELLOWFLAG || raceFlag == REDFLAG) { //go back to green!
       pln("back to", "green");
@@ -831,10 +838,10 @@ void alertGoodLap(int i) {
     delay(50);
     playToneBlocking(400 + i * 300 - 100, 50);
     delay(50);
-    playToneBlocking(400 + i * 300 - 100, 50);
+    playToneNoBlock(400 + i * 300 - 100, 50);
   }
   laneDisplayed = i;
-  nextPageFlip = millis() + FLIPTIMESHORT;
+  nextPageFlip = millis() + FLIPTIMESHORT; //assume something was displayed
   if (config[COMPYELLOW] > 0
       && ((lanes[i].lapCounter) % (1 + config[COMPYELLOW])) == (config[COMPYELLOW]) //happens every comp yellow lap
       && millis() > compYellowStop) { //only turn it on if the comp yellow is not active

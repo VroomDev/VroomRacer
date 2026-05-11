@@ -103,6 +103,7 @@ class Lane {
         prior = d;
         lapDuration = 0; //race started crossed finish for first time
         crossedStart = true;
+        banner(true, ""); //need to display reaction time
         return true;
       } else {
         //subtract "pit" time, ticksPerMs is commonly 18, thus max pit time is 65535/18=3640 ms
