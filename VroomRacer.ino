@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260511";
+const char* title = "VroomRacer v20260516";
 
 
 #define FUELSTEP 64
@@ -708,7 +708,7 @@ void checkStewards() {
         if (raceFlag == GREENFLAG) {
           ////////////////01234567890123456789
           lcd.printRowBoth(0, "Competition Yellow!");
-          nextPageFlip += 213;
+          nextPageFlip += 1213;
         }
         anyYellow = true;
       } else {
@@ -728,7 +728,7 @@ void checkStewards() {
             if ( raceFlag != REDFLAG) {
               setDevice(i);
               lcd.printRowCentered(0, "Car is very late!");
-              nextPageFlip += 211;
+              nextPageFlip += 1211;
             }
             anyRed = true;
             //is a car getting late, probably crashed
@@ -746,7 +746,7 @@ void checkStewards() {
             if ( raceFlag != YELLOWFLAG) {
               setDevice(i);
               lcd.printRowCentered(0, "Car is late!");
-              nextPageFlip += 301;
+              nextPageFlip += 1301;
             }
             anyYellow = true;
           }
@@ -759,7 +759,7 @@ void checkStewards() {
         raceFlag = REDFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
-        nextPageFlip = millis() + 257;
+        nextPageFlip = millis() + 1257;
       }
     } else if (anyYellow) {
       if (raceFlag != YELLOWFLAG) {
@@ -767,14 +767,16 @@ void checkStewards() {
         raceFlag = YELLOWFLAG;
         waveFlag(raceFlag);
         playMusic(imperialMarchMelody, imperialMarchNotes, 120);
-        nextPageFlip = millis() + 265;
+        nextPageFlip = millis() + 1265;
       }
     } else if (raceFlag == YELLOWFLAG || raceFlag == REDFLAG) { //go back to green!
       pln("back to", "green");
+      /////////////////////01234567890123456789
+      lcd.printRowBoth(0, "   Back to Green!");
       playF1Restart();
       raceFlag = GREENFLAG;
       waveFlag(raceFlag);
-      nextPageFlip = 0;
+      nextPageFlip = millis() + 501;
     }
   }
 }
