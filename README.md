@@ -97,7 +97,7 @@ The inches per second calculation is based on an car length of 2.5 inches long. 
 - **Average lap duration**: this is used to detect yellow or red flags
 - **Average start/finish trap speed**: this is used to determine if a yellow flag speed limit violation occurs. Speed trap time is mostly resilient to outliers.
 - **Impossibly fast laps** There is a debounce timeout that if the detection is within then the detection is completely ignored.
-- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest magnet car, which is configurable. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap too quickly based on the fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
+- **Automatic Jumped Lanes Detection** Doesn't rely on the average lap duration but instead uses the best lap duration for effectiveness. The track has a preset minimum lap time based on the fastest possible car, which is configurable. This method is a baseline and somewhat protects the first lap. But for subsequent laps, especially for slower cars, a more accurate approach. After the first lap, if a car attempts to complete a lap too quickly based on the fastest lap time, that lap is rejected. This way, if a car jumps a lane and tries to record a lap time that's half of the overall best duration, the lap is discarded. Since the logic uses the best overall lap, only if all racers crash on the first lap will this system falsely reject laps.  The likelihood of the that is low.  If all racers crash on the first lap, it is recommended that the race is restarted.
 
 <img src="img/jump.jpg">The car triggered a lap very early and will not be counted.</img>
 
@@ -125,20 +125,17 @@ During red, no laps are counted. Best to stop and wait on the photo sensor, fill
 
 ## Automatic Steward's Review 
 
-The steward's review happens at the end of the final lap. If bogus laps are discovered, those laps are penalized (not counted) and thus the race continues. A special song and display alerts the driver to the penalty.
+The steward's review happens at the end of the final lap. If questionable laps are discovered, those laps are penalized (not counted) and thus the race continues. A special song and display alerts the driver to the penalty.
 
 The steward logic finds the Median (M) of recent laps. This middle value is used because it ignores atypical laps that would otherwise ruin a standard average.
 
 The logic calculates the Median Absolute Deviation (MAD) by finding the middle distance of each lap from that median:
 MAD = median(|xi - M|)
-
-stewardsBound =least( M - (1.96 * 1.4826 * MAD), M * 0.9)
-
-The first two constants set a 95% confidence interval and the 0.9 constant allows for a 10% improvement under the median no matter what.
+The tolerable minimum lap is the Median - greatest(1.96 * sigma adjusted MAD, Median/7)
 
 Any laps less than this equation are penalized and thus not counted.
 
-This has been play tested and the math does indeed work. In this way, lane hops won't act as a cheat.
+This has been play tested and the math does indeed work but as with all statistics, is not perfect. 
 
 ## Sounds
 - **Single Tone**: Lap counted.
