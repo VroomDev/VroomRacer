@@ -645,7 +645,7 @@ class Lane {
         selectionSort(laparr, N);
         mad = laparr[(N & 1) == 1 ? N / 2 : N / 2 - 1]; //Median Absolute Deviation
         mad = (1.96 * 1.4826 * mad);
-        mad = mad < median / 10 ? median / 10 : mad; //allow for at least a 10% improvement over the median
+        mad = mad < median / 7 ? median / 7 : mad; //allow for at least a 10% improvement over the median
         stewardsBound = median - mad;
 
         for (int i = 0; i < lapBufSize; i++) {
