@@ -127,16 +127,6 @@ During red, no laps are counted. Best to stop and wait on the photo sensor, fill
 
 The steward's review happens at the end of the final lap. If questionable laps are discovered, those laps are penalized (not counted) and thus the race continues. A special song and display alerts the driver to the penalty.
 
-The steward logic finds the Median (M) of recent laps. This middle value is used because it ignores atypical laps that would otherwise ruin a standard average.
-
-The logic calculates the Median Absolute Deviation (MAD) by finding the middle distance of each lap from that median:
-MAD = median(|xi - M|)
-The tolerable minimum lap is the Median - greatest(1.96 * sigma adjusted MAD, Median/7)
-
-Any laps less than this equation are penalized and thus not counted.
-
-This has been play tested and the math does indeed work but as with all statistics, is not perfect. 
-
 ## Sounds
 - **Single Tone**: Lap counted.
 - **Falling tone**: Lap ignored/deleted.
