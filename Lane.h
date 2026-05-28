@@ -135,7 +135,7 @@ class Lane {
           snprintf(why, sizeof(why), "%d Hop", lapDuration);
           lapQuali = '!';
           return false;
-        } else if (allBestLapDur != 0 && lapDuration < allBestLapDur * 4 / 10) {
+        } else if (allBestLapDur != 0 && lapDuration < allBestLapDur / 2 * hopThreshold  / 100) {
           //jumped car, since better than anyone by too large of a margin
           snprintf(why, sizeof(why), "%d Jump", lapDuration);
           lapQuali = ' ';
@@ -575,7 +575,7 @@ class Lane {
     }
 
     /* these variables only valid after doStewardsCheck */
-    long int median = -1, mad = -1, N = -1, stewardsBound = -1, bogusLaps = 0;
+    long int median = -1, N = -1, stewardsBound = -1, bogusLaps = 0;
 
 
     void graphLaps() {
@@ -621,7 +621,7 @@ class Lane {
        Returns the number of laps in the buffer.
     */
     int doStewardsCheck() {
-      median = -1; mad = -1; N = -1; stewardsBound = -1;
+      median = -1; N = -1; stewardsBound = -1;
       ///load data
       Lap lap1;
       long int laparr[lapBufSize];
@@ -639,14 +639,8 @@ class Lane {
         ///calculation stats
         selectionSort(laparr, N);
         median = laparr[(N & 1) == 1 ? N / 2 : N / 2 - 1];
-        for (int i = 0; i < N; i++) {
-          laparr[i] = abs(laparr[i] - median);
-        }
-        selectionSort(laparr, N);
-        mad = laparr[(N & 1) == 1 ? N / 2 : N / 2 - 1]; //Median Absolute Deviation
-        mad = (1.96 * 1.4826 * mad);
-        mad = mad < median / 7 ? median / 7 : mad; //allow for at least a 10% improvement over the median
-        stewardsBound = median - mad;
+
+        stewardsBound = median * hopThreshold / 100;
 
         for (int i = 0; i < lapBufSize; i++) {
           if (laps.bottom(lap1, i)) {
@@ -721,7 +715,7 @@ class Lane {
       } else if ( page == 2 ) { //print out recent lap times
         if (doStewardsCheck()) {
           buffer[20] = 0; //null terminate
-          snprintf(buffer, sizeof(buffer), "%c%d Med:%ld +-%ld ", ch, laneNum + 1, median, mad);
+          snprintf(buffer, sizeof(buffer), "%c%d Median:%ld  ", ch, laneNum + 1, median);
           lcd.printRow(0, buffer);
           //loop to display
           byte offset = 0;
