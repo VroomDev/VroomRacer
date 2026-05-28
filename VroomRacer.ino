@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260516";
+const char* title = "VroomRacer v20260527";
 
 
 #define FUELSTEP 64
@@ -20,6 +20,7 @@ const char* title = "VroomRacer v20260516";
 typedef enum : uint8_t {RESUME, BANKMODE, BRIGHTNESS, SOUND, RACELEN, FUELING, COMPYELLOW, SPEEDLIMIT, MINLAPDUR, SERIALMONITOR, DEMODIAG, DEFAULTS,
                         YELLOWDELTA,
                         REDLAPSNUMER,
+                        HOPTHRESHOLD,
                         NUMCONFIG
                        } Configs; //14 configs
 
@@ -38,7 +39,8 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Demo/Diagnostics:   \0", //
   "Revert defaults?    \0", //
   "Yellow millis:      \0", //
-  "Red Multiplier+:    \0"
+  "Red Multiplier+:    \0",
+  "Hop Thresold%:      \0"
   //01234567890123456789
 };
 #define NUMBANKS 4
@@ -47,13 +49,13 @@ const char* BANKNAMES[NUMBANKS] = {"Fuel", "Fast", "Tune", "Drag"};
 #define BANKSIZE 128
 uint8_t curBank = 0;
 ///////////////////////////////resume, mode, bright,    sound, laps, fuel, compy, limit, minlapdur, sermon, demo, defaults YelDel RedLaps
-const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254 }; //max vmax is 254
+const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254, 95 }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
   //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM}, //FUEL MODE
-  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM}, //Fast MODE
-  {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //TUNE MODE
-  {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0 }, //DRAG MODE
+  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM, 75}, //FUEL MODE
+  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM, 75}, //Fast MODE
+  {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 80 }, //TUNE MODE
+  {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 0 }, //DRAG MODE
 };
 
 #define compYellowOn ((bool)config[COMPYELLOW]>0)
@@ -70,6 +72,7 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
 #define raceLength ((int)config[RACELEN])
 #define yellowDelta ((int)config[YELLOWDELTA]*MINLAPDURSTEP)
 #define redLapsNumer ((int)config[REDLAPSNUMER])
+#define hopThreshold ((int)config[HOPTHRESHOLD])
 ////////////////////////////END OF CONFIG
 
 const int NUMLANES = 2;
