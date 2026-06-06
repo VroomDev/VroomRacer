@@ -97,7 +97,7 @@ struct Sensor {
           //Detect detected       
           lastDetectTime = currentTime;          
           //put in ring buffer
-          Detection detection(curSensor,acc,count,currentTime); // Initialize with data  
+          Detection detection(curSensor,acc,count,currentTime,raceFlag); // Initialize with data  
           ringBuffer.push(detection);          
         }
       }
