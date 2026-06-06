@@ -756,12 +756,14 @@ void checkStewards() {
         }
       }
     }
-    if (anyRed && raceFlag == YELLOWFLAG) {
-      pln("wave", "red flag");
-      playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
-      raceFlag = REDFLAG;
-      waveFlag(raceFlag);
-      nextPageFlip = millis() + 1257;
+    if (anyRed && (raceFlag == YELLOWFLAG || raceFlag == REDFLAG)) {
+      if ( raceFlag != REDFLAG) {
+        pln("wave", "red flag");
+        playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
+        raceFlag = REDFLAG;
+        waveFlag(raceFlag);
+        nextPageFlip = millis() + 1257;
+      }
     } else if (anyYellow || anyRed) {
       if (raceFlag != YELLOWFLAG) {
         pln("wave", "yellow flag");
