@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260527";
+const char* title = "VroomRacer v20260606";
 
 
 #define FUELSTEP 64
@@ -39,7 +39,7 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Demo/Diagnostics:   \0", //
   "Revert defaults?    \0", //
   "Yellow millis:      \0", //
-  "Red Multiplier+:    \0",
+  "Red Multiplier:     \0",
   "Hop Thresold%:      \0"
   //01234567890123456789
 };
@@ -52,8 +52,8 @@ uint8_t curBank = 0;
 const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254, 95 }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
   //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM, 75}, //FUEL MODE
-  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 1 * FRACTIONDENOM, 75}, //Fast MODE
+  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75}, //FUEL MODE
+  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75}, //Fast MODE
   {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 80 }, //TUNE MODE
   {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 0 }, //DRAG MODE
 };
@@ -410,7 +410,7 @@ void fueling() {
       if (lanes[s].fuel < MAXFUEL) {
         if ( sensors[s].count > 250 * sensors[s].ticksPerMs) { //in pit
           // "Balance of Performance" (BoP) adjustment for solo fueling, since pit crew would work faster due to urgency
-          nextFuelCheck = millis() + (lanes[s].lapCounter + 2 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 100 : 200));
+          nextFuelCheck = millis() + (lanes[s].lapCounter + 2 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 100 : 180));
           lanes[s].fuel += MAXFUEL / 20 + 1;
           if (lanes[s].fuel < MAXFUEL) {
             playToneNoBlock(400 + s * 300 + lanes[s].fuel, 2); //was playTone ,1
@@ -683,9 +683,9 @@ void checkFinishLine() {
     }
     if (lanes[i].lapCounter >= raceLength) { //driver done with race
       alertGoodLap(i);
-    } else if ( raceFlag == REDFLAG ) { //lap doesn't count
+    } else if ( d.flag == REDFLAG ) { //lap doesn't count
       alertBadLap(i, "Red Flag");
-    } else if (raceFlag == YELLOWFLAG) { // need to make sure going slowly through trap
+    } else if (d.flag == YELLOWFLAG) { // need to make sure going slowly through trap
       if ( speed <= pitLaneSpeedLimit ) { //lap counts
         alertGoodLap(i);
       } else { // too fast!
@@ -721,7 +721,7 @@ void checkStewards() {
           if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
                && redLapsNumer > 0
                && lanes[i].avgLapDur > 0
-               && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / FRACTIONDENOM)
+               && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / 100)
                && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur / 2 ) {
             //car is late, and the other is nearing start/finish
             if (raceFlag != REDFLAG && !anyRed && !anyYellow ) {
@@ -756,20 +756,18 @@ void checkStewards() {
         }
       }
     }
-    if (anyRed) {
-      if (raceFlag != REDFLAG) {
-        pln("wave", "red flag");
-        raceFlag = REDFLAG;
-        waveFlag(raceFlag);
-        playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
-        nextPageFlip = millis() + 1257;
-      }
-    } else if (anyYellow) {
+    if (anyRed && raceFlag == YELLOWFLAG) {
+      pln("wave", "red flag");
+      playMusic(imperialMarchMelody, imperialMarchNotes, 3 * 120);
+      raceFlag = REDFLAG;
+      waveFlag(raceFlag);
+      nextPageFlip = millis() + 1257;
+    } else if (anyYellow || anyRed) {
       if (raceFlag != YELLOWFLAG) {
         pln("wave", "yellow flag");
+        playMusic(imperialMarchMelody, imperialMarchNotes, 120);
         raceFlag = YELLOWFLAG;
         waveFlag(raceFlag);
-        playMusic(imperialMarchMelody, imperialMarchNotes, 120);
         nextPageFlip = millis() + 1265;
       }
     } else if (raceFlag == YELLOWFLAG || raceFlag == REDFLAG) { //go back to green!
