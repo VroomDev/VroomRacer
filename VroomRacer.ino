@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260606";
+const char* title = "VroomRacer v20260625";
 
 
 #define FUELSTEP 64
@@ -763,6 +763,7 @@ void checkStewards() {
         raceFlag = REDFLAG;
         waveFlag(raceFlag);
         nextPageFlip = millis() + 1257;
+        nextStewardsCheck = millis() + 1000;
       }
     } else if (anyYellow || anyRed) {
       if (raceFlag != YELLOWFLAG) {
@@ -771,6 +772,7 @@ void checkStewards() {
         raceFlag = YELLOWFLAG;
         waveFlag(raceFlag);
         nextPageFlip = millis() + 1265;
+        nextStewardsCheck = millis() + 1000;
       }
     } else if (raceFlag == YELLOWFLAG || raceFlag == REDFLAG) { //go back to green!
       pln("back to", "green");
@@ -780,6 +782,7 @@ void checkStewards() {
       raceFlag = GREENFLAG;
       waveFlag(raceFlag);
       nextPageFlip = millis() + 501;
+      nextStewardsCheck = millis() + 500;
     }
   }
 }
@@ -817,7 +820,7 @@ void raceLoop() {
     lcd.printRowBoth(3, "     GO!!!!!!!!     ");
     nextFuelCheck = millis() + 401;
     nextStewardsCheck = millis() + 513;
-    nextPageFlip = millis() + 500;
+    nextPageFlip = millis() + 600;
   }
   checkFinishLine();
   fueling();
