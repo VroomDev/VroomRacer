@@ -660,7 +660,8 @@ class Lane {
         Lap lap1;
         for (int i = 0; i < lapBufSize; i++) {
           if (laps.bottom(lap1, i)) {
-            if (lap1.duration >= 0 && lap1.duration < stewardsBound ) {
+            if (lap1.duration < 0) return 0; //already penalized so bail out
+            if (lap1.duration > 0 && lap1.duration < stewardsBound ) {
               bogusLaps++;
               if (ack) {
                 lap1.duration *= -1; //=-1*lap1.duration;

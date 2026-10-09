@@ -8,12 +8,11 @@
 
 const int speakerPin = 4; // Pin connected to the speaker
 
-
+//nonblocking
 void myTone(int pin, unsigned int frequency) {
   if (sound) {
     tone(pin, frequency);
   }
-
 }
 
 // nonblocking tone
@@ -62,6 +61,18 @@ int odeToJoyMelody[] = {
 int odeToJoyNotes = sizeof(odeToJoyMelody) / sizeof(odeToJoyMelody[0]) / 2;
 
 
+int restartMelody[]= {
+  500,4,
+  500,4,
+  100,4,
+  1000,2
+ };
+int restartMelodyNotes = sizeof(restartMelody) / sizeof(restartMelody[0]) / 2;
+
+
+
+
+
 
 // notes of the moledy followed by the duration.
 // a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
@@ -101,7 +112,9 @@ int imperialMarchMelody[] = {
 int imperialMarchNotes = sizeof(imperialMarchMelody) / sizeof(imperialMarchMelody[0]) / 2;
 
 
-void playMusic(int* melody, int notes, int tempo = 80) {
+
+
+void playMusic0(int* melody, int notes, int tempo = 80) {
   // this calculates the duration of a whole note in ms
   int wholenote = (60000 * 4) / tempo;
 
@@ -123,10 +136,10 @@ void playMusic(int* melody, int notes, int tempo = 80) {
     }
 
     // we only play the note for 90% of the duration, leaving 10% as a pause
-    myTone(speakerPin, melody[thisNote], noteDuration * 0.9);
+    myTone(speakerPin, melody[thisNote], noteDuration);
 
     // Wait for the specief duration before playing the next note.
-    delay(noteDuration * 0.9);
+    delay(noteDuration);
 
     // stop the waveform generation before the next note.
     //    noTone(speakerPin);
@@ -134,19 +147,81 @@ void playMusic(int* melody, int notes, int tempo = 80) {
   noTone(speakerPin);
 }
 
+///////////////////////////////
+// music tracker
+///////////////////////////////
+
+int* bgMelody=NULL;
+int bgNotes=0;
+int wholenote=0;
+long bgNextStep=0;
+int thisNote=0;
+
+void playMusicStep() {
+  if(wholenote <0) return;
+  if(millis()<bgNextStep) return; 
+  int divider = 0, noteDuration = 0;
+  // iterate over the notes of the melody.
+  // Remember, the array is twice the number of notes (notes + durations)
+  if( thisNote < bgNotes * 2) {
+    // calculates the duration of each note
+    divider = bgMelody[thisNote + 1];
+    if (divider > 0) {
+      // regular note, just proceed
+      noteDuration = (wholenote) / divider;
+    } else if (divider < 0) {
+      // dotted notes are represented with negative durations!!
+      noteDuration = (wholenote) / abs(divider);
+      noteDuration += noteDuration >> 1; // increases the duration in half for dotted notes
+    }
+    // we only play the note for 90% of the duration, leaving 10% as a pause
+    myTone(speakerPin, bgMelody[thisNote], noteDuration);
+    // Wait for the specief duration before playing the next note.
+    bgNextStep=millis()+noteDuration;
+    thisNote = thisNote + 2; //advance the player
+  }else{
+    noTone(speakerPin);
+    wholenote=0; //stop player
+  }
+}
+
+void playMusic(int* melody, int notes, int tempo = 80) {
+  bgMelody=melody;
+  bgNotes=notes;
+  // this calculates the duration of a whole note in ms
+  wholenote = ((60000 * 4) / tempo)*9/10;
+  bgNextStep=0; //play immediately
+  thisNote=0;
+  playMusicStep(); //play first note
+}
+
+
+//////////////
+//
+//////////////
+
 // notes of the moledy followed by the duration.
 // a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
 // !!negative numbers are used to represent dotted notes,
 // so -4 means a dotted quarter note, that is, a quarter plus an eighteenth!!
 
+//
+//void playF1StartSound() {
+//  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
+//  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
+//  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
+//  myTone(speakerPin, 2000, 1000); //delay(1000); noTone(speakerPin);
+//}
 
-void playF1StartSound() {
-  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
-  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
-  myTone(speakerPin, 1000); delay(500);  noTone(speakerPin); delay(250);
-  myTone(speakerPin, 2000, 1000); //delay(1000); noTone(speakerPin);
+
+void playF1Restart() {
+  playMusic(restartMelody,restartMelodyNotes);
+  waveFlag(GREENFLAG);
+  delay(100);
+  waveFlag(FORMATION);
 }
 
+//this is blocking
 void playF1StartSound1() {
   // Tone sequence for the starting lights
   //waveFlag(FORMATION);
@@ -165,18 +240,6 @@ void playF1StartSound1() {
   waveFlag(FORMATION);
 }
 
-void playF1Restart() {
-  playToneBlocking(500, 200);
-  delay(100);
-  playToneBlocking(500, 200);
-  delay(100);
-  playToneBlocking(100, 200);
-  delay(100);
-  waveFlag(GREENFLAG);
-  playToneBlocking(1000, 400);
-  delay(100);
-  waveFlag(FORMATION);
-}
 
 
 

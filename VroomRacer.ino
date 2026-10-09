@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20260625";
+const char* title = "VroomRacer v20261008";
 
 
 #define FUELSTEP 64
@@ -21,6 +21,7 @@ typedef enum : uint8_t {RESUME, BANKMODE, BRIGHTNESS, SOUND, RACELEN, FUELING, C
                         YELLOWDELTA,
                         REDLAPSNUMER,
                         HOPTHRESHOLD,
+                        BOPMODE,
                         NUMCONFIG
                        } Configs; //14 configs
 
@@ -39,8 +40,9 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Demo/Diagnostics:   \0", //
   "Revert defaults?    \0", //
   "Yellow millis:      \0", //
-  "Red Multiplier:     \0",
-  "Hop Thresold%:      \0"
+  "Red Multiplier:     \0", //
+  "Hop Thresold%:      \0", //
+  "NASCAR BOP:         \0"  //
   //01234567890123456789
 };
 #define NUMBANKS 4
@@ -48,14 +50,14 @@ typedef enum : uint8_t {FUELMODE, FASTMODE, TUNEMODE, DRAGMODE} ModeBanks;
 const char* BANKNAMES[NUMBANKS] = {"Fuel", "Fast", "Tune", "Drag"};
 #define BANKSIZE 128
 uint8_t curBank = 0;
-///////////////////////////////resume, mode, bright,    sound, laps, fuel, compy, limit, minlapdur, sermon, demo, defaults YelDel RedLaps
-const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254, 95 }; //max vmax is 254
+///////////////////////////////resume, mode, bright,    sound, laps, fuel, compy, limit, minlapdur, sermon, demo, defaults YelDel RedLaps  HOP BOP
+const uint8_t VMAX[NUMCONFIG] = { 0,  NUMBANKS - 1,    8,       1,   99,   254,   99,    254,   254,      1,      1,    0,       254,  254, 95, 1 }; //max vmax is 254
 const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
-  //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps
-  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75}, //FUEL MODE
-  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75}, //Fast MODE
-  {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 80 }, //TUNE MODE
-  {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 0 }, //DRAG MODE
+  //R Mode Br snd laps  fuel compyel limit  mLDur             Mon  DD  Def YellowDelta         redlaps   HOP BOP
+  {0, 0,   8, 1,   10,   6,   5,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75, 0}, //FUEL MODE
+  {0, 0,   8, 1,   10,   0,   0,      45,   2500 / MINLAPDURSTEP,  1,  0,   0, 2000 / MINLAPDURSTEP, 25, 75, 0}, //Fast MODE
+  {0, 0,   8, 0,   99,   0,   0,     254,  2500 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 80, 0 }, //TUNE MODE
+  {0, 0,   8, 1,   1,    0,   0,     254,   128 / MINLAPDURSTEP,  1,  0,   0, 0, 0, 0,0 }, //DRAG MODE
 };
 
 #define compYellowOn ((bool)config[COMPYELLOW]>0)
@@ -73,6 +75,7 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
 #define yellowDelta ((int)config[YELLOWDELTA]*MINLAPDURSTEP)
 #define redLapsNumer ((int)config[REDLAPSNUMER])
 #define hopThreshold ((int)config[HOPTHRESHOLD])
+#define bopOn() ((bool)config[BOPMODE]>0)
 ////////////////////////////END OF CONFIG
 
 const int NUMLANES = 2;
@@ -235,9 +238,9 @@ void testRBPS() {
       }
     }
     pln2("", "");
-    delay(500);
+    delay(500); //ok
   }
-  delay(1000);
+  delay(1000); //ok
   pln2("rbps", "now in order");
   laps.empty();
   for (int i = 1; i < 15; i++) {
@@ -254,9 +257,9 @@ void testRBPS() {
       }
     }
     pln2("", "");
-    delay(500);
+    delay(500);//ok
   }
-  delay(1000);
+  delay(1000);//ok
   pln2("rbps", "now in middle");
   laps.empty();
   for (int i = 1; i < 15; i++) {
@@ -282,15 +285,15 @@ void testRBPS() {
     } else {
       pln2("not", "pushed");
     }
-    delay(500);
+    delay(500);//ok
   }
-  delay(32000);
+  delay(32000);//ok
 }
 #endif
 
 void setup() {
   Serial.begin(9600);
-  delay(50);
+  delay(50);//ok
   Serial.println("\n\nStarting");
 #ifdef TESTRBPS
   testRBPS();
@@ -305,7 +308,7 @@ void setup() {
       delay(100);
     }
     lcd.demoBarChart();
-    delay(1000);
+    delay(500);
     for (int i = 0; i < nDevices; i++) {
       setDevice(i);
       lcd.clear();
@@ -319,19 +322,19 @@ void setup() {
   setupButtons(); //NOTE THIS DOES THE CONFIG LOAD AS WELL
   Serial.print("analogRead A0:");
   Serial.println(analogRead(A0));
-  delay(10);
+  delay(10); //ok
   Serial.print("analogRead A1:");
   Serial.println(analogRead(A1));
-  delay(10);
+  delay(10);//ok
   if (dragOn) { //Set up drag racing
     NUMSENSORS = 4;
     Serial.println("NUMSENSORS TO 4");
     Serial.print("analogRead A2:");
     Serial.println(analogRead(A2));
-    delay(10);
+    delay(10);//ok
     Serial.print("analogRead A3:");
     Serial.println(analogRead(A3));
-    delay(10);
+    delay(10);//ok
 
   }
 
@@ -398,6 +401,30 @@ void reset() {
   ringBuffer.empty();
 }
 
+bool behind(int s){
+  if( lanes[s].avgLapDur < 1 ) return false; //still on first lap or have yet to start
+  if( lanes[(s + 1) % NUMLANES].avgLapDur < 1 ) return false; //still on first lap or have yet to start
+  if( lanes[s].lapCounter < Lane::maxLapCounter ){
+    ph("not on lead");
+    p("lmpc",Lane::maxLapCounter);
+    p("lslc",lanes[s].lapCounter);
+    return true; //not on lead lap
+  }
+//  if( lanes[s].avgLapDur > lanes[(s + 1) % NUMLANES].avgLapDur){
+//    p("going slower",lanes[s].avgLapDur);
+//    return true; //going slower
+//  }
+  return false;
+}
+
+//bool ahead(int s){
+//  if( lanes[s].avgLapDur < 1 ) return false; //still on first lap or have yet to start
+//  if( lanes[(s + 1) % NUMLANES].avgLapDur < 1 ) return false; //still on first lap or have yet to start
+//  if( lanes[s].lapCounter < Lane::maxLapCounter ) return false; //not on lead lap
+//  if( ( lanes[s].avgLapDur < lanes[(s + 1) % NUMLANES].avgLapDur  ))  return true; //avg lap is faster
+//  return false;
+//}
+
 
 void fueling() {
   if (fuelOn) {
@@ -410,8 +437,8 @@ void fueling() {
       if (lanes[s].fuel < MAXFUEL) {
         if ( sensors[s].count > 250 * sensors[s].ticksPerMs) { //in pit
           // "Balance of Performance" (BoP) adjustment for solo fueling, since pit crew would work faster due to urgency
-          nextFuelCheck = millis() + (lanes[s].lapCounter + 2 < Lane::maxLapCounter ? 50 : (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 100 : 180));
-          lanes[s].fuel += MAXFUEL / 20 + 1;
+          nextFuelCheck = millis() + (lanes[s].lapCounter + 1 < Lane::maxLapCounter ? 60 : (lanes[s].lapCounter < Lane::maxLapCounter ? 120 : 180));
+          lanes[s].fuel += MAXFUEL / ( bopOn() && behind(s) ? 10 : 20  )  + 1;
           if (lanes[s].fuel < MAXFUEL) {
             playToneNoBlock(400 + s * 300 + lanes[s].fuel, 2); //was playTone ,1
           } else {
@@ -428,6 +455,7 @@ void fueling() {
 
 void loop() {
   loopc++;
+  playMusicStep();
   delay(1);
   if (configByButtons()) {
     return; //stay in config mode
@@ -635,7 +663,7 @@ void startDragRace() {
   // Print a message to the LCD.
   /////     //////01234567890123456789
   lcd.printRow(1, "Get set.");
-  playF1StartSound1();
+  playF1StartSound1(); //drag
   raceStart = millis();
   auto chk = checkSensors();
   if (chk >= 0) {
@@ -716,13 +744,17 @@ void checkStewards() {
         anyYellow = true;
       } else {
         for (int i = 0; i < NUMLANES; i++) {
+          //          ph("checkStewards:");
+          //          p("i",i);
+          //          p("ahead",ahead(i));
+          //          pln("behind",behind(i));
           //is a car very late? definitely crashed
           //////////////////////////RED CHECK
           if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
                && redLapsNumer > 0
                && lanes[i].avgLapDur > 0
-               && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / 100)
-               && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur / 2 ) {
+               && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta + (lanes[i].avgLapDur * redLapsNumer / 100) //this one is late
+               && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur / 2 ) { //this one is nearing start/finish
             //car is late, and the other is nearing start/finish
             if (raceFlag != REDFLAG && !anyRed && !anyYellow ) {
               p("Red flag detected Car late", (char)raceFlag)
@@ -739,8 +771,8 @@ void checkStewards() {
           } else if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
                       && yellowDelta > 0
                       && lanes[i].avgLapDur > 0
-                      && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta
-                      && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur  / 2) {
+                      && millis() > lanes[i].prior.timestamp + lanes[i].avgLapDur + yellowDelta  //this one is late
+                      && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur  / 2) { //this one is nearing start/finish
             //car is late!
             if (raceFlag != YELLOWFLAG && raceFlag != REDFLAG && !anyRed && !anyYellow) {
               p("Yellow detected Car late", (char)raceFlag)
@@ -752,6 +784,25 @@ void checkStewards() {
               nextPageFlip += 1301;
             }
             anyYellow = true;
+            //end else if 
+          } else if ( !(sensors[i].darkEnough || sensors[i].longEnough) //make sure not in pitstop
+                      && bopOn() && behind(i)
+                      //&& lanes[i].avgLapDur > 0 //car has finished a lap
+                      //&& lanes[(i + 1) % NUMLANES].avgLapDur > 0 //other car has finished a lap
+                      && millis() < lanes[i].prior.timestamp + lanes[i].avgLapDur/2 //this car is in first half of lap
+                      && millis() > lanes[(i + 1) % NUMLANES].prior.timestamp + lanes[(i + 1) % NUMLANES].avgLapDur  / 2) /* other car is in second half of lap*/ {
+            if (raceFlag != YELLOWFLAG && raceFlag != REDFLAG && !anyRed && !anyYellow) {
+              p("bop yellow", (char)raceFlag)
+              pln("Car", i);
+            }
+            if ( raceFlag != YELLOWFLAG) {
+              setDevice(i);
+              playToneNoBlock(345, 50);
+              lcd.printRowCentered(0, "NASCAR BOP!");
+              nextPageFlip += 1301;
+            }
+            anyYellow = true;
+            //end else if 
           }
         }
       }
@@ -796,7 +847,7 @@ void raceLoop() {
     for (int i = 0; i < NUMLANES; i++) {
       lanes[i].fuel = MAXFUEL;
     }
-    playF1StartSound1();
+    playF1StartSound1(); //road course
     ISR::calcThresholds();
     auto chk = checkSensors();
     if (chk >= 0) {
