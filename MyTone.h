@@ -158,7 +158,7 @@ long bgNextStep=0;
 int thisNote=0;
 
 void playMusicStep() {
-  if(wholenote <0) return;
+  if(wholenote <= 0) return;
   if(millis()<bgNextStep) return; 
   int divider = 0, noteDuration = 0;
   // iterate over the notes of the melody.
@@ -189,7 +189,7 @@ void playMusic(int* melody, int notes, int tempo = 80) {
   bgMelody=melody;
   bgNotes=notes;
   // this calculates the duration of a whole note in ms
-  wholenote = ((60000 * 4) / tempo)*9/10;
+  wholenote = ((60000 * 4) / tempo)*8/10;
   bgNextStep=0; //play immediately
   thisNote=0;
   playMusicStep(); //play first note

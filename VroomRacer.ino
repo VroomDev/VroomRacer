@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20261008";
+const char* title = "VroomRacer v20261011";
 
 
 #define FUELSTEP 64
@@ -66,7 +66,6 @@ const uint8_t VDEF[NUMBANKS][NUMCONFIG] = {
 #define sound ((bool)config[SOUND])
 #define minLapDuration ((int)config[MINLAPDUR]*MINLAPDURSTEP)
 #define serialOn ((bool)config[SERIALMONITOR])
-//#define serialOn true
 #define diagOn ((bool)config[DEMODIAG])
 #define fuelOn ((bool)config[FUELING]>0)
 #define dragOn (curBank==DRAGMODE)
@@ -118,9 +117,9 @@ RaceFlag raceFlag = FORMATION;
 #define ph(label)   if(serialOn){Serial.print(label);Serial.print(':');}
 #define p(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
 #define pln(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
-#define ph2(label)   if(true){Serial.print(label);Serial.print(':');}
-#define p2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
-#define pln2(label,var) if(true){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
+#define ph2(label)   if(serialOn){Serial.print(label);Serial.print(':');}
+#define p2(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.print(',');}
+#define pln2(label,var) if(serialOn){Serial.print(label); Serial.print(':'); Serial.print(var); Serial.println();}
 
 
 void mydtostrf(float value, int width, char (&buffer)[20]) {
@@ -305,10 +304,10 @@ void setup() {
     for (int i = 0; i < nDevices; i++) {
       setDevice(i);
       lcd.boot(); //we need to configure the large font
-      delay(100);
+      delay(100); //ok
     }
     lcd.demoBarChart();
-    delay(500);
+    delay(500); //ok
     for (int i = 0; i < nDevices; i++) {
       setDevice(i);
       lcd.clear();
@@ -410,10 +409,10 @@ bool behind(int s){
     p("lslc",lanes[s].lapCounter);
     return true; //not on lead lap
   }
-//  if( lanes[s].avgLapDur > lanes[(s + 1) % NUMLANES].avgLapDur){
-//    p("going slower",lanes[s].avgLapDur);
-//    return true; //going slower
-//  }
+  //  if( lanes[s].avgLapDur > lanes[(s + 1) % NUMLANES].avgLapDur){
+  //    p("going slower",lanes[s].avgLapDur);
+  //    return true; //going slower
+  //  }
   return false;
 }
 
@@ -674,7 +673,7 @@ void startDragRace() {
     lcd.printRow(3, "Please reset.");
     playToneBlocking(250, 100);
     needReset = true;
-    delay(100);
+    delay(100); //drag
     return;
   } else {
     raceStarted = true;
@@ -858,7 +857,7 @@ void raceLoop() {
       lcd.printRow(3, "Please reset.");
       playToneBlocking(250, 100);
       needReset = true;
-      delay(100);
+      delay(100); //fault
       return;
     } else {
       ISR::go();
@@ -894,9 +893,8 @@ void alertGoodLap(int i) {
   playToneBlocking(400 + i * 300, 100);
   if (lanes[i].fuel < MAXFUEL / 5) {
     ph("LOW FUEL");
-    delay(50);
     playToneBlocking(400 + i * 300 - 100, 50);
-    delay(50);
+    delay(50); //low fuel ding ding
     playToneNoBlock(400 + i * 300 - 100, 50);
   }
   laneDisplayed = i;
