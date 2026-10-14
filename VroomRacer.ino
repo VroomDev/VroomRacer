@@ -10,7 +10,7 @@
 */
 
 //////////////////////////// CONFIG VALUES
-const char* title = "VroomRacer v20261011";
+const char* title = "VroomRacer v20261014";
 
 
 #define FUELSTEP 64
@@ -42,7 +42,7 @@ const char VLABELS[NUMCONFIG][22] PROGMEM =  {
   "Yellow millis:      \0", //
   "Red Multiplier:     \0", //
   "Hop Thresold%:      \0", //
-  "NASCAR BOP:         \0"  //
+  "BOP Yellow:         \0"  //
   //01234567890123456789
 };
 #define NUMBANKS 4
@@ -797,7 +797,7 @@ void checkStewards() {
             if ( raceFlag != YELLOWFLAG) {
               setDevice(i);
               playToneNoBlock(345, 50);
-              lcd.printRowCentered(0, "NASCAR BOP!");
+              lcd.printRowCentered(0, "BOP Yellow!");
               nextPageFlip += 1301;
             }
             anyYellow = true;
@@ -828,7 +828,8 @@ void checkStewards() {
       pln("back to", "green");
       /////////////////////01234567890123456789
       lcd.printRowBoth(0, "   Back to Green!");
-      playF1Restart();
+      playF1Restart(); //
+      waveFlag(FORMATION);
       raceFlag = GREENFLAG;
       waveFlag(raceFlag);
       nextPageFlip = millis() + 501;

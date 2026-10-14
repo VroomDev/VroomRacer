@@ -128,6 +128,7 @@ class Lane {
           //BoP adjustments, going so slowly, must be using less fuel
           if (lapCounter + 2 < maxLapCounter) drain /= 3;  //slow the fuel usage for BoP adjustment
           else if (lapCounter + 1 < maxLapCounter) drain /= 2;
+          else if( bopOn() && lapCounter<maxLapCounter) drain = drain*3/4;
           fuel -= drain;
           if (fuel < 0) fuel = 0;
         }
@@ -156,10 +157,10 @@ class Lane {
           playToneNoBlock(1046, 100); //high frequency beep to alert of new fast lap
           lapQuali = '^';
         }
-        lapCounter++;//lap counter is now the number of completed laps
+        lapCounter++;                         //lap counter is now the number of completed laps
         lap.lap = lapCounter;
         if (lapCounter > maxLapCounter) {
-          maxLapCounter = lapCounter;
+          maxLapCounter = lapCounter;         //SET MAX LAP COUNTER
           raceStatus = '>'; //in the lead
         } else if (lapCounter < maxLapCounter) {
           raceStatus = '<'; //not on same lap down at least 1 lap

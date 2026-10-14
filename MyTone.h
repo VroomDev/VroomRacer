@@ -216,9 +216,6 @@ void playMusic(int* melody, int notes, int tempo = 80) {
 
 void playF1Restart() {
   playMusic(restartMelody,restartMelodyNotes);
-  waveFlag(GREENFLAG);
-  delay(100);
-  waveFlag(FORMATION);
 }
 
 //this is blocking
